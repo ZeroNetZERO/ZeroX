@@ -368,6 +368,46 @@ local function SmartLoadConfig(configName)
     })
 end
 
+local UserInputService = game:GetService("UserInputService")
+local InfinityJumpConnection = nil
+local LocalPlayer = game.Players.LocalPlayer
+local RepStorage = game:GetService("ReplicatedStorage") 
+local ItemUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("ItemUtility", 10))
+local TierUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("TierUtility", 10))
+
+local DEFAULT_SPEED = 18
+local DEFAULT_JUMP = 50
+
+local function GetHumanoid()
+    local Character = LocalPlayer.Character
+    if not Character then
+        Character = LocalPlayer.CharacterAdded:Wait()
+    end
+    return Character:FindFirstChildOfClass("Humanoid")
+end
+
+local InitialHumanoid = GetHumanoid()
+local currentSpeed = DEFAULT_SPEED
+local currentJump = DEFAULT_JUMP
+
+if InitialHumanoid then
+    currentSpeed = InitialHumanoid.WalkSpeed
+    currentJump = InitialHumanoid.JumpPower
+end
+
+local RPath = {"Packages", "_Index", "sleitnick_net@0.2.0", "net"}
+local PlayerDataReplion = nil
+
+local function GetRemote(remotePath, name, timeout)
+    local currentInstance = RepStorage
+    for _, childName in ipairs(remotePath) do
+        currentInstance = currentInstance:WaitForChild(childName, timeout or 0.5)
+        if not currentInstance then return nil end
+    end
+    return currentInstance:FindFirstChild(name)
+end
+
+
 --automatic
 do
     local automatic = Window:Tab({

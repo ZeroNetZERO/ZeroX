@@ -407,6 +407,14 @@ local function GetRemote(remotePath, name, timeout)
     return currentInstance:FindFirstChild(name)
 end
 
+local function GetPlayerDataReplion()
+    if PlayerDataReplion then return PlayerDataReplion end
+    local ReplionModule = RepStorage:WaitForChild("Packages"):WaitForChild("Replion", 10)
+    if not ReplionModule then return nil end
+    local ReplionClient = require(ReplionModule).Client
+    PlayerDataReplion = ReplionClient:WaitReplion("Data", 5)
+    return PlayerDataReplion
+end
 
 --automatic
 do
@@ -416,13 +424,6 @@ do
         Locked = false,
     })
 
-    -- Variabel untuk Auto Sell
-    local sellDelay = 50
-    local autoSellDelayState = false
-    local autoSellDelayThread = nil
-    local sellCount = 50
-    local autoSellCountState = false
-    local autoSellCountThread = nil
 
     -- Variabel Auto Favorite/Unfavorite
     local autoFavoriteState = false
@@ -435,216 +436,8 @@ do
 
     local RE_FavoriteItem = GetRemote(RPath, "RE/FavoriteItem")
 
-    -- Helper Function: Get Fish/Item Count
-    local function GetFishCount()
-        local replion = GetPlayerDataReplion()
-        if not replion then return 0 end
-
-        local totalFishCount = 0
-        local success, inventoryData = pcall(function()
-            return replion:GetExpect("Inventory")
-        end)
-        
-        if not success or not inventoryData or not inventoryData.Items or typeof(inventoryData.Items) ~= "table" then
-            return 0
-        end
-
-        for _, item in ipairs(inventoryData.Items) do
-            local isSellableFish = false
-
-            -- EKSKLUSI GEAR/CRATE/ETC.
-            if item.Type == "Fishing Rods" or item.Type == "Boats" or item.Type == "Bait" or item.Type == "Pets" or item.Type == "Chests" or item.Type == "Crates" or item.Type == "Totems" then
-                continue
-            end
-            if item.Identifier and (item.Identifier:match("Artifact") or item.Identifier:match("Key") or item.Identifier:match("Token") or item.Identifier:match("Booster") or item.Identifier:match("hourglass")) then
-                continue
-            end
-            
-            -- INKLUSI JIKA ITEM MEMILIKI WEIGHT METADATA
-            if item.Metadata and item.Metadata.Weight then
-                isSellableFish = true
-            elseif item.Type == "Fish" or (item.Identifier and item.Identifier:match("fish")) then
-                isSellableFish = true
-            end
-
-            if isSellableFish then
-                totalFishCount = totalFishCount + (item.Count or 1)
-            end
-        end
-        
-        return totalFishCount
-    end
-
-    -- Helper Function: Menonaktifkan mode Auto Sell lain
-    local function disableOtherAutoSell(currentMode)
-        if currentMode ~= "delay" and autoSellDelayState then
-            autoSellDelayState = false
-            local toggle = automatic:GetElementByTitle("Auto Sell All (Delay)")
-            if toggle and toggle.Set then toggle:Set(false) end
-            if autoSellDelayThread then task.cancel(autoSellDelayThread) autoSellDelayThread = nil end
-        end
-        if currentMode ~= "count" and autoSellCountState then
-            autoSellCountState = false
-            local toggle = automatic:GetElementByTitle("Auto Sell by Count")
-            if toggle and toggle.Set then toggle:Set(false) end
-            if autoSellCountThread then task.cancel(autoSellCountThread) autoSellCountThread = nil end
-        end
-    end
-
-    -- LOGIC AUTO SELL BY DELAY
-    local function RunAutoSellDelayLoop()
-        if autoSellDelayThread then task.cancel(autoSellDelayThread) end
-        autoSellDelayThread = task.spawn(function()
-            while autoSellDelayState do
-                if RF_SellAllItems then
-                    pcall(function() RF_SellAllItems:InvokeServer() end)
-                end
-                task.wait(math.max(sellDelay, 1))
-            end
-        end)
-    end
-    
-    -- LOGIC AUTO SELL BY COUNT
-    local function RunAutoSellCountLoop()
-        if autoSellCountThread then task.cancel(autoSellCountThread) end
-        autoSellCountThread = task.spawn(function()
-            while autoSellCountState do
-                local currentCount = GetFishCount()
-                
-                if currentCount >= sellCount then
-                    if RF_SellAllItems then
-                        pcall(function() RF_SellAllItems:InvokeServer() end)
-                        task.wait(1)
-                    end
-                end
-                task.wait(1)
-            end
-        end)
-    end
 
 
-   -- =================================================================
-    -- 💰 UNIFIED AUTO SELL SYSTEM (BY DELAY / BY COUNT)
-    -- =================================================================
-    local sellall = automatic:Section({ Title = "Autosell Fish", TextSize = 20 })
-
-    -- Variabel Global Auto Sell Baru
-    local autoSellMethod = "Delay" -- Default: Delay
-    local autoSellValue = 50       -- Default Value (Detik atau Jumlah)
-    local autoSellState = false
-    local autoSellThread = nil
-
-    -- 1. Helper: Unified Loop Logic
-    local function RunAutoSellLoop()
-        if autoSellThread then task.cancel(autoSellThread) end
-        
-        autoSellThread = task.spawn(function()
-            while autoSellState do
-                if autoSellMethod == "Delay" then
-                    -- === LOGIC BY DELAY ===
-                    if RF_SellAllItems then
-                        pcall(function() RF_SellAllItems:InvokeServer() end)
-                    end
-                    -- Wait sesuai input (minimal 1 detik biar ga crash)
-                    task.wait(math.max(autoSellValue, 1))
-
-                elseif autoSellMethod == "Count" then
-                    -- === LOGIC BY COUNT ===
-                    local currentCount = GetFishCount() -- Pastikan fungsi GetFishCount ada di atas
-                    
-                    if currentCount >= autoSellValue then
-                        if RF_SellAllItems then
-                            pcall(function() RF_SellAllItems:InvokeServer() end)
-                            WindUI:Notify({ Title = "Auto Sell", Content = "Menjual " .. currentCount .. " items.", Duration = 2, Icon = "dollar-sign" })
-                            task.wait(2) -- Cooldown sebentar setelah jual
-                        end
-                    end
-                    task.wait(1) -- Cek setiap 1 detik
-                end
-            end
-        end)
-    end
-
-    -- 2. UI Elements
-    
-    -- Dropdown untuk memilih metode
-    local inputElement -- Forward declaration untuk update judul input
-    
-    local dropMethod = sellall:Dropdown({
-        Title = "Select Method",
-        Values = {"Delay", "Count"},
-        Value = "Delay",
-        Multi = false,
-        AllowNone = false,
-        Callback = function(val)
-            autoSellMethod = val
-            
-            -- Update Judul Input agar user paham
-            if inputElement then
-                if val == "Delay" then
-                    inputElement:SetTitle("Sell Delay (Seconds)")
-                    inputElement:SetPlaceholder("e.g. 50")
-                else
-                    inputElement:SetTitle("Sell at Item Count")
-                    inputElement:SetPlaceholder("e.g. 100")
-                end
-            end
-            
-            -- Restart loop jika sedang aktif agar logika langsung berubah
-            if autoSellState then
-                RunAutoSellLoop()
-            end
-        end
-    })
-
-    -- Input Tunggal (Dinamis)
-    inputElement = Reg("sellval",sellall:Input({
-        Title = "Sell Delay (Seconds)", -- Judul awal
-        Value = tostring(autoSellValue),
-        Placeholder = "50",
-        Icon = "hash",
-        Callback = function(text)
-            local num = tonumber(text)
-            if num then
-                autoSellValue = num
-            end
-        end
-    }))
-
-    -- Display Jumlah Ikan Saat Ini (Berguna untuk mode Count)
-    local CurrentCountDisplay = sellall:Paragraph({ Title = "Current Fish Count: 0", Icon = "package" })
-    task.spawn(function() 
-        while true do 
-            if CurrentCountDisplay and GetPlayerDataReplion() then 
-                local count = GetFishCount() 
-                CurrentCountDisplay:SetTitle("Current Fish Count: " .. tostring(count)) 
-            end 
-            task.wait(1) 
-        end 
-    end)
-
-    -- Toggle Tunggal
-    local togSell = Reg("tsell",sellall:Toggle({
-        Title = "Enable Auto Sell",
-        Desc = "Menjalankan auto sell sesuai metode di atas.",
-        Value = false,
-        Callback = function(state)
-            autoSellState = state
-            if state then
-                if not RF_SellAllItems then
-                    WindUI:Notify({ Title = "Error", Content = "Remote Sell tidak ditemukan.", Duration = 3, Icon = "x" })
-                    return false
-                end
-                
-                local msg = (autoSellMethod == "Delay") and ("Setiap " .. autoSellValue .. " detik.") or ("Saat jumlah >= " .. autoSellValue)
-                WindUI:Notify({ Title = "Auto Sell ON (" .. autoSellMethod .. ")", Content = msg, Duration = 3, Icon = "check" })
-                RunAutoSellLoop()
-            else
-                WindUI:Notify({ Title = "Auto Sell OFF", Duration = 3, Icon = "x" })
-                if autoSellThread then task.cancel(autoSellThread) autoSellThread = nil end
-            end
-        end
-    }))
     
     local favsec = automatic:Section({ Title = "Auto Favorite / Unfavorite", TextSize = 20, })
     

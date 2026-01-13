@@ -1,4 +1,18 @@
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+local WindUI
+local success, result = pcall(function()
+    if isfile("WindUI_Cache.lua") then
+        return loadstring(readfile("WindUI_Cache.lua"))()
+    end
+end)
+
+if success and result then
+    WindUI = result
+else
+    local url = "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"
+    local content = game:HttpGet(url)
+    if writefile then pcall(function() writefile("WindUI_Cache.lua", content) end) end
+    WindUI = loadstring(content)()
+end
 
 -------- [[ CATRAZ THEME SETUP ]] --------
 WindUI:AddTheme({
@@ -372,8 +386,14 @@ local UserInputService = game:GetService("UserInputService")
 local InfinityJumpConnection = nil
 local LocalPlayer = game.Players.LocalPlayer
 local RepStorage = game:GetService("ReplicatedStorage") 
-local ItemUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("ItemUtility", 10))
-local TierUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("TierUtility", 10))
+local ItemUtility = nil
+local TierUtility = nil
+task.spawn(function()
+    pcall(function()
+        ItemUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("ItemUtility", 10))
+        TierUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("TierUtility", 10))
+    end)
+end)
 
 local DEFAULT_SPEED = 18
 local DEFAULT_JUMP = 50
@@ -449,7 +469,10 @@ local function GetPlayerDataReplion()
     return PlayerDataReplion
 end
 
-local RF_SellAllItems = GetRemote(RPath, "RF/SellAllItems", 5)
+local RF_SellAllItems = nil
+task.spawn(function()
+    RF_SellAllItems = GetRemote(RPath, "RF/SellAllItems", 5)
+end)
 
 local function GetFishNameAndRarity(item)
     local name = item.Identifier or "Unknown"

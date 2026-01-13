@@ -416,6 +416,50 @@ local function GetPlayerDataReplion()
     return PlayerDataReplion
 end
 
+local function GetFishNameAndRarity(item)
+    local name = item.Identifier or "Unknown"
+    local rarity = item.Metadata and item.Metadata.Rarity or "COMMON"
+    local itemID = item.Id
+
+    local itemData = nil
+
+    if ItemUtility and itemID then
+        pcall(function()
+            itemData = ItemUtility:GetItemData(itemID)
+            if not itemData then
+                local numericID = tonumber(item.Id) or tonumber(item.Identifier)
+                if numericID then
+                    itemData = ItemUtility:GetItemData(numericID)
+                end
+            end
+        end)
+    end
+
+    if itemData and itemData.Data and itemData.Data.Name then
+        name = itemData.Data.Name
+    end
+
+    if item.Metadata and item.Metadata.Rarity then
+        rarity = item.Metadata.Rarity
+    elseif itemData and itemData.Probability and itemData.Probability.Chance and TierUtility then
+        local tierObj = nil
+        pcall(function()
+            tierObj = TierUtility:GetTierFromRarity(itemData.Probability.Chance)
+        end)
+
+        if tierObj and tierObj.Name then
+            rarity = tierObj.Name
+        end
+    end
+
+    return name, rarity
+end
+
+local function GetItemMutationString(item)
+    if item.Metadata and item.Metadata.Shiny == true then return "Shiny" end
+    return item.Metadata and item.Metadata.VariantId or ""
+end
+
 --automatic
 do
     local automatic = Window:Tab({
@@ -1122,18 +1166,19 @@ end
             
             if state then
                 WindUI:Notify({
-                    Title = "Auto Accept Trade ON! ✅",
-                    Content = "Menerima semua permintaan trade secara otomatis.",
+                    Title = "Auto Accept Trade ON!",
+                    Content = "Menerima semua permintaan trade.",
                     Duration = 3,
                     Icon = "check"
                 })
             else
                 WindUI:Notify({
-                    Title = "Auto Accept Trade OFF! ❌",
-                    Content = "Menerima trade secara manual.",
+                    Title = "Auto Accept Trade OFF!",
+                    Content = "Trade manual.",
                     Duration = 3,
                     Icon = "x"
                 })
             end
         end
     })
+end

@@ -3048,7 +3048,6 @@ end
             local targetId = selectedTradeTargetId
             
             if not targetId or typeof(targetId) ~= "number" then
-                WindUI:Notify({ Title = "Trade Gagal", Content = "Pilih Target valid.", Duration = 5, Icon = "x" })
                 local toggle = automatic:GetElementByTitle("Enable Auto Trade")
                 if toggle and toggle.Set then toggle:Set(false) end
                 return
@@ -3127,7 +3126,6 @@ end
                             })
                             task.wait(tradeDelay)
                         else
-                            WindUI:Notify({ Title = "Trade Gagal/Lag", Content = "Item tidak terkirim.", Duration = 2, Icon = "alert-triangle" })
                             task.wait(1.5)
                         end
                     else
@@ -3137,7 +3135,6 @@ end
                     task.wait(2)
                 end
             end
-            WindUI:Notify({ Title = "Auto Trade Berhenti", Duration = 3, Icon = "x" })
         end)
     end
     

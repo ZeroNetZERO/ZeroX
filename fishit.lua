@@ -1,6204 +1,8278 @@
--- ts file was generated at discord.gg/25ms
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
+-------- [[ CATRAZ THEME SETUP ]] --------
+WindUI:AddTheme({
+    Name = "Native Red",
+    Accent = Color3.fromHex("#ff5e5e"), 
+    Background = Color3.fromHex("#1a0b0b"), 
+    BackgroundTransparency = 0.8, 
+    Outline = Color3.fromHex("#451a1a"), 
+    Text = Color3.fromHex("#fcfcfc"), 
+    Placeholder = Color3.fromHex("#8a4b4b"),
+    Button = Color3.fromHex("#2b1212"), 
+    Icon = Color3.fromHex("#ffcccc"),
+    Hover = Color3.fromHex("#3d1a1a"), 
+    WindowBackground = Color3.fromHex("#140808"), 
+    WindowShadow = Color3.fromHex("#000000"),
+    WindowTopbarButtonIcon = Color3.fromHex("#ffcccc"),
+    WindowTopbarTitle = Color3.fromHex("#fcfcfc"), 
+    WindowTopbarAuthor = Color3.fromHex("#aa5555"),
+    WindowTopbarIcon = Color3.fromHex("#ff5e5e"),
+    TabBackground = Color3.fromHex("#0f0505"), 
+    TabTitle = Color3.fromHex("#fcfcfc"),
+    TabIcon = Color3.fromHex("#cc8888"),
+    ElementBackground = Color3.fromHex("#260f0f"), 
+    ElementTitle = Color3.fromHex("#fcfcfc"),
+    ElementDesc = Color3.fromHex("#b36b6b"),
+    ElementIcon = Color3.fromHex("#ffcccc"),
+    Toggle = Color3.fromHex("#fcfcfc"), 
+    ToggleBar = Color3.fromHex("#3d1a1a"),
+    Checkbox = Color3.fromHex("#fcfcfc"),
+    CheckboxIcon = Color3.fromHex("#1a0b0b"), 
+    Slider = Color3.fromHex("#fcfcfc"),
+    SliderThumb = Color3.fromHex("#ff5e5e"), 
+})
 
-local vu1 = {
-    Players = game:GetService("Players"),
-    RunService = game:GetService("RunService"),
-    HttpService = game:GetService("HttpService"),
-    RS = game:GetService("ReplicatedStorage"),
-    VIM = game:GetService("VirtualInputManager"),
-    PG = game:GetService("Players").LocalPlayer.PlayerGui,
-    Camera = workspace.CurrentCamera,
-    GuiService = game:GetService("GuiService"),
-    CoreGui = game:GetService("CoreGui")
+WindUI:SetTheme("Native Red")
+
+local Window = WindUI:CreateWindow({
+    Title = "Catraz Hub |Vyn HUB | Fish It!",
+    Folder = "CatrazHub",
+    Icon = "rbxassetid://124162045221605", 
+    NewElements = true,
+    Transparent = true,
+    Theme = "Native Red",
+    HideSearchBar = true,
+    BackgroundImageTransparency = 1,
+    OpenButton = { Title = "Open Hub", Enabled = false },                                                              
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function() end,
+    },
+})
+
+-- [[ 1. VERSION TAG (BETA) ]] --
+Window:Tag({
+    Title = "v4.0-BETA",
+    Icon = "github", -- Ikon Github
+    Color = Color3.fromHex("#4a4a4a"), -- Warna Hijau Stabilo
+})
+
+Window:Tag({
+    Title = "Premium",
+    Color = Color3.fromHex("#b80202"), -- Warna Hijau Stabilo
+})
+
+Window:DisableTopbarButtons({
+    "Close", 
+    "Minimize", 
+    "Fullscreen",
+})
+
+WindUI:Notify({
+    Title = "Catraz Hub Loaded",
+    Content = "Success load Catraz Hub | FISH IT!",
+    Duration = 5,
+    Icon = "badge-check", 
+})
+
+-- [[ CUSTOM TOGGLE UI SYSTEM & MINI DASHBOARD (DRAGGABLE VERSION) ]] --
+task.spawn(function()
+    local CoreGui = game:GetService("CoreGui")
+    local TweenService = game:GetService("TweenService")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService") -- Tambahan Service
+    local Stats = game:GetService("Stats")
+    
+    local NameUI = "CatrazHubSystem"
+    if CoreGui:FindFirstChild(NameUI) then CoreGui[NameUI]:Destroy() end
+    
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = NameUI
+    ScreenGui.Parent = CoreGui
+    ScreenGui.ResetOnSpawn = false
+    
+    -- [[ FUNGSI DRAGGABLE (BIAR BISA DIGESER) ]] --
+    local function MakeDraggable(topbarobject, object)
+        local Dragging = nil
+        local DragInput = nil
+        local DragStart = nil
+        local StartPosition = nil
+
+        local function Update(input)
+            local Delta = input.Position - DragStart
+            local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
+            -- Pakai Tween biar smooth pas ditarik
+            local Tween = TweenService:Create(object, TweenInfo.new(0.15), {Position = pos})
+            Tween:Play()
+        end
+
+        topbarobject.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                Dragging = true
+                DragStart = input.Position
+                StartPosition = object.Position
+
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        Dragging = false
+                    end
+                end)
+            end
+        end)
+
+        topbarobject.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                DragInput = input
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input == DragInput and Dragging then
+                Update(input)
+            end
+        end)
+    end
+    -- [[ END FUNGSI DRAGGABLE ]] --
+
+    -- Variables State
+    local IsMenuOpen = true 
+    
+    -- 1. TOGGLE BUTTON
+    local ToggleBtn = Instance.new("ImageButton")
+    ToggleBtn.Name = "MainButton"
+    ToggleBtn.Parent = ScreenGui
+    ToggleBtn.Position = UDim2.new(0.05, 0, 0.45, 0)
+    ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+    ToggleBtn.BackgroundColor3 = Color3.fromHex("#140808")
+    ToggleBtn.BackgroundTransparency = 0.2
+    ToggleBtn.AutoButtonColor = false 
+    
+    -- Bikin Tombolnya Draggable juga (Pakai fungsi baru biar smooth)
+    MakeDraggable(ToggleBtn, ToggleBtn)
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0.3, 0)
+    BtnCorner.Parent = ToggleBtn
+
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Parent = ToggleBtn
+    BtnStroke.Color = Color3.fromHex("#ff5e5e")
+    BtnStroke.Thickness = 2.5
+    BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local IconImage = Instance.new("ImageLabel")
+    IconImage.Parent = ToggleBtn
+    IconImage.BackgroundTransparency = 1 
+    IconImage.AnchorPoint = Vector2.new(0.5, 0.5)
+    IconImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+    IconImage.Size = UDim2.new(0.7, 0, 0.7, 0)
+    IconImage.Image = "rbxassetid://124162045221605" 
+    IconImage.ScaleType = Enum.ScaleType.Fit
+    
+    -- 2. MINI DASHBOARD (Status Box)
+    local StatusFrame = Instance.new("Frame")
+    StatusFrame.Name = "StatusDashboard"
+    StatusFrame.Parent = ScreenGui
+    StatusFrame.Position = UDim2.new(0.5, 0, 0.05, 0) 
+    StatusFrame.AnchorPoint = Vector2.new(0.5, 0)
+    StatusFrame.Size = UDim2.new(0, 300, 0, 65)
+    StatusFrame.BackgroundColor3 = Color3.fromHex("#0f0505")
+    StatusFrame.BackgroundTransparency = 0.1
+    StatusFrame.Visible = false 
+    
+    -- [[ TERAPKAN DRAGGABLE DI SINI ]]
+    -- Kita bikin StatusFrame bisa ditarik
+    MakeDraggable(StatusFrame, StatusFrame)
+
+    local StatusCorner = Instance.new("UICorner")
+    StatusCorner.CornerRadius = UDim.new(0, 8)
+    StatusCorner.Parent = StatusFrame
+    
+    local StatusStroke = Instance.new("UIStroke")
+    StatusStroke.Parent = StatusFrame
+    StatusStroke.Color = Color3.fromHex("#451a1a")
+    StatusStroke.Thickness = 2
+    
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Parent = StatusFrame
+    AccentBar.BackgroundColor3 = Color3.fromHex("#ff5e5e")
+    AccentBar.Size = UDim2.new(0, 4, 1, 0)
+    AccentBar.BorderSizePixel = 0
+    local BarCorner = Instance.new("UICorner"); BarCorner.Parent = AccentBar
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Parent = StatusFrame
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+    TitleLabel.Size = UDim2.new(1, -20, 0, 20)
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.Text = "CATRAZ HUB | <font color='#ff5e5e'>FISH IT!</font>"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.RichText = true
+
+    local StatsLabel = Instance.new("TextLabel")
+    StatsLabel.Parent = StatusFrame
+    StatsLabel.BackgroundTransparency = 1
+    StatsLabel.Position = UDim2.new(0, 15, 0, 28)
+    StatsLabel.Size = UDim2.new(1, -20, 0, 30) 
+    StatsLabel.Font = Enum.Font.GothamMedium
+    StatsLabel.Text = "Loading Stats..."
+    StatsLabel.TextColor3 = Color3.fromHex("#cccccc")
+    StatsLabel.TextSize = 12
+    StatsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- 3. ANIMATION & LOGIC
+    local function PlayClickAnim()
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 40, 0, 40)}):Play()
+        task.wait(0.1)
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.3, Enum.EasingStyle.Elastic), {Size = UDim2.new(0, 50, 0, 50)}):Play()
+    end
+
+    local function FormatTime(seconds)
+        local h = math.floor(seconds / 3600)
+        local m = math.floor((seconds % 3600) / 60)
+        local s = math.floor(seconds % 60)
+        return string.format("%02d:%02d:%02d", h, m, s)
+    end
+
+    ToggleBtn.MouseButton1Click:Connect(function()
+        PlayClickAnim()
+        Window:Toggle() 
+        IsMenuOpen = not IsMenuOpen
+        StatusFrame.Visible = not IsMenuOpen 
+        
+        if not IsMenuOpen then
+            StatusFrame.BackgroundTransparency = 1
+            TitleLabel.TextTransparency = 1
+            StatsLabel.TextTransparency = 1
+            TweenService:Create(StatusFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.1}):Play()
+            TweenService:Create(TitleLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+            TweenService:Create(StatsLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        end
+    end)
+
+    -- 4. LIVE VISUAL UPDATE
+    RunService.RenderStepped:Connect(function(deltaTime)
+        if StatusFrame.Visible then
+            local fps = math.floor(1 / deltaTime)
+            local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            local runtime = FormatTime(workspace.DistributedGameTime)
+            
+            StatsLabel.Text = string.format("FPS: %d  |  Ping: %d ms\nRuntime: %s", fps, ping, runtime)
+        end
+    end)
+end)
+
+-- [[ 1. CONFIGURATION SYSTEM SETUP ]] --
+local CatrazHubConfig = Window.ConfigManager:CreateConfig("catrazhub")
+
+-- [BARU] Tabel untuk menyimpan semua elemen UI agar bisa dicek valuenya
+local ElementRegistry = {} 
+
+-- Fungsi Helper Reg yang sudah di-upgrade
+local function Reg(id, element)
+    CatrazHubConfig:Register(id, element)
+    -- Simpan elemen ke tabel lokal kita
+    ElementRegistry[id] = element 
+    return element
+end
+
+local HttpService = game:GetService("HttpService")
+local BaseFolder = "WindUI/" .. (Window.Folder or "CatrazHub") .. "/config/"
+
+local function SmartLoadConfig(configName)
+    local path = BaseFolder .. configName .. ".json"
+    
+    -- 1. Cek File
+    if not isfile(path) then 
+        WindUI:Notify({ Title = "Gagal Load", Content = "File tidak ditemukan: " .. configName, Duration = 3, Icon = "x" })
+        return 
+    end
+
+    -- 2. Cek Isi File & Decode
+    local content = readfile(path)
+    local success, decodedData = pcall(function() return HttpService:JSONDecode(content) end)
+
+    if not success or not decodedData then 
+        WindUI:Notify({ Title = "Gagal Load", Content = "File JSON rusak/kosong.", Duration = 3, Icon = "alert-triangle" })
+        return 
+    end
+
+    -- [FIX PENTING] Ambil data dari '__elements' jika ada
+    local realData = decodedData
+    if decodedData["__elements"] then
+        realData = decodedData["__elements"]
+    end
+
+    local changeCount = 0
+    local foundCount = 0
+
+    -- Debug: Hitung total registry script saat ini
+    for _ in pairs(ElementRegistry) do foundCount = foundCount + 1 end
+    print("------------------------------------------------")
+    print("[SmartLoad] Target Config: " .. configName)
+    print("[SmartLoad] Elemen terdaftar di Script: " .. foundCount)
+
+    -- 3. Loop Data
+    for id, itemData in pairs(realData) do
+        local element = ElementRegistry[id] -- Cari elemen di script kita
+        
+        if element then
+            -- [FIX PENTING] Ambil 'value' dari dalam object JSON WindUI
+            -- Struktur JSON kamu: "tognorm": {"value": true, "__type": "Toggle"}
+            local finalValue = itemData
+            
+            if type(itemData) == "table" and itemData.value ~= nil then
+                finalValue = itemData.value
+            end
+
+            -- Cek Tipe Data (Safety)
+            local currentVal = element.Value
+            
+            -- Cek Perbedaan (Support Table/Array untuk Dropdown)
+            local isDifferent = false
+            
+            if type(finalValue) == "table" then
+                -- Jika dropdown/multi-select, kita asumsikan selalu update biar aman
+                -- atau bandingkan panjang table (simple check)
+                isDifferent = true 
+            elseif currentVal ~= finalValue then
+                isDifferent = true
+            end
+
+            -- Eksekusi Perubahan
+            if isDifferent then
+                pcall(function() 
+                    element:Set(finalValue) 
+                end)
+                changeCount = changeCount + 1
+                
+                -- Anti-Freeze: Jeda mikro setiap 10 perubahan
+                if changeCount % 10 == 0 then task.wait() end
+            end
+        end
+    end
+
+    print("[SmartLoad] Selesai. Total Update: " .. changeCount)
+    print("------------------------------------------------")
+
+    WindUI:Notify({ 
+        Title = "Config Loaded", 
+        Content = string.format("Updated: %d settings", changeCount), 
+        Duration = 3, 
+        Icon = "check" 
+    })
+end
+
+local UserInputService = game:GetService("UserInputService")
+local InfinityJumpConnection = nil
+local LocalPlayer = game.Players.LocalPlayer
+local RepStorage = game:GetService("ReplicatedStorage") 
+local ItemUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("ItemUtility", 10))
+local TierUtility = require(RepStorage:WaitForChild("Shared"):WaitForChild("TierUtility", 10))
+
+local DEFAULT_SPEED = 18
+local DEFAULT_JUMP = 50
+
+local function GetHumanoid()
+    local Character = LocalPlayer.Character
+    if not Character then
+        Character = LocalPlayer.CharacterAdded:Wait()
+    end
+    return Character:FindFirstChildOfClass("Humanoid")
+end
+
+local InitialHumanoid = GetHumanoid()
+local currentSpeed = DEFAULT_SPEED
+local currentJump = DEFAULT_JUMP
+
+if InitialHumanoid then
+    currentSpeed = InitialHumanoid.WalkSpeed
+    currentJump = InitialHumanoid.JumpPower
+end
+
+local RPath = {"Packages", "_Index", "sleitnick_net@0.2.0", "net"}
+local PlayerDataReplion = nil
+
+local function GetRemote(remotePath, name, timeout)
+    local currentInstance = RepStorage
+    for _, childName in ipairs(remotePath) do
+        currentInstance = currentInstance:WaitForChild(childName, timeout or 0.5)
+        if not currentInstance then return nil end
+    end
+    return currentInstance:FindFirstChild(name)
+end
+
+local function GetHRP()
+    local Character = game.Players.LocalPlayer.Character
+    if not Character then
+        Character = game.Players.LocalPlayer.CharacterAdded:Wait()
+    end
+    return Character:WaitForChild("HumanoidRootPart", 5)
+end
+
+pcall(function()
+    local player = game:GetService("Players").LocalPlayer
+    
+    -- Cek semua koneksi yang terhubung ke event Idled pemain lokal
+    for i, v in pairs(getconnections(player.Idled)) do
+        if v.Disable then
+            v:Disable() -- Menonaktifkan koneksi event
+            print("[CatrazHub Anti-AFK] ON")
+        end
+    end
+end)
+
+local function TeleportToLookAt(position, lookVector)
+    local hrp = GetHRP()
+    
+    if hrp and typeof(position) == "Vector3" and typeof(lookVector) == "Vector3" then
+        local targetCFrame = CFrame.new(position, position + lookVector)
+        hrp.CFrame = targetCFrame * CFrame.new(0, 0.5, 0)
+        
+        WindUI:Notify({ Title = "Teleport Sukses!", Duration = 3, Icon = "map-pin", })
+    else
+        WindUI:Notify({ Title = "Teleport Gagal", Content = "Data posisi tidak valid.", Duration = 3, Icon = "x", })
+    end
+end
+
+local function GetPlayerDataReplion()
+    if PlayerDataReplion then return PlayerDataReplion end
+    local ReplionModule = RepStorage:WaitForChild("Packages"):WaitForChild("Replion", 10)
+    if not ReplionModule then return nil end
+    local ReplionClient = require(ReplionModule).Client
+    PlayerDataReplion = ReplionClient:WaitReplion("Data", 5)
+    return PlayerDataReplion
+end
+
+local RF_SellAllItems = GetRemote(RPath, "RF/SellAllItems", 5)
+
+local function GetFishNameAndRarity(item)
+    local name = item.Identifier or "Unknown"
+    local rarity = item.Metadata and item.Metadata.Rarity or "COMMON"
+    local itemID = item.Id
+
+    local itemData = nil
+
+    if ItemUtility and itemID then
+        pcall(function()
+            itemData = ItemUtility:GetItemData(itemID)
+            if not itemData then
+                local numericID = tonumber(item.Id) or tonumber(item.Identifier)
+                if numericID then
+                    itemData = ItemUtility:GetItemData(numericID)
+                end
+            end
+        end)
+    end
+
+    if itemData and itemData.Data and itemData.Data.Name then
+        name = itemData.Data.Name
+    end
+
+    if item.Metadata and item.Metadata.Rarity then
+        rarity = item.Metadata.Rarity
+    elseif itemData and itemData.Probability and itemData.Probability.Chance and TierUtility then
+        local tierObj = nil
+        pcall(function()
+            tierObj = TierUtility:GetTierFromRarity(itemData.Probability.Chance)
+        end)
+
+        if tierObj and tierObj.Name then
+            rarity = tierObj.Name
+        end
+    end
+
+    return name, rarity
+end
+
+local function GetItemMutationString(item)
+    if item.Metadata and item.Metadata.Shiny == true then return "Shiny" end
+    return item.Metadata and item.Metadata.VariantId or ""
+end
+
+local ShopItems = {
+    ["Rods"] = {
+        {Name = "Luck Rod", ID = 79, Price = 325}, {Name = "Carbon Rod", ID = 76, Price = 750},
+        {Name = "Grass Rod", ID = 85, Price = 1500}, {Name = "Demascus Rod", ID = 77, Price = 3000},
+        {Name = "Ice Rod", ID = 78, Price = 5000}, {Name = "Lucky Rod", ID = 4, Price = 15000},
+        {Name = "Midnight Rod", ID = 80, Price = 50000}, {Name = "Steampunk Rod", ID = 6, Price = 215000},
+        {Name = "Chrome Rod", ID = 7, Price = 437000}, {Name = "Flourescent Rod", ID = 255, Price = 715000},
+        {Name = "Astral Rod", ID = 5, Price = 1000000}, {Name = "Ares Rod", ID = 126, Price = 3000000},
+        {Name = "Angler Rod", ID = 168, Price = 8000000},{Name = "Bamboo Rod", ID = 258, Price = 12000000}
+    },
+    ["Bobbers"] = {
+        {Name = "Floral Bait", ID = 20, Price = 4000000}, {Name = "Aether Bait", ID = 16, Price = 3700000},
+        {Name = "Corrupt Bait", ID = 15, Price = 1148484}, {Name = "Dark Matter Bait", ID = 8, Price = 630000},
+        {Name = "Chroma Bait", ID = 6, Price = 290000}, {Name = "Nature Bait", ID = 17, Price = 83500},
+        {Name = "Midnight Bait", ID = 3, Price = 3000}, {Name = "Luck Bait", ID = 2, Price = 1000},
+        {Name = "Topwater Bait", ID = 10, Price = 100},
+    },
+    ["Boats"] = {
+        {Name = "Mini Yach", ID = 14, Price = 1200000}, {Name = "Fish Boat", ID = 6, Price = 180000},
+        {Name = "Speed Boat", ID = 5, Price = 70000}, {Name = "Highfield Boat", ID = 4, Price = 25000},
+        {Name = "Jetski", ID = 3, Price = 7500}, {Name = "Kayak", ID = 2, Price = 1100},
+        {Name = "Small Boat", ID = 1, Price = 100},
+    },
 }
-_G.httpRequest = syn and syn.request or (http and http.request or http_request or (fluxus and fluxus.request or request))
-if _G.httpRequest then
-    local vu2 = vu1.Players.LocalPlayer
-    if not (vu2.Character and vu2.Character:WaitForChild("HumanoidRootPart")) then
-        vu2.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
-    end
-    local vu3 = {
-        MerchantRoot = vu1.PG.Merchant.Main.Background,
-        ItemsFrame = vu1.PG.Merchant.Main.Background.Items.ScrollingFrame,
-        RefreshMerchant = vu1.PG.Merchant.Main.Background.RefreshLabel
-    }
-    local vu4 = {
-        Net = vu1.RS.Packages._Index["sleitnick_net@0.2.0"].net,
-        Replion = require(vu1.RS.Packages.Replion),
-        FishingController = require(vu1.RS.Controllers.FishingController),
-        TradingController = require(vu1.RS.Controllers.ItemTradingController),
-        ItemUtility = require(vu1.RS.Shared.ItemUtility),
-        VendorUtility = require(vu1.RS.Shared.VendorUtility),
-        PlayerStatsUtility = require(vu1.RS.Shared.PlayerStatsUtility),
-        Effects = require(vu1.RS.Shared.Effects),
-        NotifierFish = require(vu1.RS.Controllers.TextNotificationController),
-        InputControl = require(vu1.RS.Modules.InputControl),
-        VFX = require(vu1.RS.Controllers.VFXController)
-    }
-    local vu5 = {
-        Events = {
-            RECutscene = vu4.Net["RE/ReplicateCutscene"],
-            REStop = vu4.Net["RE/StopCutscene"],
-            REFav = vu4.Net["RE/FavoriteItem"],
-            REFavChg = vu4.Net["RE/FavoriteStateChanged"],
-            REFishDone = vu4.Net["RE/FishingCompleted"],
-            REFishGot = vu4.Net["RE/FishCaught"],
-            RENotify = vu4.Net["RE/TextNotification"],
-            REEquip = vu4.Net["RE/EquipToolFromHotbar"],
-            REEquipItem = vu4.Net["RE/EquipItem"],
-            REAltar = vu4.Net["RE/ActivateEnchantingAltar"],
-            REAltar2 = vu4.Net["RE/ActivateSecondEnchantingAltar"],
-            UpdateOxygen = vu4.Net["URE/UpdateOxygen"],
-            REPlayFishEffect = vu4.Net["RE/PlayFishingEffect"],
-            RETextEffect = vu4.Net["RE/ReplicateTextEffect"],
-            REEvReward = vu4.Net["RE/ClaimEventReward"],
-            Totem = vu4.Net["RE/SpawnTotem"],
-            REObtainedNewFishNotification = vu4.Net["RE/ObtainedNewFishNotification"],
-            FishingMinigameChanged = vu4.Net["RE/FishingMinigameChanged"],
-            FishingStopped = vu4.Net["RE/FishingStopped"]
-        },
-        Functions = {
-            Trade = vu4.Net["RF/InitiateTrade"],
-            BuyRod = vu4.Net["RF/PurchaseFishingRod"],
-            BuyBait = vu4.Net["RF/PurchaseBait"],
-            BuyWeather = vu4.Net["RF/PurchaseWeatherEvent"],
-            ChargeRod = vu4.Net["RF/ChargeFishingRod"],
-            StartMini = vu4.Net["RF/RequestFishingMinigameStarted"],
-            UpdateRadar = vu4.Net["RF/UpdateFishingRadar"],
-            Cancel = vu4.Net["RF/CancelFishingInputs"],
-            Dialogue = vu4.Net["RF/SpecialDialogueEvent"],
-            SellItem = vu4.Net["RF/SellItem"],
-            Done = vu4.Net["RF/RequestFishingMinigameStarted"],
-            AutoEnabled = vu4.Net["RF/UpdateAutoFishingState"]
-        }
-    }
-    local vu6 = {
-        Data = vu4.Replion.Client:WaitReplion("Data"),
-        Items = vu1.RS:WaitForChild("Items"),
-        PlayerStat = require(vu1.RS.Packages._Index:FindFirstChild("ytrev_replion@2.0.0-rc.3").replion)
-    }
-    local vu7 = {
-        autoInstant = false,
-        selectedEvents = {},
-        autoWeather = false,
-        autoSellEnabled = false,
-        autoFavEnabled = false,
-        autoEventActive = false,
-        canFish = true,
-        savedCFrame = nil,
-        sellMode = "Delay",
-        sellDelay = 60,
-        inputSellCount = 50,
-        selectedName = {},
-        selectedRarity = {},
-        selectedVariant = {},
-        rodDataList = {},
-        rodDisplayNames = {},
-        baitDataList = {},
-        baitDisplayNames = {},
-        selectedRodId = nil,
-        selectedBaitId = nil,
-        rods = {},
-        baits = {},
-        weathers = {},
-        lcc = 0,
-        player = vu2,
-        stats = vu2:WaitForChild("leaderstats"),
-        caught = vu2:WaitForChild("leaderstats"):WaitForChild("Caught"),
-        char = vu2.Character or vu2.CharacterAdded:Wait(),
-        vim = vu1.VIM,
-        cam = vu1.Camera,
-        offs = {
-            ["Worm Hunt"] = 25
-        },
-        curCF = nil,
-        origCF = nil,
-        flt = false,
-        con = nil,
-        Instant = false,
-        CancelWaitTime = 3,
-        ResetTimer = 0.5,
-        hasTriggeredBug = false,
-        lastFishTime = 0,
-        fishConnected = false,
-        lastCancelTime = 0,
-        hasFishingEffect = false,
-        trade = {
-            selectedPlayer = nil,
-            selectedItem = nil,
-            tradeAmount = 1,
-            targetCoins = 0,
-            trading = false,
-            awaiting = false,
-            lastResult = nil,
-            successCount = 0,
-            failCount = 0,
-            totalToTrade = 0,
-            sentCoins = 0,
-            successCoins = 0,
-            failCoins = 0,
-            totalReceived = 0,
-            currentGrouped = {},
-            TotemActive = false
-        },
-        ignore = {
-            Cloudy = true,
-            Day = true,
-            ["Increased Luck"] = true,
-            Mutated = true,
-            Night = true,
-            Snow = true,
-            ["Sparkling Cove"] = true,
-            Storm = true,
-            Wind = true,
-            UIListLayout = true,
-            ["Admin - Shocked"] = true,
-            ["Admin - Super Mutated"] = true,
-            Radiant = true
-        },
-        notifConnections = {},
-        defaultHandlers = {},
-        disabledCons = {},
-        CEvent = true
-    }
-    _G.Celestial = _G.Celestial or {}
-    _G.Celestial.DetectorCount = _G.Celestial.DetectorCount or 0
-    _G.Celestial.InstantCount = _G.Celestial.InstantCount or 0
-    function getFishCount()
-        local v8 = vu7.player.PlayerGui:WaitForChild("Inventory"):WaitForChild("Main"):WaitForChild("Top"):WaitForChild("Options"):WaitForChild("Fish"):WaitForChild("Label"):WaitForChild("BagSize")
-        return tonumber((v8.Text or "0/???"):match("(%d+)/")) or 0
-    end
-    function clickCenter()
-        local v9 = vu7.cam.ViewportSize
-        vu7.vim:SendMouseButtonEvent(v9.X / 2, v9.Y / 2, 0, true, nil, 0)
-        vu7.vim:SendMouseButtonEvent(v9.X / 2, v9.Y / 2, 0, false, nil, 0)
-    end
-    local v10, v11, v12 = ipairs(vu6.Items:GetChildren())
-    local v13 = {}
-    local vu14 = "Chloe X/FishIt/Position.json"
-    while true do
-        local v15, v16 = v10(v11, v12)
-        if v15 == nil then
-            break
-        end
-        v12 = v15
-        if v16:IsA("ModuleScript") then
-            local v17, v18 = pcall(require, v16)
-            if v17 and (v18.Data and v18.Data.Type == "Fish") then
-                table.insert(v13, v18.Data.Name)
-            end
-        end
-    end
-    table.sort(v13)
-    _G.TierFish = {
-        " ",
-        "Uncommon",
-        "Rare",
-        "Epic",
-        "Legendary",
-        "Mythic",
-        "Secret"
-    }
-    _G.WebhookRarities = _G.WebhookRarities or {}
-    _G.WebhookNames = _G.WebhookNames or {}
-    _G.Variant = {
-        "Galaxy",
-        "Corrupt",
-        "Gemstone",
-        "Ghost",
-        "Lightning",
-        "Fairy Dust",
-        "Gold",
-        "Midnight",
-        "Radioactive",
-        "Stone",
-        "Holographic",
-        "Albino",
-        "Bloodmoon",
-        "Sandy",
-        "Acidic",
-        "Color Burn",
-        "Festive",
-        "Frozen"
-    }
-    function toSet(p19)
-        local v20 = {}
-        if type(p19) == "table" then
-            local v21, v22, v23 = ipairs(p19)
-            while true do
-                local v24
-                v23, v24 = v21(v22, v23)
-                if v23 == nil then
-                    break
-                end
-                v20[v24] = true
-            end
-            local v25, v26, v27 = pairs(p19)
-            while true do
-                local v28
-                v27, v28 = v25(v26, v27)
-                if v27 == nil then
-                    break
-                end
-                if v28 then
-                    v20[v27] = true
-                end
-            end
-        end
-        return v20
-    end
-    local vu29 = {}
-    vu5.Events.REFavChg.OnClientEvent:Connect(function(p30, p31)
-        rawset(vu29, p30, p31)
+
+do
+    local PromptController = nil
+    local Promise = nil
+    
+    pcall(function()
+        PromptController = require(RepStorage:WaitForChild("Controllers").PromptController)
+        Promise = require(RepStorage:WaitForChild("Packages").Promise)
     end)
-    function checkAndFavorite(p32)
-        if vu7.autoFavEnabled then
-            local v33 = vu4.ItemUtility.GetItemDataFromItemType("Items", p32.Id)
-            if v33 and v33.Data.Type == "Fish" then
-                local v34 = _G.TierFish[v33.Data.Tier]
-                local v35 = v33.Data.Name
-                local v36 = p32.Metadata and (p32.Metadata.VariantId or "None") or "None"
-                local v37 = vu7.selectedName[v35]
-                local v38 = vu7.selectedRarity[v34]
-                local v39 = vu7.selectedVariant[v36]
-                local v40 = rawget(vu29, p32.UUID)
-                if v40 == nil then
-                    v40 = p32.Favorited
-                end
-                if next(vu7.selectedVariant) == nil or next(vu7.selectedName) == nil then
-                    v39 = v37 or v38
-                elseif not v37 then
-                    v39 = v37
-                end
-                if v39 and not v40 then
-                    vu5.Events.REFav:FireServer(p32.UUID)
-                    rawset(vu29, p32.UUID, true)
-                end
+    
+    _G.CatrazHub = false 
+
+    if PromptController and PromptController.FirePrompt and Promise then
+        local oldFirePrompt = PromptController.FirePrompt
+        PromptController.FirePrompt = function(self, promptText, ...)
+            
+            if _G.CatrazHub and type(promptText) == "string" and promptText:find("Accept") and promptText:find("from:") then
+                
+                local initiatorName = string.match(promptText, "from: ([^\n]+)") or "Seseorang"
+                
+                
+                return Promise.new(function(resolve)
+                    task.wait(2)
+                    resolve(true)
+                end)
             end
-        else
-            return
+            
+            return oldFirePrompt(self, promptText, ...)
+        end
+    else
+        warn("[Catrazhub] Gagal memuat PromptController/Promise untuk Auto Accept Trade.")
+    end
+end
+
+local ENCHANT_MAPPING = {
+    ["Cursed I"] = 12,
+    ["Big Hunter I"] = 3,
+    ["Empowered I"] = 9,
+    ["Glistening I"] = 1,
+    ["Gold Digger I"] = 4,
+    ["Leprechaun I"] = 5,
+    ["Leprechaun II"] = 6,
+    ["Mutation Hunter I"] = 7,
+    ["Mutation Hunter II"] = 14,
+    ["Perfection"] = 15,
+    ["Prismatic I"] = 13,
+    ["Reeler I"] = 2,
+    ["Stargazer I"] = 8,
+    ["Stormhunter I"] = 11,
+    ["Experienced I"] = 10,
+}
+local ENCHANT_NAMES = {} 
+for name, id in pairs(ENCHANT_MAPPING) do table.insert(ENCHANT_NAMES, name) end
+
+local autoEnchantState = false
+local autoEnchantThread = nil
+local selectedRodUUID = nil
+local selectedEnchantNames = {}
+
+local ENCHANT_STONE_ID = 10
+_G.CatrazHub = {}
+
+local function GetEnchantNameFromId(id)
+    id = tonumber(id)
+    if not id then return nil end
+    for name, eid in pairs(ENCHANT_MAPPING) do
+        if eid == id then
+            return name
         end
     end
-    function scanInventory()
-        if vu7.autoFavEnabled then
-            local v41, v42, v43 = ipairs(vu6.Data:GetExpect({
-                "Inventory",
-                "Items"
-            }))
-            while true do
-                local v44
-                v43, v44 = v41(v42, v43)
-                if v43 == nil then
-                    break
-                end
-                checkAndFavorite(v44)
-            end
+    return nil
+end
+
+local function GetRodOptions()
+    local rodOptions = {}
+    local replion = GetPlayerDataReplion()
+    if not replion then return {"(Gagal memuat Inventory)"} end
+
+    local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+    if not success or not inventoryData or not inventoryData["Fishing Rods"] then
+        return {"(Tidak ada Rod ditemukan)"}
+    end
+
+    local Rods = inventoryData["Fishing Rods"]
+    for _, rod in ipairs(Rods) do
+        local rodUUID = rod.UUID
+        
+        if typeof(rodUUID) ~= "string" or string.len(rodUUID) < 10 then
+            continue
+        end
+        
+        local rodName, _ = GetFishNameAndRarity(rod)
+        
+        if not string.find(rodName, "Rod", 1, true) then
+            continue
+        end
+
+        local enchantStatus = ""
+        local metadata = rod.Metadata or {}
+        local enchants = {}
+
+        if metadata.EnchantId then table.insert(enchants, metadata.EnchantId) end
+        --if metadata.EnchantId2 then table.insert(enchants, metadata.EnchantId2) end
+
+        local resolvedEnchantNames = {}
+        for _, eid in ipairs(enchants) do
+            local name = GetEnchantNameFromId(eid) or "ID:" .. eid
+            table.insert(resolvedEnchantNames, name)
+        end
+        
+        if #resolvedEnchantNames > 0 then
+            enchantStatus = " [" .. table.concat(resolvedEnchantNames, ", ") .. "]"
+        end
+
+        local shortUUID = string.sub(rodUUID, 1, 8) .. "..."
+        table.insert(rodOptions, rodName .. " (" .. shortUUID .. ")" .. enchantStatus)
+    end
+    
+    return rodOptions
+end
+
+
+local function GetUUIDFromFormattedName(formattedName)
+    local uuidMatch = formattedName:match("%(([^%)]+)%.%.%.%)")
+    if not uuidMatch then return nil end
+
+    local replion = GetPlayerDataReplion()
+    local Rods = replion:GetExpect("Inventory")["Fishing Rods"] or {}
+
+    for _, rod in ipairs(Rods) do
+        if string.sub(rod.UUID, 1, 8) == uuidMatch then
+            return rod.UUID
         end
     end
-    local v45, v46, v47 = ipairs(vu1.RS.Items:GetChildren())
-    local vu48 = vu29
-    while true do
-        local v49, v50 = v45(v46, v47)
-        if v49 == nil then
+    return nil
+end
+
+local function CheckIfEnchantReached(rodUUID)
+    local replion = GetPlayerDataReplion()
+    local Rods = replion:GetExpect("Inventory")["Fishing Rods"] or {}
+    
+    local targetRod = nil
+    for _, rod in ipairs(Rods) do
+        if rod.UUID == rodUUID then
+            targetRod = rod
             break
         end
-        v47 = v49
-        if v50:IsA("ModuleScript") and v50.Name:match("Rod") then
-            local v51, v52 = pcall(require, v50)
-            if v51 and (typeof(v52) == "table" and v52.Data) then
-                local v53 = v52.Data.Name or "Unknown"
-                local v54 = v52.Data.Id or "Unknown"
-                local v55 = v52.Price or 0
-                local v56 = v53:gsub("^!!!%s*", "")
-                local v57 = v56 .. " ($" .. v55 .. ")"
-                local v58 = {
-                    Name = v56,
-                    Id = v54,
-                    Price = v55,
-                    Display = v57
-                }
-                vu7.rods[v54] = v58
-                vu7.rods[v56] = v58
-                table.insert(vu7.rodDisplayNames, v57)
-            end
+    end
+
+    if not targetRod then return true end
+    
+    local metadata = targetRod.Metadata or {}
+    local currentEnchants = {}
+    if metadata.EnchantId then table.insert(currentEnchants, metadata.EnchantId) end
+    --if metadata.EnchantId2 then table.insert(currentEnchants, metadata.EnchantId2) end
+
+    for _, targetName in ipairs(selectedEnchantNames) do
+        local targetID = ENCHANT_MAPPING[targetName]
+        if targetID and table.find(currentEnchants, targetID) then
+            return true
         end
     end
-    BaitsFolder = vu1.RS:WaitForChild("Baits")
-    local v59, v60, v61 = ipairs(BaitsFolder:GetChildren())
-    while true do
-        local v62, v63 = v59(v60, v61)
-        if v62 == nil then
-            break
-        end
-        v61 = v62
-        if v63:IsA("ModuleScript") then
-            local v64, v65 = pcall(require, v63)
-            if v64 and (typeof(v65) == "table" and v65.Data) then
-                local v66 = v65.Data.Name or "Unknown"
-                local v67 = v65.Data.Id or "Unknown"
-                local v68 = v65.Price or 0
-                local v69 = v66 .. " ($" .. v68 .. ")"
-                local v70 = {
-                    Name = v66,
-                    Id = v67,
-                    Price = v68,
-                    Display = v69
-                }
-                vu7.baits[v67] = v70
-                vu7.baits[v66] = v70
-                table.insert(vu7.baitDisplayNames, v69)
-            end
-        end
-    end
-    function _cleanName(p71)
-        if type(p71) == "string" then
-            return p71:match("^(.-) %(") or p71
-        else
-            return tostring(p71)
-        end
-    end
-    function SavePosition(p72)
-        local v73 = {
-            p72:GetComponents()
-        }
-        writefile(vu14, vu1.HttpService:JSONEncode(v73))
-    end
-    function LoadPosition()
-        if isfile(vu14) then
-            local v74, v75 = pcall(function()
-                return vu1.HttpService:JSONDecode(readfile(vu14))
-            end)
-            if v74 and typeof(v75) == "table" then
-                return CFrame.new(unpack(v75))
-            end
-        end
+
+    return false
+end
+
+local function GetFirstStoneUUID()
+    local replion = GetPlayerDataReplion()
+    if not replion then return nil end
+
+    local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+    if not success or not inventoryData or not inventoryData.Items then
         return nil
     end
-    function TeleportLastPos(pu76)
-        task.spawn(function()
-            local v77 = pu76:WaitForChild("HumanoidRootPart")
-            local v78 = LoadPosition()
-            if v78 then
-                task.wait(2)
-                v77.CFrame = v78
-                chloex("Teleported to your last position...")
-            end
-        end)
-    end
-    vu2.CharacterAdded:Connect(TeleportLastPos)
-    if vu2.Character then
-        TeleportLastPos(vu2.Character)
-    end
-    ignore = {
-        Cloudy = true,
-        Day = true,
-        ["Increased Luck"] = true,
-        Mutated = true,
-        Night = true,
-        Snow = true,
-        ["Sparkling Cove"] = true,
-        Storm = true,
-        Wind = true,
-        UIListLayout = true,
-        ["Admin - Shocked"] = true,
-        ["Admin - Super Mutated"] = true,
-        Radiant = true
-    }
-    local function vu80(p79)
-        if p79 then
-            p79 = p79:FindFirstChild("HumanoidRootPart") or p79:FindFirstChildWhichIsA("BasePart")
-        end
-        return p79
-    end
-    local function vu87(pu81, pu82, p83)
-        if vu7.flt and vu7.con then
-            vu7.con:Disconnect()
-        end
-        vu7.flt = p83 or false
-        if p83 then
-            local vu84 = workspace:FindFirstChild("WW_Part") or Instance.new("Part")
-            vu84.Name = "WW_Part"
-            vu84.Size = Vector3.new(15, 1, 15)
-            vu84.Anchored = true
-            vu84.CanCollide = false
-            vu84.Transparency = 1
-            vu84.Material = Enum.Material.SmoothPlastic
-            vu84.Parent = workspace
-            local vu85 = - 1.8
-            vu7.con = vu1.RunService.Heartbeat:Connect(function()
-                if pu81 and (pu82 and vu84) then
-                    vu84.Position = Vector3.new(pu82.Position.X, vu85, pu82.Position.Z)
-                    vu84.CanCollide = vu85 < pu82.Position.Y
-                end
-            end)
-        else
-            local v86 = workspace:FindFirstChild("WW_Part")
-            if v86 then
-                v86:Destroy()
-            end
+
+    local GeneralItems = inventoryData.Items or {}
+    for _, item in ipairs(GeneralItems) do
+        if tonumber(item.Id) == ENCHANT_STONE_ID and item.UUID and item.Type ~= "Fishing Rods" and item.Type ~= "Bait" then
+            return item.UUID
         end
     end
-    local function v96()
-        local v88 = {}
-        local v89 = vu7.player:WaitForChild("PlayerGui"):FindFirstChild("Events")
-        local v90 = v89 and v89:FindFirstChild("Frame")
-        if v90 then
-            v90 = v89.Frame:FindFirstChild("Events")
-        end
-        if v90 then
-            local v91, v92, v93 = ipairs(v90:GetChildren())
-            while true do
-                local v94
-                v93, v94 = v91(v92, v93)
-                if v93 == nil then
-                    break
-                end
-                local v95 = v94:IsA("Frame") and v94:FindFirstChild("DisplayName") and v94.DisplayName.Text or v94.Name
-                if typeof(v95) == "string" and (v95 ~= "" and not vu7.ignore[v95]) then
-                    table.insert(v88, (v95:gsub("^Admin %- ", "")))
-                end
-            end
-        end
-        return v88
+    return nil
+end
+
+local function UnequipAllEquippedItems()
+    local RE_UnequipItem = GetRemote(RPath, "RE/UnequipItem")
+    if not RE_UnequipItem then 
+        warn("[Auto Enchant] Gagal menemukan RE/UnequipItem remote.")
+        return 
     end
-    local function vu124(p97)
-        if p97 then
-            if p97 == "Megalodon Hunt" then
-                local v98 = workspace:FindFirstChild("!!! MENU RINGS")
-                if v98 then
-                    local v99, v100, v101 = ipairs(v98:GetChildren())
-                    while true do
-                        local v102
-                        v101, v102 = v99(v100, v101)
-                        if v101 == nil then
-                            break
-                        end
-                        local v103 = v102:FindFirstChild("Megalodon Hunt")
-                        if v103 then
-                            v103 = v103:FindFirstChild("Megalodon Hunt")
-                        end
-                        if v103 and v103:IsA("BasePart") then
-                            return v103
-                        end
-                    end
-                end
-            else
-                local v104 = {
-                    workspace:FindFirstChild("Props")
-                }
-                local v105 = workspace:FindFirstChild("!!! MENU RINGS")
-                if v105 then
-                    local v106, v107, v108 = ipairs(v105:GetChildren())
-                    while true do
-                        local v109
-                        v108, v109 = v106(v107, v108)
-                        if v108 == nil then
-                            break
-                        end
-                        if v109.Name:match("^Props") then
-                            table.insert(v104, v109)
-                        end
-                    end
-                end
-                local v110, v111, v112 = ipairs(v104)
-                while true do
-                    local v113
-                    v112, v113 = v110(v111, v112)
-                    if v112 == nil then
-                        break
-                    end
-                    local v114, v115, v116 = ipairs(v113:GetChildren())
-                    while true do
-                        local v117
-                        v116, v117 = v114(v115, v116)
-                        if v116 == nil then
-                            break
-                        end
-                        local v118, v119, v120 = ipairs(v117:GetDescendants())
-                        while true do
-                            local v121
-                            v120, v121 = v118(v119, v120)
-                            if v120 == nil then
-                                break
-                            end
-                            if v121:IsA("TextLabel") and v121.Name == "DisplayName" and (v121.ContentText ~= "" and v121.ContentText or v121.Text):lower() == p97:lower() then
-                                local v122 = v121:FindFirstAncestorOfClass("Model")
-                                local v123 = v122 and v122:FindFirstChild("Part") or v117:FindFirstChild("Part")
-                                if v123 and v123:IsA("BasePart") then
-                                    return v123
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        else
-            return
+
+    local replion = GetPlayerDataReplion()
+    local EquippedItems = replion:GetExpect("EquippedItems") or {}
+    local EquippedSkinUUID = replion:Get("EquippedSkinUUID")
+
+    if EquippedSkinUUID and EquippedSkinUUID ~= "" then
+         -- Unequip Rod Skin
+         pcall(function() RE_UnequipItem:FireServer(EquippedSkinUUID) end)
+         task.wait(0.1)
+    end
+
+    for _, uuid in ipairs(EquippedItems) do
+        pcall(function() RE_UnequipItem:FireServer(uuid) end)
+        task.wait(0.05)
+    end
+end
+
+local ARTIFACT_IDS = {
+    ["Arrow Artifact"] = 265,
+    ["Crescent Artifact"] = 266,
+    ["Diamond Artifact"] = 267,
+    ["Hourglass Diamond Artifact"] = 271
+}
+
+-- Helper: Cek Item di Backpack pakai Hardcoded ID
+local function HasArtifactItem(artifactName)
+    local replion = GetPlayerDataReplion()
+    if not replion then return false end
+    
+    local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+    if not success or not inventoryData or not inventoryData.Items then return false end
+
+    -- Ambil Target ID dari tabel Hardcode
+    local targetId = ARTIFACT_IDS[artifactName]
+    
+    if not targetId then 
+        warn("[Kaitun] ID untuk " .. artifactName .. " tidak ditemukan di tabel Hardcode!")
+        return false 
+    end
+
+    -- Loop inventory, cari angka ID yang cocok
+    for _, item in ipairs(inventoryData.Items) do
+        -- Pastikan item.Id dibaca sebagai angka
+        if tonumber(item.Id) == targetId then 
+            return true 
         end
     end
-    local function vu126(p125)
-        if vu7.lastState ~= p125 then
-            chloex(p125)
-            vu7.lastState = p125
-        end
+    
+    return false
+end
+
+
+local function RunAutoEnchantLoop(rodUUID)
+    if autoEnchantThread then task.cancel(autoEnchantThread) end
+    
+    local ENCHANT_ALTAR_POS = Vector3.new(3236.441, -1302.855, 1397.910)
+    local ENCHANT_ALTAR_LOOK = Vector3.new(-0.954, -0.000, 0.299)
+    
+    local RE_UnequipItem = GetRemote(RPath, "RE/UnequipItem")
+    local RE_EquipItem = GetRemote(RPath, "RE/EquipItem")
+    local RE_EquipToolFromHotbar = GetRemote(RPath, "RE/EquipToolFromHotbar")
+    local RE_ActivateEnchantingAltar = GetRemote(RPath, "RE/ActivateEnchantingAltar")
+
+    if not (RE_UnequipItem and RE_EquipItem and RE_EquipToolFromHotbar and RE_ActivateEnchantingAltar) then
+        WindUI:Notify({ Title = "Error Remote", Content = "Remote Enchanting tidak ditemukan.", Duration = 4, Icon = "x" })
+        autoEnchantState = false
+        return
     end
-    function vu7.loop()
-        while true do
-            if not vu7.autoEventActive then
-                vu87(vu7.player.Character, nil, false)
-                if vu7.origCF and vu7.player.Character then
-                    vu7.player.Character:PivotTo(vu7.origCF)
-                    vu126("Auto Event off")
-                end
-                local v127 = vu7
-                vu7.curCF = nil
-                v127.origCF = nil
-                return
+
+    autoEnchantThread = task.spawn(function()
+        
+        UnequipAllEquippedItems()
+
+        task.wait(2.5) 
+
+        TeleportToLookAt(ENCHANT_ALTAR_POS, ENCHANT_ALTAR_LOOK)
+        task.wait(1.5)
+
+        WindUI:Notify({ Title = "Auto Enchant Started", Content = "Memulai Roll Enchant...", Duration = 2, Icon = "zap" })
+
+        while autoEnchantState do
+            
+            if CheckIfEnchantReached(rodUUID) then
+                WindUI:Notify({ Title = "Enchant Selesai!", Content = "Rod mencapai salah satu target enchant.", Duration = 5, Icon = "check" })
+                break
             end
-            local v128 = nil
-            local v129 = nil
-            local v130
-            if vu7.priorityEvent then
-                v130 = vu124(vu7.priorityEvent)
-                if v130 then
-                    v129 = vu7.priorityEvent
-                else
-                    v130 = v128
-                end
-            else
-                v130 = v128
+            
+            local enchantStoneUUID = GetFirstStoneUUID() 
+            if not enchantStoneUUID then
+                WindUI:Notify({ Title = "Stone Habis!", Content = "Tidak ada Enchant Stone yang tersisa di inventaris.", Duration = 5, Icon = "stop-circle" })
+                break
             end
-            local v131, v132
-            if v130 or # vu7.selectedEvents <= 0 then
-                v131 = v129
-                v132 = v130
-            else
-                local v133, v134, v135 = ipairs(vu7.selectedEvents)
-                while true do
-                    v135, v131 = v133(v134, v135)
-                    if v135 == nil then
-                        v131 = v129
-                        v132 = v130
-                    end
-                    v132 = vu124(v131)
-                    if v132 then
-                        break
-                    end
-                end
-            end
-            local v136 = vu80(vu7.player.Character)
-            if v132 and v136 then
-                if not vu7.origCF then
-                    vu7.origCF = v136.CFrame
-                end
-                if (v136.Position - v132.Position).Magnitude > 40 then
-                    vu7.curCF = v132.CFrame + Vector3.new(0, vu7.offs[v131] or 7, 0)
-                    vu7.player.Character:PivotTo(vu7.curCF)
-                    vu87(vu7.player.Character, v136, true)
-                    task.wait(1)
-                    vu126("Event! " .. v131)
-                end
-            elseif v132 == nil and (vu7.curCF and v136) then
-                vu87(vu7.player.Character, nil, false)
-                if vu7.origCF then
-                    vu7.player.Character:PivotTo(vu7.origCF)
-                    vu126("Event end \226\134\146 Back")
-                    vu7.origCF = nil
-                end
-                vu7.curCF = nil
-            elseif not vu7.curCF then
-                vu126("Idle")
-            end
+
+            pcall(function() RE_EquipItem:FireServer(rodUUID, "Fishing Rods") end)
             task.wait(0.2)
+
+            pcall(function() RE_EquipItem:FireServer(enchantStoneUUID, "Enchant Stones") end)
+            task.wait(0.2)
+            
+            pcall(function() RE_EquipToolFromHotbar:FireServer(2) end)
+            task.wait(0.3)
+
+            pcall(function() RE_ActivateEnchantingAltar:FireServer() end)
+            
+            task.wait(tradeDelay) 
+
+            pcall(function() RE_EquipToolFromHotbar:FireServer(0) end) 
+            
+            task.wait(0.5)
         end
-    end
-    vu7.player.CharacterAdded:Connect(function(pu137)
-        if vu7.autoEventActive then
-            task.spawn(function()
-                local v138 = pu137:WaitForChild("HumanoidRootPart", 5)
-                task.wait(0.3)
-                if v138 then
-                    if vu7.curCF then
-                        pu137:PivotTo(vu7.curCF)
-                        vu87(pu137, v138, true)
-                        task.wait(0.5)
-                        chloex("Respawn \226\134\146 Back")
-                    elseif vu7.origCF then
-                        pu137:PivotTo(vu7.origCF)
-                        vu87(pu137, v138, true)
-                        chloex("Back to farm")
+
+        autoEnchantState = false
+        local toggle = Window:GetElementByTitle("Enable Auto Enchant") 
+        if toggle and toggle.Set then toggle:Set(false) end
+        
+        WindUI:Notify({ Title = "Auto Enchant Berhenti", Duration = 3, Icon = "x" })
+    end)
+end
+
+local eventsList = { 
+    "Shark Hunt", "Ghost Shark Hunt", "Worm Hunt", "Black Hole", "Shocked", 
+    "Ghost Worm", "Meteor Rain", "Megalodon Hunt", "Treasure Event"
+}
+
+local autoEventTargetName = nil 
+local autoEventTeleportState = false
+local autoEventTeleportThread = nil
+
+
+local function FindAndTeleportToTargetEvent()
+    local targetName = autoEventTargetName
+    if not targetName or targetName == "" then return false end
+    
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+    
+    local eventModel = nil
+    
+    if targetName == "Treasure Event" then
+        local sunkenFolder = workspace:FindFirstChild("Sunken Wreckage")
+        if sunkenFolder then
+            eventModel = sunkenFolder:FindFirstChild("Treasure")
+        end
+    
+    elseif targetName == "Worm Hunt" then
+        local menuRingsFolder = workspace:FindFirstChild("!!! MENU RINGS")
+        if menuRingsFolder then
+            for _, child in ipairs(menuRingsFolder:GetChildren()) do
+                if child.Name == "Props" then
+                    local specificModel = child:FindFirstChild("Model")
+                    if specificModel then
+                        eventModel = specificModel
+                        break
                     end
                 end
-            end)
-        end
-    end)
-    local vu139 = {
-        ["Treasure Room"] = Vector3.new(- 3602.01, - 266.57, - 1577.18),
-        ["Sisyphus Statue"] = Vector3.new(- 3703.69, - 135.57, - 1017.17),
-        ["Crater Island Top"] = Vector3.new(1011.29, 22.68, 5076.27),
-        ["Crater Island Ground"] = Vector3.new(1079.57, 3.64, 5080.35),
-        ["Coral Reefs SPOT 1"] = Vector3.new(- 3031.88, 2.52, 2276.36),
-        ["Coral Reefs SPOT 2"] = Vector3.new(- 3270.86, 2.5, 2228.1),
-        ["Coral Reefs SPOT 3"] = Vector3.new(- 3136.1, 2.61, 2126.11),
-        ["Lost Shore"] = Vector3.new(- 3737.97, 5.43, - 854.68),
-        ["Weather Machine"] = Vector3.new(- 1524.88, 2.87, 1915.56),
-        ["Kohana Volcano"] = Vector3.new(- 561.81, 21.24, 156.72),
-        ["Kohana SPOT 1"] = Vector3.new(- 367.77, 6.75, 521.91),
-        ["Kohana SPOT 2"] = Vector3.new(- 623.96, 19.25, 419.36),
-        ["Stingray Shores"] = Vector3.new(44.41, 28.83, 3048.93),
-        ["Tropical Grove"] = Vector3.new(- 2018.91, 9.04, 3750.59),
-        ["Ice Sea"] = Vector3.new(2164, 7, 3269),
-        ["Tropical Grove Cave 1"] = Vector3.new(- 2151, 3, 3671),
-        ["Tropical Grove Cave 2"] = Vector3.new(- 2018, 5, 3756),
-        ["Tropical Grove Highground"] = Vector3.new(- 2139, 53, 3624),
-        ["Fisherman Island Underground"] = Vector3.new(- 62, 3, 2846),
-        ["Fisherman Island Mid"] = Vector3.new(33, 3, 2764),
-        ["Fisherman Island Rift Left"] = Vector3.new(- 26, 10, 2686),
-        ["Fisherman Island Rift Right"] = Vector3.new(95, 10, 2684),
-        ["Secred Temple"] = Vector3.new(1475, - 22, - 632),
-        ["Ancient Jungle Outside"] = Vector3.new(1488, 8, - 392),
-        ["Ancient Jungle"] = Vector3.new(1274, 8, - 184),
-        ["Underground Cellar"] = Vector3.new(2136, - 91, - 699),
-        ["Crystaline Pessage"] = Vector3.new(6051, - 539, 4386),
-        ["Ancient Ruin"] = Vector3.new(6090, - 586, 4634),
-        ["Esoteric Deep"] = Vector3.new(3181, - 1303, 1425),
-        ["Classic Event"] = Vector3.new(1173, 4, 2839),
-        ["Classic Event River"] = Vector3.new(1439, 46, 2779),
-        ["Iron Cavern Right"] = Vector3.new(- 8792, - 585, 223),
-        ["Iron Cavern Left"] = Vector3.new(- 8795, - 585, 89),
-        ["Iron Cafe"] = Vector3.new(- 8642, - 548, 162)
-    }
-    locationNames = {}
-    local v140, v141, v142 = pairs(vu139)
-    local vu143 = vu80
-    local function vu149()
-        local v144, v145, v146 = ipairs(vu1.Players:GetPlayers())
-        local v147 = {}
-        while true do
-            local v148
-            v146, v148 = v144(v145, v146)
-            if v146 == nil then
-                break
-            end
-            if v148 ~= vu2 then
-                table.insert(v147, v148.Name)
             end
         end
-        return v147
-    end
-    while true do
-        v142 = v140(v141, v142)
-        if v142 == nil then
-            break
-        end
-        table.insert(locationNames, v142)
-    end
-    table.sort(locationNames, function(p150, p151)
-        return p150:lower() < p151:lower()
-    end)
-    local function vu160()
-        local v152, v153, v154 = ipairs({
-            vu4.Net["RE/ObtainedNewFishNotification"],
-            vu4.Net["RE/TextNotification"],
-            vu4.Net["RE/ClaimNotification"]
-        })
-        while true do
-            local v155
-            v154, v155 = v152(v153, v154)
-            if v154 == nil then
-                break
-            end
-            local v156, v157, v158 = ipairs(getconnections(v155.OnClientEvent))
-            while true do
-                local v159
-                v158, v159 = v156(v157, v158)
-                if v158 == nil then
+
+    else
+        local menuRingsFolder = workspace:FindFirstChild("!!! MENU RINGS") 
+        if menuRingsFolder then
+            for _, container in ipairs(menuRingsFolder:GetChildren()) do
+                if container:FindFirstChild(targetName) then
+                    eventModel = container:FindFirstChild(targetName)
                     break
                 end
-                v159:Disconnect()
-                table.insert(vu7.notifConnections, v159)
             end
         end
     end
-    local function vu161()
-        vu7.notifConnections = {}
+    
+    if not eventModel then return false end 
+
+    local targetPart = nil
+    local positionOffset = Vector3.new(0, 15, 0) 
+    
+    if targetName == "Megalodon Hunt" then
+        targetPart = eventModel:FindFirstChild("Top") 
+        if targetPart then positionOffset = Vector3.new(0, 3, 0) end
+    elseif targetName == "Treasure Event" then
+        targetPart = eventModel
+        positionOffset = Vector3.new(0, 5, 0)
+    else
+        targetPart = eventModel:FindFirstChild("Fishing Boat")
+        if not targetPart then targetPart = eventModel end
+        positionOffset = Vector3.new(0, 15, 0)
     end
-    local v162 = loadstring(game:HttpGet("https://raw.githubusercontent.com/TesterX14/XXXX/refs/heads/main/Library"))():Window({
-        Title = "Chloe X |",
-        Footer = "Version 1.0.8",
-        Image = "132435516080103",
-        Color = Color3.fromRGB(0, 208, 255),
-        Theme = 9542022979,
-        Version = 4
-    })
-    if v162 then
-        chloex("Window loaded!")
-    end
-    local v163 = {
-        Info = v162:AddTab({
-            Name = "Info",
-            Icon = "player"
-        }),
-        Main = v162:AddTab({
-            Name = "Fishing",
-            Icon = "rbxassetid://97167558235554"
-        }),
-        Auto = v162:AddTab({
-            Name = "Automatically",
-            Icon = "next"
-        }),
-        Trade = v162:AddTab({
-            Name = "Trading",
-            Icon = "rbxassetid://114581487428395"
-        }),
-        Farm = v162:AddTab({
-            Name = "Menu",
-            Icon = "rbxassetid://140165584241571"
-        }),
-        Quest = v162:AddTab({
-            Name = "Quest",
-            Icon = "scroll"
-        }),
-        Tele = v162:AddTab({
-            Name = "Teleport",
-            Icon = "rbxassetid://18648122722"
-        }),
-        Webhook = v162:AddTab({
-            Name = "Webhook",
-            Icon = "rbxassetid://137601480983962"
-        }),
-        Misc = v162:AddTab({
-            Name = "Misc",
-            Icon = "rbxassetid://6034509993"
-        })
-    }
-    local vu164 = "https://raw.githubusercontent.com/ChloeRewite/test/refs/heads/main/2.lua"
-    local v168, v169 = pcall(function()
-        local v165 = game:HttpGet(vu164)
-        local v166, v167 = loadstring(v165)
-        if not v166 then
-            error(v167)
+
+    if not targetPart then return false end
+
+    local targetCFrame = nil
+    
+    local success = pcall(function()
+        if targetPart:IsA("Model") then
+             targetCFrame = targetPart:GetPivot()
+        elseif targetPart:IsA("BasePart") then
+             targetCFrame = targetPart.CFrame
         end
-        return v166()
     end)
-    if v168 and type(v169) == "function" then
-        pcall(v169, v162, v163)
+
+    if success and targetCFrame and typeof(targetCFrame) == "CFrame" then
+        local position = targetCFrame.p + positionOffset
+        local lookVector = targetCFrame.LookVector
+        
+        TeleportToLookAt(position, lookVector)
+        
+        WindUI:Notify({
+            Title = "Event Found!",
+            Content = "Teleported to: " .. targetName,
+            Icon = "map-pin",
+            Duration = 3
+        })
+        return true
     end
-    Fish1 = v163.Main:AddSection("Fishing Support")
-    Fish1:AddToggle({
-        Title = "Show Fishing Panel",
-        Default = false,
-        Callback = function(p170)
-            if p170 then
-                local vu171 = game:GetService("Players").LocalPlayer
-                if game.CoreGui:FindFirstChild("ChloeX_FishingPanel") then
-                    game.CoreGui:FindFirstChild("ChloeX_FishingPanel"):Destroy()
+    
+    return false
+end
+
+local function RunAutoEventTeleportLoop()
+    if autoEventTeleportThread then task.cancel(autoEventTeleportThread) end
+
+    autoEventTeleportThread = task.spawn(function()
+        WindUI:Notify({ Title = "Auto Event TP ON", Content = "Mulai memindai event terpilih.", Duration = 3, Icon = "search" })
+        
+        while autoEventTeleportState do
+            
+            if FindAndTeleportToTargetEvent() then
+                
+                task.wait(900) 
+            else
+                
+                task.wait(10)
+            end
+        end
+        
+        WindUI:Notify({ Title = "Auto Event TP OFF", Duration = 3, Icon = "x" })
+    end)
+end
+
+local function CensorName(name)
+    if not name or type(name) ~= "string" or #name < 1 then
+        return "N/A" 
+    end
+    
+    if #name <= 3 then
+        return name
+    end
+
+    local prefix = name:sub(1, 3)
+    
+    local censureLength = #name - 3
+    
+    local censorString = string.rep("*", censureLength)
+    
+    return prefix .. censorString
+end
+
+local FishingAreas = {
+        ["Iron Cavern"] = {Pos = Vector3.new(-8792.546, -588.000, 230.642), Look = Vector3.new(0.718, 0.000, 0.696)},
+        ["Disco Event"] = {Pos = Vector3.new(-8641.672, -547.500, 160.322), Look = Vector3.new(0.984, -0.000, 0.176)},
+        ["Classic Island"] = {Pos = Vector3.new(1440.843, 46.062, 2777.175), Look = Vector3.new(0.940, -0.000, 0.342)},
+        ["Ancient Jungle"] = {Pos = Vector3.new(1535.639, 3.159, -193.352), Look = Vector3.new(0.505, -0.000, 0.863)},
+        ["Arrow Lever"] = {Pos = Vector3.new(898.296, 8.449, -361.856), Look = Vector3.new(0.023, -0.000, 1.000)},
+        ["Coral Reef"] = {Pos = Vector3.new(-3207.538, 6.087, 2011.079), Look = Vector3.new(0.973, 0.000, 0.229)},
+        ["Crater Island"] = {Pos = Vector3.new(1058.976, 2.330, 5032.878), Look = Vector3.new(-0.789, 0.000, 0.615)},
+        ["Cresent Lever"] = {Pos = Vector3.new(1419.750, 31.199, 78.570), Look = Vector3.new(0.000, -0.000, -1.000)},
+        ["Crystalline Passage"] = {Pos = Vector3.new(6051.567, -538.900, 4370.979), Look = Vector3.new(0.109, 0.000, 0.994)},
+        ["Ancient Ruin"] = {Pos = Vector3.new(6031.981, -585.924, 4713.157), Look = Vector3.new(0.316, -0.000, -0.949)},
+        ["Diamond Lever"] = {Pos = Vector3.new(1818.930, 8.449, -284.110), Look = Vector3.new(0.000, 0.000, -1.000)},
+        ["Enchant Room"] = {Pos = Vector3.new(3255.670, -1301.530, 1371.790), Look = Vector3.new(-0.000, -0.000, -1.000)},
+        ["Esoteric Island"] = {Pos = Vector3.new(2164.470, 3.220, 1242.390), Look = Vector3.new(-0.000, -0.000, -1.000)},
+        ["Fisherman Island"] = {Pos = Vector3.new(74.030, 9.530, 2705.230), Look = Vector3.new(-0.000, -0.000, -1.000)},
+        ["Hourglass Diamond Lever"] = {Pos = Vector3.new(1484.610, 8.450, -861.010), Look = Vector3.new(-0.000, -0.000, -1.000)},
+        ["Kohana"] = {Pos = Vector3.new(-668.732, 3.000, 681.580), Look = Vector3.new(0.889, -0.000, 0.458)},
+        ["Lost Isle"] = {Pos = Vector3.new(-3804.105, 2.344, -904.653), Look = Vector3.new(-0.901, -0.000, 0.433)},
+        --["Ocean (for element)"] = {Pos = Vector3.new(4675.870, 5.210, -554.690), Look = Vector3.new(-0.000, -0.000, -1.000)},
+        ["Sacred Temple"] = {Pos = Vector3.new(1461.815, -22.125, -670.234), Look = Vector3.new(-0.990, -0.000, 0.143)},
+        ["Second Enchant Altar"] = {Pos = Vector3.new(1479.587, 128.295, -604.224), Look = Vector3.new(-0.298, 0.000, -0.955)},
+        ["Sisyphus Statue"] = {Pos = Vector3.new(-3743.745, -135.074, -1007.554), Look = Vector3.new(0.310, 0.000, 0.951)},
+        ["Treasure Room"] = {Pos = Vector3.new(-3598.440, -281.274, -1645.855), Look = Vector3.new(-0.065, 0.000, -0.998)},
+        ["Tropical Island"] = {Pos = Vector3.new(-2162.920, 2.825, 3638.445), Look = Vector3.new(0.381, -0.000, 0.925)},
+        ["Underground Cellar"] = {Pos = Vector3.new(2118.417, -91.448, -733.800), Look = Vector3.new(0.854, 0.000, 0.521)},
+        ["Volcano"] = {Pos = Vector3.new(-605.121, 19.516, 160.010), Look = Vector3.new(0.854, 0.000, 0.520)},
+        ["Weather Machine"] = {Pos = Vector3.new(-1518.550, 2.875, 1916.148), Look = Vector3.new(0.042, 0.000, 0.999)},
+    }
+    local AreaNames = {}
+    for name, _ in pairs(FishingAreas) do
+        table.insert(AreaNames, name)
+    end
+
+do
+    local player = Window:Tab({
+        Title = "Player",
+        Icon = "user",
+        Locked = false,
+    })
+
+    -- MOVEMENT
+    local movement = player:Section({
+        Title = "Movement",
+        TextSize = 20,
+    })
+
+    -- 1. SLIDER WALKSPEED
+    local SliderSpeed = Reg("Walkspeed",movement:Slider({
+        Title = "WalkSpeed",
+        Step = 1,
+        Value = {
+            Min = 16,
+            Max = 200,
+            Default = currentSpeed,
+        },
+        Callback = function(value)
+            local speedValue = tonumber(value)
+            if speedValue and speedValue >= 0 then
+                local Humanoid = GetHumanoid()
+                if Humanoid then
+                    Humanoid.WalkSpeed = speedValue
                 end
-                local v172 = Instance.new("ScreenGui")
-                v172.Name = "ChloeX_FishingPanel"
-                v172.IgnoreGuiInset = true
-                v172.ResetOnSpawn = false
-                v172.ZIndexBehavior = Enum.ZIndexBehavior.Global
-                v172.Parent = game.CoreGui
-                local v173 = Instance.new("Frame", v172)
-                v173.Size = UDim2.new(0, 400, 0, 210)
-                v173.AnchorPoint = Vector2.new(0.5, 0.5)
-                v173.Position = UDim2.new(0.5, 0, 0.5, 0)
-                v173.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-                v173.BorderSizePixel = 0
-                v173.BackgroundTransparency = 0.05
-                v173.Active = true
-                v173.Draggable = true
-                local v174 = Instance.new("UIStroke", v173)
-                v174.Thickness = 2
-                v174.Color = Color3.fromRGB(80, 150, 255)
-                v174.Transparency = 0.35
-                Instance.new("UICorner", v173).CornerRadius = UDim.new(0, 14)
-                local v175 = Instance.new("ImageLabel", v173)
-                v175.Size = UDim2.new(0, 28, 0, 28)
-                v175.Position = UDim2.new(0, 10, 0, 6)
-                v175.BackgroundTransparency = 1
-                v175.Image = "rbxassetid://100076212630732"
-                v175.ScaleType = Enum.ScaleType.Fit
-                local v176 = Instance.new("TextLabel", v173)
-                v176.Size = UDim2.new(1, - 40, 0, 36)
-                v176.Position = UDim2.new(0, 45, 0, 5)
-                v176.BackgroundTransparency = 1
-                v176.Font = Enum.Font.GothamBold
-                v176.Text = "CHLOEX PANEL FISHING"
-                v176.TextSize = 22
-                v176.TextColor3 = Color3.fromRGB(255, 255, 255)
-                v176.TextXAlignment = Enum.TextXAlignment.Left
-                local v177 = Instance.new("UIGradient", v176)
-                v177.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(170, 220, 255)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 120, 255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 220, 255))
+            end
+        end,
+    }))
+
+    -- 2. SLIDER JUMPOWER
+    local SliderJump = Reg("slidjump",movement:Slider({
+        Title = "JumpPower",
+        Step = 1,
+        Value = {
+            Min = 50,
+            Max = 200,
+            Default = currentJump,
+        },
+        Callback = function(value)
+            local jumpValue = tonumber(value)
+            if jumpValue and jumpValue >= 50 then
+                local Humanoid = GetHumanoid()
+                if Humanoid then
+                    Humanoid.JumpPower = jumpValue
+                end
+            end
+        end,
+    }))
+    
+    -- 3. RESET BUTTON
+    local reset = movement:Button({
+        Title = "Reset Movement",
+        Icon = "rotate-ccw",
+        Locked = false,
+        Callback = function()
+            local Humanoid = GetHumanoid()
+            if Humanoid then
+                Humanoid.WalkSpeed = DEFAULT_SPEED
+                Humanoid.JumpPower = DEFAULT_JUMP
+                SliderSpeed:Set(DEFAULT_SPEED)
+                SliderJump:Set(DEFAULT_JUMP)
+                WindUI:Notify({
+                    Title = "Movement Direset",
+                    Content = "WalkSpeed & JumpPower Reset to default",
+                    Duration = 3,
+                    Icon = "check",
                 })
-                v177.Rotation = 45
-                local v178 = Instance.new("TextLabel", v173)
-                v178.Position = UDim2.new(0, 15, 0, 55)
-                v178.Size = UDim2.new(1, - 30, 0, 22)
-                v178.Font = Enum.Font.GothamBold
-                v178.TextSize = 18
-                v178.BackgroundTransparency = 1
-                v178.TextColor3 = Color3.fromRGB(140, 200, 255)
-                v178.Text = "INVENTORY COUNT:"
-                local vu179 = Instance.new("TextLabel", v173)
-                vu179.Position = UDim2.new(0, 15, 0, 75)
-                vu179.Size = UDim2.new(1, - 30, 0, 22)
-                vu179.Font = Enum.Font.Gotham
-                vu179.TextSize = 18
-                vu179.BackgroundTransparency = 1
-                vu179.TextColor3 = Color3.fromRGB(255, 255, 255)
-                vu179.Text = "Fish: 0/0"
-                local v180 = Instance.new("TextLabel", v173)
-                v180.Position = UDim2.new(0, 15, 0, 105)
-                v180.Size = UDim2.new(1, - 30, 0, 22)
-                v180.Font = Enum.Font.GothamBold
-                v180.TextSize = 18
-                v180.BackgroundTransparency = 1
-                v180.TextColor3 = Color3.fromRGB(140, 200, 255)
-                v180.Text = "TOTAL FISH CAUGHT:"
-                local vu181 = Instance.new("TextLabel", v173)
-                vu181.Position = UDim2.new(0, 15, 0, 125)
-                vu181.Size = UDim2.new(1, - 30, 0, 22)
-                vu181.Font = Enum.Font.Gotham
-                vu181.TextSize = 18
-                vu181.BackgroundTransparency = 1
-                vu181.TextColor3 = Color3.fromRGB(255, 255, 255)
-                vu181.Text = "Value: 0"
-                local vu182 = Instance.new("TextLabel", v173)
-                vu182.Position = UDim2.new(0.5, 0, 0, 165)
-                vu182.AnchorPoint = Vector2.new(0.5, 0)
-                vu182.Size = UDim2.new(0.8, 0, 0, 30)
-                vu182.Font = Enum.Font.GothamBold
-                vu182.TextSize = 22
-                vu182.Text = "FISHING NORMAL"
-                vu182.BackgroundTransparency = 1
-                vu182.TextColor3 = Color3.fromRGB(0, 255, 100)
-                local vu183 = vu171.leaderstats.Caught.Value
-                local vu184 = tick()
-                local vu185 = false
-                vu7.fishingPanelRunning = true
-                task.spawn(function()
-                    while vu7.fishingPanelRunning and task.wait(1) do
-                        local vu186 = ""
-                        pcall(function()
-                            vu186 = vu171.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize.Text
-                        end)
-                        local v187 = vu171.leaderstats.Caught.Value
-                        vu179.Text = "Fish: " .. (vu186 or "0/0")
-                        vu181.Text = "Value: " .. tostring(v187)
-                        if vu183 < v187 then
-                            vu183 = v187
-                            vu184 = tick()
-                            if vu185 then
-                                vu185 = false
-                                vu182.Text = "FISHING NORMAL"
-                                vu182.TextColor3 = Color3.fromRGB(0, 255, 100)
-                            end
-                        end
-                        if not vu185 and tick() - vu184 >= 10 then
-                            vu185 = true
-                            vu182.Text = "FISHING STUCK"
-                            vu182.TextColor3 = Color3.fromRGB(255, 70, 70)
-                        end
-                    end
-                end)
-            else
-                vu7.fishingPanelRunning = false
-                local v188 = game.CoreGui:FindFirstChild("ChloeX_FishingPanel")
-                if v188 then
-                    v188:Destroy()
-                end
             end
         end
     })
-    Fish1:AddToggle({
-        Title = "Auto Equip Rod",
-        Content = "Automatically equip your fishing rod",
-        Default = false,
-        Callback = function(p189)
-            vu7.autoEquipRod = p189
-            local function vu194()
-                local vu190 = vu6.Data:Get("EquippedId")
-                if not vu190 then
-                    return false
-                end
-                local v192 = vu4.PlayerStatsUtility:GetItemFromInventory(vu6.Data, function(p191)
-                    return p191.UUID == vu190
-                end)
-                if not v192 then
-                    return false
-                end
-                local v193 = vu4.ItemUtility:GetItemData(v192.Id)
-                if v193 then
-                    v193 = v193.Data.Type == "Fishing Rods"
-                end
-                return v193
-            end
-            local function vu195()
-                if not vu194() then
-                    vu5.Events.REEquip:FireServer(1)
-                end
-            end
-            task.spawn(function()
-                while vu7.autoEquipRod do
-                    vu195()
-                    task.wait(1)
-                end
-            end)
-        end
-    })
-    Fish1:AddToggle({
-        Title = "No Fishing Animations",
-        Default = false,
-        Callback = function(p196)
-            local v197 = (vu2.Character or vu2.CharacterAdded:Wait()):WaitForChild("Humanoid"):FindFirstChildOfClass("Animator")
-            if v197 then
-                if p196 then
-                    vu7.stopAnimHookEnabled = true
-                    local v198, v199, v200 = ipairs(v197:GetPlayingAnimationTracks())
-                    while true do
-                        local v201
-                        v200, v201 = v198(v199, v200)
-                        if v200 == nil then
-                            break
-                        end
-                        v201:Stop(0)
-                    end
-                    vu7.stopAnimConn = v197.AnimationPlayed:Connect(function(pu202)
-                        if vu7.stopAnimHookEnabled then
-                            task.defer(function()
-                                pcall(function()
-                                    pu202:Stop(0)
-                                end)
-                            end)
-                        end
-                    end)
-                else
-                    vu7.stopAnimHookEnabled = false
-                    if vu7.stopAnimConn then
-                        vu7.stopAnimConn:Disconnect()
-                        vu7.stopAnimConn = nil
-                    end
-                end
-            end
-        end
-    })
-    local vu203 = false
-    local vu204 = nil
-    local vu205 = nil
-    local vu206 = - 1.8
-    Fish1:AddToggle({
-        Title = "Walk on Water",
-        Default = false,
-        Callback = function(p207)
-            vu203 = p207
-            local vu208 = (vu2.Character or vu2.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart")
-            if p207 then
-                vu204 = Instance.new("Part")
-                vu204.Name = "WW_Part"
-                vu204.Size = Vector3.new(15, 1, 15)
-                vu204.Anchored = true
-                vu204.CanCollide = false
-                vu204.Transparency = 1
-                vu204.Material = Enum.Material.SmoothPlastic
-                vu204.Parent = workspace
-                vu205 = vu1.RunService.Heartbeat:Connect(function()
-                    if vu203 and (vu204 and vu208) then
-                        vu204.Position = Vector3.new(vu208.Position.X, vu206, vu208.Position.Z)
-                        vu204.CanCollide = vu206 < vu208.Position.Y
-                    end
-                end)
-            else
-                if vu205 then
-                    vu205:Disconnect()
-                    vu205 = nil
-                end
-                if vu204 then
-                    vu204:Destroy()
-                    vu204 = nil
-                end
-            end
-        end
-    })
-    Fish1:AddToggle({
+
+    -- 4. TOGGLE FREEZE PLAYER
+    local freezeplr = Reg("frezee",movement:Toggle({
         Title = "Freeze Player",
-        Content = "Freeze only if rod is equipped",
-        Default = false,
-        Callback = function(p209)
-            vu7.frozen = p209
-            local v210 = vu7.player.Character
-            local function vu215()
-                local vu211 = vu6.Data:Get("EquippedId")
-                if not vu211 then
-                    return false
-                end
-                local v213 = vu4.PlayerStatsUtility:GetItemFromInventory(vu6.Data, function(p212)
-                    return p212.UUID == vu211
-                end)
-                if not v213 then
-                    return false
-                end
-                local v214 = vu4.ItemUtility:GetItemData(v213.Id)
-                if v214 then
-                    v214 = v214.Data.Type == "Fishing Rods"
-                end
-                return v214
-            end
-            local function vu216()
-                if not vu215() then
-                    vu5.Events.REEquip:FireServer(1)
-                    task.wait(0.5)
-                end
-            end
-            local function vu223(p217, p218)
-                if p217 then
-                    local v219, v220, v221 = ipairs(p217:GetDescendants())
-                    while true do
-                        local v222
-                        v221, v222 = v219(v220, v221)
-                        if v221 == nil then
-                            break
-                        end
-                        if v222:IsA("BasePart") then
-                            v222.Anchored = p218
-                        end
-                    end
-                end
-            end
-            local function vu225(p224)
-                if vu7.frozen then
-                    vu216()
-                    if vu215() then
-                        vu223(p224, true)
-                    end
+        Desc = "Membekukan karakter di posisi saat ini (Anti-Push).",
+        Value = false,
+        Callback = function(state)
+            local character = LocalPlayer.Character
+            if not character then return end
+            
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                -- Set Anchored sesuai status toggle
+                hrp.Anchored = state
+                
+                if state then
+                    -- Hentikan momentum agar berhenti instan (tidak meluncur)
+                    hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    hrp.Velocity = Vector3.new(0, 0, 0)
+                    
+                    WindUI:Notify({ 
+                        Title = "Player Frozen", 
+                        Content = "Posisi dikunci (Anchored).", 
+                        Duration = 2, 
+                        Icon = "lock" 
+                    })
                 else
-                    vu223(p224, false)
+                    WindUI:Notify({ 
+                        Title = "Player Unfrozen", 
+                        Content = "Gerakan kembali normal.", 
+                        Duration = 2, 
+                        Icon = "unlock" 
+                    })
                 end
+            else
+                WindUI:Notify({ Title = "Error", Content = "HumanoidRootPart tidak ditemukan.", Duration = 3, Icon = "alert-triangle" })
             end
-            vu225(v210)
-            vu7.player.CharacterAdded:Connect(function(p226)
-                task.wait(1)
-                vu225(p226)
-            end)
         end
+    }))
+
+    -- ABILITIES
+    local ability = player:Section({
+        Title = "Abilities",
+        TextSize = 20,
     })
-    Fish = v163.Main:AddSection("Fishing Features")
-    DetectorParagraph = Fish:AddParagraph({
-        Title = "Detector Stuck",
-        Content = "Status = Idle\nTime = 0.0s\nBag = 0"
-    })
-    Fish:AddSlider({
-        Title = "Wait (s)",
-        Default = 15,
-        Min = 10,
-        Max = 25,
-        Rounding = 0,
-        Callback = function(p227)
-            vu7.stuckThreshold = p227
-        end
-    })
-    Fish:AddToggle({
-        Title = "Start Detector",
-        Default = false,
-        Callback = function(p228)
-            vu7.supportEnabled = p228
-            if p228 then
-                vu7.char = vu7.player.Character or vu7.player.CharacterAdded:Wait()
-                vu7.savedCFrame = vu7.char:WaitForChild("HumanoidRootPart").CFrame
-                _G.Celestial.DetectorCount = getFishCount()
-                vu7.fishingTimer = 0
-                task.spawn(function()
-                    local v229 = tick()
-                    while vu7.supportEnabled do
-                        task.wait(0.2)
-                        local v230, v231 = pcall(getFishCount)
-                        if v230 and v231 then
-                            local v232 = tick()
-                            local v233 = v232 - v229
-                            vu7.fishingTimer = vu7.fishingTimer + v233
-                            if not (vu7.char and vu7.char.Parent) then
-                                vu7.char = vu7.player.Character or vu7.player.CharacterAdded:Wait()
-                            end
-                            if v231 ~= _G.Celestial.DetectorCount then
-                                _G.Celestial.DetectorCount = v231
-                                vu7.fishingTimer = 0
-                            end
-                            if vu7.fishingTimer >= (vu7.stuckThreshold or 10) then
-                                DetectorParagraph:SetContent("<font color=\'rgb(255,69,0)\'>Status = Reset!</font>\nTime = 0.0s\nBag = " .. v231)
-                                local v234 = vu7.char:FindFirstChild("HumanoidRootPart")
-                                if v234 then
-                                    vu7.savedCFrame = v234.CFrame
-                                end
-                                vu7.player.Character:BreakJoints()
-                                vu7.char = vu7.player.CharacterAdded:Wait()
-                                task.wait(0.3)
-                                vu7.char:WaitForChild("HumanoidRootPart").CFrame = vu7.savedCFrame
-                                _G.Celestial.DetectorCount = getFishCount()
-                                vu7.fishingTimer = 0
-                                v229 = v232
-                            else
-                                DetectorParagraph:SetContent(string.format("<font color=\'rgb(0,255,127)\'>Status = Running</font>\nTime = %.1fs\nBag = %d", vu7.fishingTimer, v231))
-                                v229 = v232
-                            end
-                        else
-                            DetectorParagraph:SetContent("<font color=\'rgb(255,69,0)\'>Status = Error Reading Count</font>\nTime = 0.0s\nBag = 0")
-                            vu7.fishingTimer = 0
-                        end
+
+    -- 1. TOGGLE INFINITE JUMP
+    local infjump = Reg("infj", ability:Toggle({
+        Title = "Infinite Jump",
+        Value = false,
+        Callback = function(state)
+            if state then
+                WindUI:Notify({ Title = "Infinite Jump ON!", Duration = 3, Icon = "check", })
+                InfinityJumpConnection = UserInputService.JumpRequest:Connect(function()
+                    local Humanoid = GetHumanoid()
+                    if Humanoid and Humanoid.Health > 0 then
+                        Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                     end
-                    DetectorParagraph:SetContent("<font color=\'rgb(200,200,200)\'>Status = Detector Offline</font>\nTime = 0.0s\nBag = 0")
                 end)
             else
-                DetectorParagraph:SetContent("<font color=\'rgb(200,200,200)\'>Status = Detector Offline</font>\nTime = 0.0s\nBag = 0")
+                WindUI:Notify({ Title = "Infinite Jump OFF!", Duration = 3, Icon = "check", })
+                if InfinityJumpConnection then
+                    InfinityJumpConnection:Disconnect()
+                    InfinityJumpConnection = nil
+                end
             end
         end
-    })
-    Fish:AddInput({
-        Title = "Legit Delay",
-        Content = "Delay complete fishing!",
-        Value = tostring(_G.Delay),
-        Callback = function(p235)
-            local v236 = tonumber(p235)
-            if v236 and 0 < v236 then
-                _G.Delay = v236
-                SaveConfig()
-                task.spawn(function()
-                    print("Started")
-                    while not (vu4.FishingController and vu4.FishingController._autoLoop) do
-                        task.wait(0.05)
-                    end
-                    local v237 = vu4.FishingController
-                    if not v237:GetCurrentGUID() then
-                    end
-                    print("Waiting", _G.Delay)
-                    task.wait(_G.Delay)
-                    while true do
-                        local v238, v239 = pcall(function()
-                            vu5.Events.REFishDone:FireServer()
-                        end)
-                        if v238 then
-                            print("Successfully")
-                        else
-                            warn("Failed to Fire", v239)
-                        end
-                        task.wait(0.05)
-                        if not (v237:GetCurrentGUID() and v237._autoLoop) then
-                            print("loop ended")
+    }))
+
+    -- 2. TOGGLE NO CLIP
+    local noclipConnection = nil
+    local isNoClipActive = false
+    local noclip = Reg("nclip",ability:Toggle({
+        Title = "No Clip",
+        Value = false,
+        Callback = function(state)
+            isNoClipActive = state
+            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+            if state then
+                WindUI:Notify({ Title = "No Clip ON!", Duration = 3, Icon = "check", })
+                noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+                    if isNoClipActive and character then
+                        for _, part in ipairs(character:GetDescendants()) do
+                            if part:IsA("BasePart") and part.CanCollide then
+                                part.CanCollide = false
+                            end
                         end
                     end
                 end)
             else
-                warn("Invalid fishing delay input")
-            end
-        end
-    })
-    shakeDelay = 0
-    Fish:AddInput({
-        Title = "Shake Delay",
-        Value = tostring(shakeDelay),
-        Callback = function(p240)
-            local v241 = tonumber(p240)
-            if v241 and 0 <= v241 then
-                shakeDelay = v241
-            end
-        end
-    })
-    local vu242 = nil
-    oldRegister = vu4.InputControl.RegisterMouseReleased
-    function vu4.InputControl.RegisterMouseReleased(p243, p244, p245)
-        vu242 = p245
-        return oldRegister(p243, p244, p245)
-    end
-    function castWithBarRelease()
-        local v246 = vu1.PG
-        local v247 = vu1.Camera
-        local vu248 = Vector2.new(v247.ViewportSize.X / 2, v247.ViewportSize.Y / 2)
-        pcall(function()
-            vu5.Functions.Cancel:InvokeServer()
-        end)
-        pcall(function()
-            vu4.FishingController:RequestChargeFishingRod(vu248, false)
-        end)
-        local v249 = v246:WaitForChild("Charge"):WaitForChild("Main"):WaitForChild("CanvasGroup"):WaitForChild("Bar")
-        repeat
-            task.wait()
-        until v249.Size.Y.Scale > 0
-        local v250 = tick()
-        while v249:IsDescendantOf(v246) and v249.Size.Y.Scale < 0.93 do
-            task.wait()
-            if tick() - v250 > 2 then
-                break
-            end
-        end
-        if vu242 then
-            pcall(vu242)
-        end
-    end
-    userId = tostring(vu1.Players.LocalPlayer.UserId)
-    CosmeticFolder = workspace:WaitForChild("CosmeticFolder")
-    Fish:AddToggle({
-        Title = "Legit Fishing",
-        Default = false,
-        Callback = function(p251)
-            vu4.FishingController._autoLoop = p251
-            if p251 then
-                task.spawn(function()
-                    while vu4.FishingController._autoLoop do
-                        if not CosmeticFolder:FindFirstChild(userId) then
-                            castWithBarRelease()
-                            task.wait(0.2)
-                        end
-                        while CosmeticFolder:FindFirstChild(userId) and vu4.FishingController._autoLoop do
-                            task.wait(0.2)
-                        end
-                        task.wait(0.2)
+                WindUI:Notify({ Title = "No Clip OFF!", Duration = 3, Icon = "x", })
+                if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+
+                for _, part in ipairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
                     end
+                end
+            end
+        end
+    }))
+
+    -- 3. TOGGLE FLY MODE
+    local flyConnection = nil
+    local isFlying = false
+    local flySpeed = 60
+    local bodyGyro, bodyVel
+    local flytog = Reg("flym",ability:Toggle({
+        Title = "Fly Mode",
+        Value = false,
+        Callback = function(state)
+            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            local humanoid = character:WaitForChild("Humanoid")
+
+            if state then
+                WindUI:Notify({ Title = "Fly Mode ON!", Duration = 3, Icon = "check", })
+                isFlying = true
+
+                bodyGyro = Instance.new("BodyGyro")
+                bodyGyro.P = 9e4
+                bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+                bodyGyro.CFrame = humanoidRootPart.CFrame
+                bodyGyro.Parent = humanoidRootPart
+
+                bodyVel = Instance.new("BodyVelocity")
+                bodyVel.Velocity = Vector3.zero
+                bodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                bodyVel.Parent = humanoidRootPart
+
+                local cam = workspace.CurrentCamera
+                local moveDir = Vector3.zero
+                local jumpPressed = false
+
+                UserInputService.JumpRequest:Connect(function()
+                    if isFlying then jumpPressed = true task.delay(0.2, function() jumpPressed = false end) end
                 end)
-            end
-        end
-    })
-    Fish:AddToggle({
-        Title = "Auto Shake",
-        Content = "Spam click during fishing (only legit)",
-        Default = false,
-        Callback = function(p252)
-            vu4._autoShake = p252
-            local v253 = vu1.PG:FindFirstChild("!!! Click Effect")
-            if p252 then
-                if v253 then
-                    v253.Enabled = false
-                end
-                task.spawn(function()
-                    while vu4._autoShake do
-                        pcall(function()
-                            vu4.FishingController:RequestFishingMinigameClick()
-                        end)
-                        task.wait(shakeDelay)
+
+                flyConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                    if not isFlying or not humanoidRootPart or not bodyGyro or not bodyVel then return end
+                    
+                    bodyGyro.CFrame = cam.CFrame
+                    moveDir = humanoid.MoveDirection
+
+                    if jumpPressed then
+                        moveDir = moveDir + Vector3.new(0, 1, 0)
+                    elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                        moveDir = moveDir - Vector3.new(0, 1, 0)
                     end
+
+                    if moveDir.Magnitude > 0 then moveDir = moveDir.Unit * flySpeed end
+
+                    bodyVel.Velocity = moveDir
                 end)
-            elseif v253 then
-                clickEff11111ect.Enabled = true
-            end
-        end
-    })
-    Fish0 = v163.Main:AddSection("Instant Features")
-    Fish0:AddInput({
-        Title = "Delay Complete",
-        Value = tostring(_G.DelayComplete),
-        Callback = function(p254)
-            local v255 = tonumber(p254)
-            if v255 and 0 <= v255 then
-                _G.DelayComplete = v255
-                SaveConfig()
-            end
-        end
-    })
-    Fish0:AddToggle({
-        Title = "Instant Fishing",
-        Content = "Auto instantly catch fish",
-        Default = false,
-        Callback = function(p256)
-            vu7.autoInstant = p256
-            if p256 then
-                _G.Celestial.InstantCount = getFishCount()
-                task.spawn(function()
-                    while vu7.autoInstant do
-                        if vu7.canFish then
-                            vu7.canFish = false
-                            local v257, _, vu258 = pcall(function()
-                                return vu5.Functions.ChargeRod:InvokeServer(workspace:GetServerTimeNow())
-                            end)
-                            if v257 and typeof(vu258) == "number" then
-                                local vu259 = - 1
-                                local vu260 = 0.999
-                                task.wait(0.3)
-                                pcall(function()
-                                    vu5.Functions.StartMini:InvokeServer(vu259, vu260, vu258)
-                                end)
-                                local v261 = tick()
-                                repeat
-                                    task.wait()
-                                until _G.FishMiniData and _G.FishMiniData.LastShift or tick() - v261 > 1
-                                task.wait(_G.DelayComplete)
-                                pcall(function()
-                                    vu5.Events.REFishDone:FireServer()
-                                end)
-                                local v262 = getFishCount()
-                                local v263 = tick()
-                                repeat
-                                    task.wait()
-                                until v262 < getFishCount() or tick() - v263 > 1
-                            end
-                            pcall(function()
-                                vu5.Functions.Cancel:InvokeServer()
-                            end)
-                            vu7.canFish = true
-                        end
-                        task.wait()
-                    end
-                end)
-            end
-        end
-    })
-    if MiniEvent then
-        if _G._MiniEventConn then
-            _G._MiniEventConn:Disconnect()
-        end
-        _G._MiniEventConn = MiniEvent.OnClientEvent:Connect(function(p264, p265)
-            if p264 and p265 then
-                _G.FishMiniData = p265
-            end
-        end)
-    end
-    Fish2 = v163.Main:AddSection("Blatant Features")
-    function Fastest()
-        task.spawn(function()
-            pcall(function()
-                vu5.Functions.Cancel:InvokeServer()
-            end)
-            local vu266 = workspace:GetServerTimeNow()
-            pcall(function()
-                vu5.Functions.ChargeRod:InvokeServer(vu266)
-            end)
-            pcall(function()
-                vu5.Functions.StartMini:InvokeServer(- 1, 0.999)
-            end)
-            task.wait(_G.FishingDelay)
-            pcall(function()
-                vu5.Events.REFishDone:FireServer()
-            end)
-        end)
-    end
-    Fish2:AddInput({
-        Title = "Delay Reel",
-        Value = tostring(_G.Reel),
-        Default = "1.9",
-        Callback = function(p267)
-            local v268 = tonumber(p267)
-            if v268 and 0 < v268 then
-                _G.Reel = v268
-            end
-            SaveConfig()
-        end
-    })
-    Fish2:AddInput({
-        Title = "Delay Fishing",
-        Value = tostring(_G.FishingDelay),
-        Default = "1.1",
-        Callback = function(p269)
-            local v270 = tonumber(p269)
-            if v270 and 0 < v270 then
-                _G.FishingDelay = v270
-            end
-            SaveConfig()
-        end
-    })
-    Fish2:AddToggle({
-        Title = "Blatant Fishing",
-        Default = _G.FBlatant,
-        Callback = function(p271)
-            _G.FBlatant = p271
-            vu5.Functions.AutoEnabled:InvokeServer(p271)
-            if p271 then
-                vu2:SetAttribute("Loading", nil)
-                task.spawn(function()
-                    while _G.FBlatant do
-                        Fastest()
-                        task.wait(_G.Reel)
-                    end
-                end)
+
             else
-                vu2:SetAttribute("Loading", false)
+                WindUI:Notify({ Title = "Fly Mode OFF!", Duration = 3, Icon = "x", })
+                isFlying = false
+
+                if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+                if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+                if bodyVel then bodyVel:Destroy() bodyVel = nil end
             end
         end
-    })
-    Fish2:AddButton({
-        Title = "Recovery Fishing",
-        Callback = function()
-            task.spawn(function()
-                pcall(function()
-                    vu5.Functions.Cancel:InvokeServer()
-                end)
-                local v272 = game:GetService("Players").LocalPlayer
-                v272:SetAttribute("Loading", nil)
-                task.wait(0.05)
-                v272:SetAttribute("Loading", false)
-                chloex("Recovery Successfully!")
-            end)
-        end
-    })
-    local v273 = v163.Main:AddSection("Selling Features")
-    v273:AddDropdown({
-        Options = {
-            "Delay",
-            "Count"
-        },
-        Default = "Delay",
-        Title = "Select Sell Mode",
-        Callback = function(p274)
-            vu7.sellMode = p274
-            SaveConfig()
-        end
-    })
-    v273:AddInput({
-        Default = "1",
-        Title = "Set Value",
-        Content = "Delay = Minutes | Count = Backpack Count",
-        Placeholder = "Input Here",
-        Callback = function(p275)
-            local v276 = tonumber(p275) or 1
-            if vu7.sellMode ~= "Delay" then
-                vu7.inputSellCount = v276
-            else
-                vu7.sellDelay = v276 * 60
-            end
-            SaveConfig()
-        end
-    })
-    v273:AddToggle({
-        Title = "Start Selling",
-        Default = false,
-        Callback = function(p277)
-            vu7.autoSellEnabled = p277
-            if p277 then
-                task.spawn(function()
-                    local v278 = vu4.Net["RF/SellAllItems"]
-                    while vu7.autoSellEnabled do
-                        local v279 = vu2:WaitForChild("PlayerGui"):WaitForChild("Inventory").Main.Top.Options.Fish.Label:FindFirstChild("BagSize")
-                        local v280, v281
-                        if v279 and v279:IsA("TextLabel") then
-                            local v282, v283 = (v279.Text or ""):match("(%d+)%s*/%s*(%d+)")
-                            v280 = tonumber(v282) or 0
-                            v281 = tonumber(v283) or 0
-                        else
-                            v280 = 0
-                            v281 = 0
-                        end
-                        if vu7.sellMode ~= "Delay" then
-                            if vu7.sellMode == "Count" then
-                                if (tonumber(vu7.inputSellCount) or v281) <= v280 then
-                                    v278:InvokeServer()
-                                end
-                                task.wait()
-                            end
-                        else
-                            task.wait(vu7.sellDelay)
-                            v278:InvokeServer()
-                        end
+    }))
+
+   -- 4. TOGGLE WALK ON WATER (FIXED: RESPAWN SUPPORT)
+    local walkOnWaterConnection = nil
+    local isWalkOnWater = false
+    local waterPlatform = nil
+    
+    local walkon = Reg("walkwat",ability:Toggle({
+        Title = "Walk on Water",
+        Value = false,
+        Callback = function(state)
+            -- Kita tidak mendefinisikan 'character' di sini agar logic tidak stuck di char lama
+
+            if state then
+                WindUI:Notify({ Title = "Walk on Water ON!", Duration = 3, Icon = "check", })
+                isWalkOnWater = true
+                
+                -- Buat Platform jika belum ada
+                if not waterPlatform then
+                    waterPlatform = Instance.new("Part")
+                    waterPlatform.Name = "WaterPlatform"
+                    waterPlatform.Anchored = true
+                    waterPlatform.CanCollide = true
+                    waterPlatform.Transparency = 1 
+                    waterPlatform.Size = Vector3.new(15, 1, 15) -- Ukuran diperbesar sedikit
+                    waterPlatform.Parent = workspace
+                end
+
+                -- Pastikan koneksi lama mati dulu sebelum buat baru
+                if walkOnWaterConnection then walkOnWaterConnection:Disconnect() end
+
+                walkOnWaterConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                    -- [FIX] Ambil Karakter TERBARU setiap frame
+                    local character = LocalPlayer.Character
+                    if not isWalkOnWater or not character then return end
+                    
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+
+                    -- Pastikan platform masih ada (kadang kehapus oleh game cleanup)
+                    if not waterPlatform or not waterPlatform.Parent then
+                        waterPlatform = Instance.new("Part")
+                        waterPlatform.Name = "WaterPlatform"
+                        waterPlatform.Anchored = true
+                        waterPlatform.CanCollide = true
+                        waterPlatform.Transparency = 1 
+                        waterPlatform.Size = Vector3.new(15, 1, 15)
+                        waterPlatform.Parent = workspace
                     end
-                end)
-            end
-        end
-    })
-    v273:AddSubSection("Auto Sell Enchant Stone")
-    EnchantStoneID = 10
-    TargetLeft = 0
-    AutoSellRunning = false
-    EnchantStonePanel = v273:AddParagraph({
-        Title = "Enchant Stone Left Status",
-        Content = "Counting..."
-    })
-    v273:AddInput({
-        Title = "Target Left",
-        Default = "0",
-        Callback = function(p284)
-            num = tonumber(p284)
-            if num and num >= 0 then
-                TargetLeft = num
-            end
-        end
-    })
-    v273:AddToggle({
-        Title = "Start Sell Enchant Stone",
-        Default = false,
-        Callback = function(p285)
-            AutoSellRunning = p285
-            if AutoSellRunning then
-                task.spawn(function()
-                    while AutoSellRunning do
-                        inv = vu6.Data:GetExpect({
-                            "Inventory",
-                            "Items"
-                        })
-                        count = 0
-                        targetUUID = nil
-                        local v286, v287, v288 = ipairs(inv)
-                        while true do
-                            local v289
-                            v288, v289 = v286(v287, v288)
-                            if v288 == nil then
-                                break
-                            end
-                            if v289.Id == EnchantStoneID then
-                                count = count + 1
-                                if not targetUUID then
-                                    targetUUID = v289.UUID
-                                end
+
+                    local rayParams = RaycastParams.new()
+                    rayParams.FilterDescendantsInstances = {workspace.Terrain} 
+                    rayParams.FilterType = Enum.RaycastFilterType.Include -- MODE WHITELIST
+                    rayParams.IgnoreWater = false -- Pastikan Air terdeteksi
+
+                    -- Tembak dari ketinggian di atas kepala
+                    local rayOrigin = hrp.Position + Vector3.new(0, 5, 0) 
+                    local rayDirection = Vector3.new(0, -500, 0)
+
+                    local result = workspace:Raycast(rayOrigin, rayDirection, rayParams)
+
+                    -- 2. LOGIKA DETEKSI
+                    if result and result.Material == Enum.Material.Water then
+                        -- Jika menabrak AIR (Terrain Water)
+                        local waterSurfaceHeight = result.Position.Y
+                        
+                        -- Taruh platform tepat di permukaan air
+                        waterPlatform.Position = Vector3.new(hrp.Position.X, waterSurfaceHeight, hrp.Position.Z)
+                        
+                        -- Jika kaki player tenggelam sedikit di bawah air, angkat ke atas
+                        if hrp.Position.Y < (waterSurfaceHeight + 2) and hrp.Position.Y > (waterSurfaceHeight - 5) then
+                             -- Cek input jump biar gak stuck pas mau loncat dari air
+                            if not UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                                hrp.CFrame = CFrame.new(hrp.Position.X, waterSurfaceHeight + 3.2, hrp.Position.Z)
                             end
                         end
-                        EnchantStonePanel:SetContent("Enchant Stone : " .. count)
-                        if count <= TargetLeft then
-                            AutoSellRunning = false
-                            break
-                        end
-                        if not targetUUID then
-                            AutoSellRunning = false
-                            break
-                        end
-                        task.defer(function()
-                            vu5.Functions.SellItem:InvokeServer(targetUUID)
-                        end)
-                        task.wait(0.1)
-                    end
-                end)
-            end
-        end
-    })
-    task.spawn(function()
-        while task.wait(1) do
-            inv = vu6.Data:GetExpect({
-                "Inventory",
-                "Items"
-            })
-            count = 0
-            local v290, v291, v292 = ipairs(inv)
-            while true do
-                local v293
-                v292, v293 = v290(v291, v292)
-                if v292 == nil then
-                    break
-                end
-                if v293.Id == EnchantStoneID then
-                    count = count + 1
-                end
-            end
-            EnchantStonePanel:SetContent("Enchant Stone : " .. count)
-        end
-    end)
-    local v294 = v163.Main:AddSection("Favorite Features")
-    v294:AddDropdown({
-        Options = (# v13 <= 0 or not v13) and {
-            "No Fish Found"
-        } or v13,
-        Content = "Favorite By Name Fish (Recommended)",
-        Multi = true,
-        Title = "Name",
-        Callback = function(p295)
-            vu7.selectedName = toSet(p295)
-        end
-    })
-    v294:AddDropdown({
-        Options = {
-            "Common",
-            "Uncommon",
-            "Rare",
-            "Epic",
-            "Legendary",
-            "Mythic",
-            "Secret"
-        },
-        Content = "Favorite By Rarity (Optional)",
-        Multi = true,
-        Title = "Rarity",
-        Callback = function(p296)
-            vu7.selectedRarity = toSet(p296)
-        end
-    })
-    v294:AddDropdown({
-        Options = _G.Variant,
-        Content = "Favorite By Variant (Only works with Name)",
-        Multi = true,
-        Title = "Variant",
-        Callback = function(p297)
-            if next(vu7.selectedName) == nil then
-                vu7.selectedVariant = {}
-                warn("Pilih Name dulu sebelum memilih Variant.")
-            else
-                vu7.selectedVariant = toSet(p297)
-            end
-        end
-    })
-    v294:AddToggle({
-        Title = "Auto Favorite",
-        Default = false,
-        Callback = function(p298)
-            vu7.autoFavEnabled = p298
-            if p298 then
-                scanInventory()
-                vu6.Data:OnChange({
-                    "Inventory",
-                    "Items"
-                }, scanInventory)
-            end
-        end
-    })
-    v294:AddButton({
-        Title = "Unfavorite Fish",
-        Callback = function()
-            local v299, v300, v301 = ipairs(vu6.Data:GetExpect({
-                "Inventory",
-                "Items"
-            }))
-            while true do
-                local v302
-                v301, v302 = v299(v300, v301)
-                if v301 == nil then
-                    break
-                end
-                local v303 = rawget(vu48, v302.UUID)
-                if v303 == nil then
-                    v303 = v302.Favorited
-                end
-                if v303 then
-                    vu5.Events.REFav:FireServer(v302.UUID)
-                    rawset(vu48, v302.UUID, false)
-                end
-            end
-        end
-    })
-    local v304 = v163.Auto:AddSection("Shop Features")
-    ShopParagraph = v304:AddParagraph({
-        Title = "MERCHANT STOCK PANEL",
-        Content = "Loading..."
-    })
-    v304:AddButton({
-        Title = "Open/Close Merchant",
-        Callback = function()
-            local v305 = vu1.PG:FindFirstChild("Merchant")
-            if v305 then
-                v305.Enabled = not v305.Enabled
-            end
-        end
-    })
-    function UPX()
-        local v306, v307, v308 = ipairs(vu3.ItemsFrame:GetChildren())
-        local v309 = {}
-        while true do
-            local v310
-            v308, v310 = v306(v307, v308)
-            if v308 == nil then
-                break
-            end
-            if v310:IsA("ImageLabel") and v310.Name ~= "Frame" then
-                local v311 = v310:FindFirstChild("Frame")
-                if v311 and v311:FindFirstChild("ItemName") then
-                    local v312 = v311.ItemName.Text
-                    if not string.find(v312, "Mystery") then
-                        table.insert(v309, "- " .. v312)
-                    end
-                end
-            end
-        end
-        if # v309 ~= 0 then
-            ShopParagraph:SetContent(table.concat(v309, "\n") .. "\n\n" .. vu3.RefreshMerchant.Text)
-        else
-            ShopParagraph:SetContent("No items found\n" .. vu3.RefreshMerchant.Text)
-        end
-    end
-    task.spawn(function()
-        while task.wait(1) do
-            pcall(UPX)
-        end
-    end)
-    v304:AddSubSection("Buy Rod")
-    v304:AddDropdown({
-        Title = "Select Rod",
-        Options = vu7.rodDisplayNames,
-        Callback = function(p313)
-            if p313 then
-                local v314 = _cleanName(p313)
-                local v315 = vu7.rods[v314]
-                if v315 then
-                    vu7.selectedRodId = v315.Id
-                end
-            end
-        end
-    })
-    v304:AddButton({
-        Title = "Buy Selected Rod",
-        Callback = function()
-            if vu7.selectedRodId then
-                local vu316 = vu7.rods[vu7.selectedRodId] or vu7.rods[_cleanName(vu7.selectedRodId)]
-                if vu316 then
-                    pcall(function()
-                        vu5.Functions.BuyRod:InvokeServer(vu316.Id)
-                    end)
-                end
-            else
-                return
-            end
-        end
-    })
-    v304:AddSubSection("Buy Baits")
-    v304:AddDropdown({
-        Title = "Select Bait",
-        Options = vu7.baitDisplayNames,
-        Callback = function(p317)
-            if p317 then
-                local v318 = _cleanName(p317)
-                local v319 = vu7.baits[v318]
-                if v319 then
-                    vu7.selectedBaitId = v319.Id
-                end
-            end
-        end
-    })
-    v304:AddButton({
-        Title = "Buy Selected Bait",
-        Callback = function()
-            if vu7.selectedBaitId then
-                local vu320 = vu7.baits[vu7.selectedBaitId] or vu7.baits[_cleanName(vu7.selectedBaitId)]
-                if vu320 then
-                    pcall(function()
-                        vu5.Functions.BuyBait:InvokeServer(vu320.Id)
-                    end)
-                end
-            else
-                return
-            end
-        end
-    })
-    v304:AddSubSection("Buy Weather")
-    local vu327 = v304:AddDropdown({
-        Title = "Select Weather",
-        Multi = true,
-        Options = {
-            "Cloudy ($10000)",
-            "Wind ($10000)",
-            "Snow ($15000)",
-            "Storm ($35000)",
-            "Radiant ($50000)",
-            "Shark Hunt ($300000)"
-        },
-        Callback = function(p321)
-            vu7.selectedEvents = {}
-            if type(p321) == "table" then
-                local v322, v323, v324 = ipairs(p321)
-                while true do
-                    local v325
-                    v324, v325 = v322(v323, v324)
-                    if v324 == nil then
-                        break
-                    end
-                    local v326 = v325:match("^(.-) %(") or v325
-                    table.insert(vu7.selectedEvents, v326)
-                end
-            end
-            SaveConfig()
-        end
-    })
-    v304:AddToggle({
-        Title = "Auto Buy Weather",
-        Default = false,
-        Callback = function(p328)
-            vu7.autoBuyWeather = p328
-            if vu5.Functions.BuyWeather then
-                if p328 then
-                    task.spawn(function()
-                        while vu7.autoBuyWeather do
-                            local v329 = vu327.Value or vu327.Selected or {}
-                            local v330 = {}
-                            if type(v329) ~= "table" then
-                                if type(v329) == "string" then
-                                    local v331 = v329:match("^(.-) %(") or v329
-                                    table.insert(v330, v331)
-                                end
-                            else
-                                local v332, v333, v334 = ipairs(v329)
-                                while true do
-                                    local v335
-                                    v334, v335 = v332(v333, v334)
-                                    if v334 == nil then
-                                        break
-                                    end
-                                    local v336 = v335:match("^(.-) %(") or v335
-                                    table.insert(v330, v336)
-                                end
-                            end
-                            if # v330 > 0 then
-                                local v337 = {}
-                                local v338 = workspace:FindFirstChild("Weather")
-                                if v338 then
-                                    local v339, v340, v341 = ipairs(v338:GetChildren())
-                                    while true do
-                                        local v342
-                                        v341, v342 = v339(v340, v341)
-                                        if v341 == nil then
-                                            break
-                                        end
-                                        table.insert(v337, string.lower(v342.Name))
-                                    end
-                                end
-                                local v343, v344, v345 = ipairs(v330)
-                                while true do
-                                    local vu346
-                                    v345, vu346 = v343(v344, v345)
-                                    if v345 == nil then
-                                        break
-                                    end
-                                    local v347 = string.lower(vu346)
-                                    if not table.find(v337, v347) then
-                                        pcall(function()
-                                            vu5.Functions.BuyWeather:InvokeServer(vu346)
-                                        end)
-                                        task.wait(0.1)
-                                    end
-                                end
-                            end
-                            task.wait(0.1)
-                        end
-                    end)
-                end
-            end
-        end
-    })
-    local v348 = v163.Auto:AddSection("Save position Features")
-    v348:AddParagraph({
-        Title = "Guide Teleport",
-        Content = "\r\n<b><font color=\"rgb(0,162,255)\">AUTO TELEPORT?</font></b>\r\nClick <b><font color=\"rgb(0,162,255)\">Save Position</font></b> to save your current position!\r\n\r\n<b><font color=\"rgb(0,162,255)\">HOW TO LOAD?</font></b>\r\nThis feature will auto-sync your last position when executed, so you will teleport automatically!\r\n\r\n<b><font color=\"rgb(0,162,255)\">HOW TO RESET?</font></b>\r\nClick <b><font color=\"rgb(0,162,255)\">Reset Position</font></b> to clear your saved position.\r\n    "
-    })
-    v348:AddButton({
-        Title = "Save Position",
-        Callback = function()
-            local v349 = vu2.Character
-            if v349 then
-                v349 = v349:FindFirstChild("HumanoidRootPart")
-            end
-            if v349 then
-                SavePosition(v349.CFrame)
-                chloex("Position saved successfully!")
-            end
-        end,
-        SubTitle = "Reset Position",
-        SubCallback = function()
-            if isfile(vu14) then
-                delfile(vu14)
-            end
-            chloex("Last position has been reset.")
-        end
-    })
-    local v350 = v163.Auto:AddSection("Enchant Features")
-    local function vu373(p351)
-        local v352 = vu6.Data:Get("EquippedItems") or {}
-        local v353 = vu6.Data:Get({
-            "Inventory",
-            "Fishing Rods"
-        }) or {}
-        local v354, v355, v356 = pairs(v352)
-        local v357 = 0
-        local v358 = {}
-        local v359 = "None"
-        local v360 = "None"
-        while true do
-            local v361
-            v356, v361 = v354(v355, v356)
-            if v356 == nil then
-                break
-            end
-            local v362, v363, v364 = ipairs(v353)
-            while true do
-                local v365
-                v364, v365 = v362(v363, v364)
-                if v364 == nil then
-                    break
-                end
-                if v365.UUID == v361 then
-                    local v366 = vu4.ItemUtility:GetItemData(v365.Id)
-                    v359 = v366 and v366.Data.Name or (v365.ItemName or "None")
-                    if v365.Metadata and v365.Metadata.EnchantId then
-                        local v367 = vu4.ItemUtility:GetEnchantData(v365.Metadata.EnchantId)
-                        v360 = v367 and v367.Data.Name
-                        if not v360 then
-                            v360 = "None"
-                        end
-                    end
-                end
-            end
-        end
-        local v368, v369, v370 = pairs(vu6.Data:GetExpect({
-            "Inventory",
-            "Items"
-        }))
-        while true do
-            local v371
-            v370, v371 = v368(v369, v370)
-            if v370 == nil then
-                break
-            end
-            local v372 = vu4.ItemUtility:GetItemData(v371.Id)
-            if v372 and (v372.Data.Type == "Enchant Stones" and v371.Id == p351) then
-                v357 = v357 + 1
-                table.insert(v358, v371.UUID)
-            end
-        end
-        return v359, v360, v357, v358
-    end
-    local vu374 = v350:AddParagraph({
-        Title = "Enchant Status",
-        Content = "Current Rod : None\nCurrent Enchant : None\nEnchant Stones Left : 0"
-    })
-    v350:AddButton({
-        Title = "Click Enchant",
-        Callback = function()
-            task.spawn(function()
-                local v375, v376, v377, v378 = vu373(10)
-                if v375 == "None" or v377 <= 0 then
-                    vu374:SetContent(("Current Rod : <font color=\'rgb(0,170,255)\'>%s</font>\nCurrent Enchant : <font color=\'rgb(0,170,255)\'>%s</font>\nEnchant Stones Left : <font color=\'rgb(0,170,255)\'>%d</font>"):format(v375, v376, v377))
-                    return
-                end
-                local v379 = tick()
-                local v380 = nil
-                while tick() - v379 < 5 do
-                    local v381, v382, v383 = pairs(vu6.Data:Get("EquippedItems") or {})
-                    while true do
-                        local v384
-                        v383, v384 = v381(v382, v383)
-                        if v383 == nil then
-                            break
-                        end
-                        if v384 == v378[1] then
-                            v380 = v383
-                        end
-                    end
-                    if v380 then
-                        break
-                    end
-                    vu5.Events.REEquipItem:FireServer(v378[1], "Enchant Stones")
-                    task.wait(0.3)
-                end
-                if v380 then
-                    vu5.Events.REEquip:FireServer(v380)
-                    task.wait(0.2)
-                    vu5.Events.REAltar:FireServer()
-                    task.wait(1.5)
-                    local _, v385 = vu373(10)
-                    vu374:SetContent(("Current Rod : <font color=\'rgb(0,170,255)\'>%s</font>\nCurrent Enchant : <font color=\'rgb(0,170,255)\'>%s</font>\nEnchant Stones Left : <font color=\'rgb(0,170,255)\'>%d</font>"):format(v375, v385, v377 - 1))
-                end
-            end)
-        end
-    })
-    v350:AddButton({
-        Title = "Teleport Enchant Altar",
-        Callback = function()
-            local v386 = vu7.player.Character or vu7.player.CharacterAdded:Wait()
-            local v387 = v386:FindFirstChild("HumanoidRootPart")
-            local v388 = v386:FindFirstChildOfClass("Humanoid")
-            if v387 and v388 then
-                v387.CFrame = CFrame.new(Vector3.new(3258, - 1301, 1391))
-                v388:ChangeState(Enum.HumanoidStateType.Physics)
-                task.wait(0.1)
-                v388:ChangeState(Enum.HumanoidStateType.Running)
-            end
-        end
-    })
-    v350:AddDivider()
-    v350:AddButton({
-        Title = "Click Double Enchant",
-        Content = "Starting Double Enchanting",
-        Callback = function()
-            task.spawn(function()
-                local v389, v390, v391, v392 = vu373(246)
-                if v389 == "None" or v391 <= 0 then
-                    vu374:SetContent(("Current Rod : <font color=\'rgb(0,170,255)\'>%s</font>\nCurrent Enchant : <font color=\'rgb(0,170,255)\'>%s</font>\nEnchant Stones Left : <font color=\'rgb(0,170,255)\'>%d</font>"):format(v389, v390, v391))
-                    return
-                end
-                local v393 = tick()
-                local v394 = nil
-                while tick() - v393 < 5 do
-                    local v395, v396, v397 = pairs(vu6.Data:Get("EquippedItems") or {})
-                    while true do
-                        local v398
-                        v397, v398 = v395(v396, v397)
-                        if v397 == nil then
-                            break
-                        end
-                        if v398 == v392[1] then
-                            v394 = v397
-                        end
-                    end
-                    if v394 then
-                        break
-                    end
-                    vu5.Events.REEquipItem:FireServer(v392[1], "Enchant Stones")
-                    task.wait(0.3)
-                end
-                if v394 then
-                    vu5.Events.REEquip:FireServer(v394)
-                    task.wait(0.2)
-                    vu5.Events.REAltar2:FireServer()
-                    task.wait(1.5)
-                    local _, v399 = vu373(246)
-                    vu374:SetContent(("Current Rod : <font color=\'rgb(0,170,255)\'>%s</font>\nCurrent Enchant : <font color=\'rgb(0,170,255)\'>%s</font>\nEnchant Stones Left : <font color=\'rgb(0,170,255)\'>%d</font>"):format(v389, v399, v391 - 1))
-                end
-            end)
-        end
-    })
-    v350:AddButton({
-        Title = "Teleport Second Enchant Altar",
-        Callback = function()
-            local v400 = vu7.player.Character or vu7.player.CharacterAdded:Wait()
-            local v401 = v400:FindFirstChild("HumanoidRootPart")
-            local v402 = v400:FindFirstChildOfClass("Humanoid")
-            if v401 and v402 then
-                v401.CFrame = CFrame.new(Vector3.new(1480, 128, - 593))
-                v402:ChangeState(Enum.HumanoidStateType.Physics)
-                task.wait(0.1)
-                v402:ChangeState(Enum.HumanoidStateType.Running)
-            end
-        end
-    })
-    local v403 = v163.Auto:AddSection("Totem Features")
-    TotemPanel = v403:AddParagraph({
-        Title = "Panel Activated Totem",
-        Content = "Scanning Totems..."
-    })
-    HeaderPanel = v403:AddParagraph({
-        Title = "Auto Totem Status",
-        Content = "Idle."
-    })
-    function GetTT()
-        local v404 = vu7.char and (vu7.char:FindFirstChild("HumanoidRootPart") and vu7.char.HumanoidRootPart.Position) or Vector3.zero
-        local v405, v406, v407 = pairs(workspace.Totems:GetChildren())
-        local v408 = {}
-        while true do
-            local v409
-            v407, v409 = v405(v406, v407)
-            if v407 == nil then
-                break
-            end
-            if v409:IsA("Model") then
-                local v410 = v409:FindFirstChild("Handle")
-                if v410 then
-                    v410 = v410:FindFirstChild("Overhead")
-                end
-                if v410 then
-                    v410 = v410:FindFirstChild("Content")
-                end
-                local v411
-                if v410 then
-                    v411 = v410:FindFirstChild("Header")
-                else
-                    v411 = v410
-                end
-                if v410 then
-                    v410 = v410:FindFirstChild("TimerLabel")
-                end
-                local v412 = (v404 - v409:GetPivot().Position).Magnitude
-                local v413 = v410 and v410.Text or "??"
-                local v414 = v411 and v411.Text or "??"
-                table.insert(v408, {
-                    Name = v414,
-                    Distance = v412,
-                    TimeLeft = v413
-                })
-            end
-        end
-        return v408
-    end
-    function UpdTT()
-        local v415 = GetTT()
-        if # v415 ~= 0 then
-            local v416, v417, v418 = ipairs(v415)
-            local v419 = {}
-            while true do
-                local v420
-                v418, v420 = v416(v417, v418)
-                if v418 == nil then
-                    break
-                end
-                table.insert(v419, string.format("%s \226\128\162 %.1f studs \226\128\162 %s", v420.Name, v420.Distance, v420.TimeLeft))
-            end
-            TotemPanel:SetContent(table.concat(v419, "\n"))
-        else
-            TotemPanel:SetContent("No active totems detected.")
-        end
-    end
-    task.spawn(function()
-        while task.wait(1) do
-            pcall(UpdTT)
-        end
-    end)
-    function GetTTUUID(p421)
-        if not Data then
-            Data = vu4.Replion.Client:WaitReplion("Data")
-            if not Data then
-                return nil
-            end
-        end
-        if not Totems then
-            Totems = require(game:GetService("ReplicatedStorage"):WaitForChild("Totems"))
-            if not Totems then
-                return nil
-            end
-        end
-        local v422 = Data:GetExpect({
-            "Inventory",
-            "Totems"
-        }) or {}
-        local v423, v424, v425 = ipairs(v422)
-        while true do
-            local v426
-            v425, v426 = v423(v424, v425)
-            if v425 == nil then
-                return nil
-            end
-            local v427 = "Unknown Totem"
-            if typeof(Totems) == "table" then
-                local v428, v429, v430 = pairs(Totems)
-                while true do
-                    local v431
-                    v430, v431 = v428(v429, v430)
-                    if v430 == nil then
-                        break
-                    end
-                    if v431.Data and v431.Data.Id == v426.Id then
-                        v427 = v431.Data.Name
-                        break
-                    end
-                end
-            end
-            if v427 == p421 then
-                return v426.UUID, v427
-            end
-        end
-    end
-    v403:AddButton({
-        Title = "Teleport To Nearest Totem",
-        Callback = function()
-            local v432 = vu7.char
-            if v432 then
-                v432 = vu7.char:FindFirstChild("HumanoidRootPart")
-            end
-            if not v432 then
-                return
-            end
-            local v433 = GetTT()
-            if # v433 == 0 then
-                return
-            end
-            table.sort(v433, function(p434, p435)
-                return p434.Distance < p435.Distance
-            end)
-            local v436 = v433[1]
-            local v437, v438, v439 = pairs(workspace.Totems:GetChildren())
-            while true do
-                local v440
-                v439, v440 = v437(v438, v439)
-                if v439 == nil then
-                    break
-                end
-                if v440:IsA("Model") then
-                    local v441 = v440:GetPivot().Position
-                    if math.abs((v441 - v432.Position).Magnitude - v436.Distance) < 1 then
-                        v432.CFrame = CFrame.new(v441 + Vector3.new(0, 3, 0))
-                        break
-                    end
-                end
-            end
-        end
-    })
-    TotemsFolder = vu1.RS:WaitForChild("Totems")
-    vu7.Totems = vu7.Totems or {}
-    vu7.TotemDisplayName = vu7.TotemDisplayName or {}
-    local v442, v443, v444 = ipairs(TotemsFolder:GetChildren())
-    local function vu448(pu445)
-        if pu445 then
-            local v446, v447 = pcall(function()
-                vu5.Events.Totem:FireServer(pu445)
-            end)
-            if not v446 then
-                warn("[Chloe X] Totem spawn failed:", tostring(v447))
-            end
-        end
-    end
-    local function vu449()
-        if RealTotemPanel and RealTotemPanel.Show then
-            RealTotemPanel:Show()
-        end
-    end
-    while true do
-        local v450, v451 = v442(v443, v444)
-        if v450 == nil then
-            break
-        end
-        v444 = v450
-        if v451:IsA("ModuleScript") then
-            local v452, v453 = pcall(require, v451)
-            if v452 and (typeof(v453) == "table" and v453.Data) then
-                local v454 = v453.Data.Name or "Unknown"
-                local v455 = v453.Data.Id or "Unknown"
-                local v456 = {
-                    Name = v454,
-                    Id = v455
-                }
-                vu7.Totems[v455] = v456
-                vu7.Totems[v454] = v456
-                table.insert(vu7.TotemDisplayName, v454)
-            end
-        end
-    end
-    selectedTotem = nil
-    TotemDropdown = v403:AddDropdown({
-        Title = "Select Totem to Auto Place",
-        Options = vu7.TotemDisplayName or {
-            "No Totems Found"
-        },
-        Default = vu7.TotemDisplayName and (vu7.TotemDisplayName[1] or "No Totems Found") or "No Totems Found",
-        Callback = function(p457)
-            selectedTotem = p457
-        end
-    })
-    v403:AddToggle({
-        Title = "Auto Place Totem (Beta)",
-        Content = "Place Totem every 60 minutes automatically.",
-        Default = false,
-        Callback = function(p458)
-            TotemActive = p458
-            if p458 then
-                if not selectedTotem then
-                    HeaderPanel:SetContent("Please select a Totem first.")
-                    TotemActive = false
-                    return
-                end
-                local vu459, vu460 = GetTTUUID(selectedTotem)
-                if not vu459 then
-                    HeaderPanel:SetContent("You don\'t own any Totem.")
-                    TotemActive = false
-                    return
-                end
-                HeaderPanel:SetContent(("Auto Totem Enabled [%s] \226\128\162 Waiting 60m loop..."):format(selectedTotem))
-                task.spawn(function()
-                    local v461 = 0
-                    while TotemActive do
-                        vu448(vu459)
-                        if v461 < 3 then
-                            HeaderPanel:SetContent(("Totem Used [%s] \226\128\162 Next in 60m"):format(selectedTotem))
-                            v461 = v461 + 1
-                        elseif v461 == 3 then
-                            v461 = v461 + 1
-                            task.wait(1)
-                            HeaderPanel:SetContent("Reverting to Real Totem Panel...")
-                            task.wait(0.5)
-                            vu449()
-                        end
-                        for _ = 3600, 1, - 1 do
-                            if not TotemActive then
-                                break
-                            end
-                            task.wait(1)
-                        end
-                        local v462, v463 = GetTTUUID(selectedTotem)
-                        vu460 = v463
-                        vu459 = v462
-                        if not vu459 then
-                            HeaderPanel:SetContent("Totem not found in inventory anymore.")
-                            TotemActive = false
-                            break
-                        end
-                    end
-                    HeaderPanel:SetContent("Auto Totem Disabled.")
-                end)
-            else
-                HeaderPanel:SetContent("Auto Totem Disabled.")
-                vu449()
-            end
-        end
-    })
-    Potion = v163.Auto:AddSection("Potions Features")
-    PotionsFolder = vu1.RS:WaitForChild("Potions")
-    vu7.Potions = vu7.Potions or {}
-    vu7.PotionDisplayName = vu7.PotionDisplayName or {}
-    local v464, v465, v466 = ipairs(PotionsFolder:GetChildren())
-    while true do
-        local v467, v468 = v464(v465, v466)
-        if v467 == nil then
-            break
-        end
-        v466 = v467
-        if v468:IsA("ModuleScript") then
-            local v469, v470 = pcall(require, v468)
-            if v469 and (typeof(v470) == "table" and v470.Data) then
-                local v471 = v470.Data.Name or "Unknown"
-                local v472 = v470.Data.Id or "Unknown"
-                if not string.find(string.lower(v471), "totem") then
-                    local v473 = {
-                        Name = v471,
-                        Id = v472
-                    }
-                    vu7.Potions[v472] = v473
-                    vu7.Potions[v471] = v473
-                    table.insert(vu7.PotionDisplayName, v471)
-                end
-            end
-        end
-    end
-    selectedPotions = {}
-    Potion:AddDropdown({
-        Title = "Select Potions",
-        Multi = true,
-        Options = vu7.PotionDisplayName,
-        Callback = function(p474)
-            selectedPotions = p474
-        end
-    })
-    Potion:AddToggle({
-        Title = "Auto Use Potions",
-        Default = false,
-        Callback = function(p475)
-            _G.AutoUsePotions = p475
-            task.spawn(function()
-                while true do
-                    if not _G.AutoUsePotions then
-                        return
-                    end
-                    task.wait(1)
-                    local v476 = vu6.Data:GetExpect({
-                        "Inventory",
-                        "Potions"
-                    }) or {}
-                    local v477, v478, v479 = ipairs(selectedPotions)
-                    while true do
-                        local v480
-                        v479, v480 = v477(v478, v479)
-                        if v479 == nil then
-                            break
-                        end
-                        local v481 = vu7.Potions[v480]
-                        if v481 then
-                            local v482, v483, v484 = ipairs(v476)
-                            while true do
-                                local vu485
-                                v484, vu485 = v482(v483, v484)
-                                if v484 == nil then
-                                    break
-                                end
-                                if vu485.Id == v481.Id then
-                                    pcall(function()
-                                        vu4.Net["RF/ConsumePotion"]:InvokeServer(vu485.UUID, 1)
-                                    end)
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    })
-    local v486 = v163.Auto:AddSection("Event Features")
-    v486:AddDropdown({
-        Options = v96() or {},
-        Multi = false,
-        Title = "Priority Event",
-        Callback = function(p487)
-            vu7.priorityEvent = p487
-        end
-    })
-    v486:AddDropdown({
-        Options = v96() or {},
-        Multi = true,
-        Title = "Select Event",
-        Callback = function(p488)
-            vu7.selectedEvents = {}
-            local v489, v490, v491 = pairs(p488)
-            while true do
-                local v492
-                v491, v492 = v489(v490, v491)
-                if v491 == nil then
-                    break
-                end
-                table.insert(vu7.selectedEvents, v492)
-            end
-            vu7.curCF = nil
-            if vu7.autoEventActive and (# vu7.selectedEvents > 0 or vu7.priorityEvent) then
-                task.spawn(vu7.loop)
-            end
-        end
-    })
-    v486:AddToggle({
-        Title = "Auto Event",
-        Default = false,
-        Callback = function(p493)
-            vu7.autoEventActive = p493
-            if p493 and (# vu7.selectedEvents > 0 or vu7.priorityEvent) then
-                vu7.origCF = vu7.origCF or vu143(vu2.Character).CFrame
-                task.spawn(vu7.loop)
-            else
-                if vu7.origCF then
-                    vu2.Character:PivotTo(vu7.origCF)
-                    chloex("Auto Event Off")
-                end
-                local v494 = vu7
-                vu7.curCF = nil
-                v494.origCF = nil
-            end
-        end
-    })
-    function getGroupedByType(p495)
-        local v496 = vu6.Data:GetExpect({
-            "Inventory",
-            "Items"
-        })
-        local v497, v498, v499 = ipairs(v496)
-        local v500 = {}
-        local v501 = {}
-        while true do
-            local v502
-            v499, v502 = v497(v498, v499)
-            if v499 == nil then
-                break
-            end
-            local v503 = vu4.ItemUtility.GetItemDataFromItemType("Items", v502.Id)
-            if v503 and (v503.Data.Type == p495 and not v502.Favorited) then
-                local v504 = v503.Data.Name
-                v500[v504] = v500[v504] or {
-                    count = 0,
-                    uuids = {}
-                }
-                v500[v504].count = v500[v504].count + (v502.Quantity or 1)
-                table.insert(v500[v504].uuids, v502.UUID)
-            end
-        end
-        local v505, v506, v507 = pairs(v500)
-        while true do
-            local v508
-            v507, v508 = v505(v506, v507)
-            if v507 == nil then
-                break
-            end
-            table.insert(v501, ("%s x%d"):format(v507, v508.count))
-        end
-        return v500, v501
-    end
-    local v509 = v163.Trade:AddSection("Trading Fish Features")
-    local v510 = v163.Trade:AddSection("Trading Coin Features")
-    local vu511 = v509:AddParagraph({
-        Title = "Panel Name Trading",
-        Content = "\r\nPlayer : ???\r\nItem   : ???\r\nAmount : 0\r\nStatus : Idle\r\nSuccess: 0 / 0\r\n"
-    })
-    local vu512 = v510:AddParagraph({
-        Title = "Panel Coin Trading",
-        Content = "\r\nPlayer   : ???\r\nTarget   : 0\r\nProgress : 0 / 0\r\nStatus   : Idle\r\nResult   : Success : 0 | Received : 0\r\n"
-    })
-    local vu513 = {}
-    function _G.safeSetContent(p514, p515)
-        if p514 then
-            vu513[p514] = p515
-        end
-    end
-    vu1.RunService.Heartbeat:Connect(function()
-        local v516, v517, v518 = pairs(vu513)
-        while true do
-            local v519
-            v518, v519 = v516(v517, v518)
-            if v518 == nil then
-                break
-            end
-            v518:SetContent(v519)
-            vu513[v518] = nil
-        end
-    end)
-    local function vu524(p520)
-        local v521 = vu7.trade
-        local v522 = "200,200,200"
-        if p520 and p520:lower():find("send") then
-            v522 = "51,153,255"
-        elseif p520 and p520:lower():find("complete") then
-            v522 = "0,204,102"
-        elseif p520 then
-            v522 = p520:lower():find("time") and "255,69,0" or v522
-        end
-        local v523 = string.format("\r\n<font color=\'rgb(173,216,230)\'>Player : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Item   : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Amount : %d</font>\r\n<font color=\'rgb(%s)\'>Status : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Success: %d / %d</font>\r\n", v521.selectedPlayer or "???", v521.selectedItem or "???", v521.tradeAmount or 0, v522, p520 or "Idle", v521.successCount or 0, v521.totalToTrade or 0)
-        _G.safeSetContent(vu511, v523)
-    end
-    local function vu529(p525)
-        local v526 = vu7.trade
-        local v527 = "200,200,200"
-        if p525 and p525:lower():find("send") then
-            v527 = "51,153,255"
-        elseif p525 and p525:lower():find("progress") then
-            v527 = "255,215,0"
-        elseif p525 and p525:lower():find("complete") then
-            v527 = "0,204,102"
-        elseif p525 then
-            v527 = p525:lower():find("time") and "255,69,0" or v527
-        end
-        local v528 = string.format("\r\n<font color=\'rgb(173,216,230)\'>Player   : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Target   : %d</font>\r\n<font color=\'rgb(173,216,230)\'>Progress : %d / %d</font>\r\n<font color=\'rgb(%s)\'>Status   : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Result   : Success : %d | Received : %d</font>\r\n", v526.selectedPlayer or "???", v526.targetCoins or 0, v526.successCoins or 0, v526.targetCoins or 0, v527, p525 or "Idle", v526.successCoins or 0, v526.totalReceived or 0)
-        _G.safeSetContent(vu512, v528)
-    end
-    local function vu535(p530)
-        local v531, v532, v533 = ipairs(vu6.Data:GetExpect({
-            "Inventory",
-            "Items"
-        }))
-        while true do
-            local v534
-            v533, v534 = v531(v532, v533)
-            if v533 == nil then
-                break
-            end
-            if v534.UUID == p530 then
-                return true
-            end
-        end
-        return false
-    end
-    local function vu544(p536, pu537, p538, p539)
-        local v540 = vu7.trade
-        v540.lastResult = nil
-        v540.awaiting = true
-        local v541 = false
-        local vu542 = vu1.Players:FindFirstChild(p536)
-        if not vu542 then
-            v540.trading = false
-            vu524("<font color=\'#ff3333\'>Player not found</font>")
-            vu529("<font color=\'#ff3333\'>Player not found</font>")
-            return false
-        end
-        if p538 then
-            vu524("Sending")
-            chloex("Sending " .. p538)
-        else
-            vu529("Sending")
-            chloex("Sending fish for coins")
-        end
-        if not pcall(function()
-            vu5.Functions.Trade:InvokeServer(vu542.UserId, pu537)
-        end) then
-            return false
-        end
-        local v543 = tick()
-        while v540.trading and not v541 do
-            if vu535(pu537) then
-                if tick() - v543 > 10 then
-                    return false
-                end
-            else
-                v541 = true
-                if p538 then
-                    v540.successCount = v540.successCount + 1
-                    vu524("Completed")
-                else
-                    v540.successCoins = v540.successCoins + (p539 or 0)
-                    v540.totalReceived = v540.successCoins
-                    vu529("Progress")
-                end
-            end
-            task.wait(0.2)
-        end
-        return v541
-    end
-    local function vu551(p545, p546, p547, p548)
-        local v549 = vu7.trade
-        local v550 = 0
-        while v550 < 3 and v549.trading do
-            if vu544(p545, p546, p547, p548) then
-                task.wait(2.5)
-                return true
-            end
-            v550 = v550 + 1
-            task.wait(1)
-        end
-        return false
-    end
-    function startTradeByName()
-        local v552 = vu7.trade
-        if not v552.trading then
-            if not (v552.selectedPlayer and v552.selectedItem) then
-                return chloex("Select player & item first!")
-            end
-            v552.trading = true
-            v552.successCount = 0
-            chloex("Starting trade with " .. v552.selectedPlayer)
-            local v553 = v552.currentGrouped[v552.selectedItem]
-            if not v553 then
-                v552.trading = false
-                vu524("<font color=\'#ff3333\'>Item not found</font>")
-                return chloex("Item not found")
-            end
-            v552.totalToTrade = math.min(v552.tradeAmount, # v553.uuids)
-            local v554 = 1
-            while v552.trading and v552.successCount < v552.totalToTrade do
-                vu551(v552.selectedPlayer, v553.uuids[v554], v552.selectedItem)
-                local v555 = v554 + 1
-                v554 = # v553.uuids < v555 and 1 or v555
-                task.wait(2)
-            end
-            v552.trading = false
-            vu524("<font color=\'#66ccff\'>All trades finished</font>")
-            chloex("All trades finished")
-        end
-    end
-    function chooseFishesByRange(p556, p557)
-        table.sort(p556, function(p558, p559)
-            return p558.Price > p559.Price
-        end)
-        local v560, v561, v562 = ipairs(p556)
-        local v563 = 0
-        local v564 = {}
-        while true do
-            local v565
-            v562, v565 = v560(v561, v562)
-            if v562 == nil then
-                break
-            end
-            if v563 + v565.Price <= p557 then
-                table.insert(v564, v565)
-                v563 = v563 + v565.Price
-            end
-            if p557 <= v563 then
-                break
-            end
-        end
-        if v563 < p557 and # p556 > 0 then
-            table.insert(v564, p556[# p556])
-        end
-        return v564, v563
-    end
-    function startTradeByCoin()
-        local v566 = vu7.trade
-        if v566.trading then
-            return
-        elseif v566.selectedPlayer and v566.targetCoins > 0 then
-            v566.trading = true
-            v566.totalReceived = 0
-            v566.successCoins = 0
-            v566.sentCoins = 0
-            vu529("<font color=\'#ffaa00\'>Starting...</font>")
-            chloex("Starting coin trade with " .. v566.selectedPlayer)
-            local v567 = vu1.Players.LocalPlayer
-            local v568 = vu4.PlayerStatsUtility:GetPlayerModifiers(v567)
-            local v569 = vu6.Data:GetExpect({
-                "Inventory",
-                "Items"
-            })
-            local v570, v571, v572 = ipairs(v569)
-            local v573 = {}
-            while true do
-                local v574
-                v572, v574 = v570(v571, v572)
-                if v572 == nil then
-                    break
-                end
-                if not v574.Favorited then
-                    local v575 = vu4.ItemUtility:GetItemData(v574.Id)
-                    if v575 and (v575.Data and v575.Data.Type == "Fish") then
-                        local v576 = vu4.VendorUtility:GetSellPrice(v574) or (v575.SellPrice or 0)
-                        local v577 = math.ceil(v576 * (v568 and (v568.CoinMultiplier or 1) or 1))
-                        if v577 > 0 then
-                            table.insert(v573, {
-                                UUID = v574.UUID,
-                                Name = v575.Data.Name or "Unknown",
-                                Price = v577
-                            })
-                        end
-                    end
-                end
-            end
-            if # v573 ~= 0 then
-                local v578, v579 = chooseFishesByRange(v573, v566.targetCoins)
-                if # v578 ~= 0 then
-                    v566.totalToTrade = # v578
-                    v566.targetCoins = v579
-                    if vu1.Players:FindFirstChild(v566.selectedPlayer) then
-                        local v580, v581, v582 = ipairs(v578)
-                        while true do
-                            local v583
-                            v582, v583 = v580(v581, v582)
-                            if v582 == nil or not v566.trading then
-                                break
-                            end
-                            v566.sentCoins = v566.sentCoins + v583.Price
-                            vu529(string.format("<font color=\'#ffaa00\'>Progress : %d / %d</font>", v566.sentCoins, v566.targetCoins))
-                            vu551(v566.selectedPlayer, v583.UUID, nil, v583.Price)
-                            v566.successCoins = v566.sentCoins
-                            task.wait(2)
-                        end
-                        v566.trading = false
-                        vu529(string.format("<font color=\'#66ccff\'>Coin trade finished (Target: %d, Received: %d)</font>", v566.targetCoins, v566.successCoins))
-                        chloex(string.format("Coin trade finished (Target: %d, Received: %d)", v566.targetCoins, v566.successCoins))
                     else
-                        v566.trading = false
-                        vu529("<font color=\'#ff3333\'>Player not found</font>")
+                        -- Sembunyikan platform jika di darat
+                        waterPlatform.Position = Vector3.new(hrp.Position.X, -500, hrp.Position.Z)
                     end
-                else
-                    v566.trading = false
-                    vu529("<font color=\'#ff3333\'>No valid fishes for target</font>")
-                    return
-                end
+                end)
+
             else
-                v566.trading = false
-                vu529("<font color=\'#ff3333\'>No fishes found</font>")
-                chloex("\226\154\160 No fishes found in inventory")
-                return
-            end
-        else
-            return chloex("\226\154\160 Select player & coin target first!")
-        end
-    end
-    local vu586 = v509:AddDropdown({
-        Options = {},
-        Multi = false,
-        Title = "Select Item",
-        Callback = function(p584)
-            local v585 = vu7.trade
-            if p584 then
-                p584 = p584:match("^(.-) x") or p584
-            end
-            v585.selectedItem = p584
-            vu524()
-        end
-    })
-    v509:AddButton({
-        Title = "Refresh Fish",
-        Callback = function()
-            local v587, v588 = getGroupedByType("Fish")
-            vu7.trade.currentGrouped = v587
-            vu586:SetValues(v588 or {})
-        end,
-        SubTitle = "Refresh Stone",
-        SubCallback = function()
-            local v589, v590 = getGroupedByType("Enchant Stones")
-            vu7.trade.currentGrouped = v589
-            vu586:SetValues(v590 or {})
-        end
-    })
-    v509:AddInput({
-        Title = "Amount to Trade",
-        Default = "1",
-        Callback = function(p591)
-            vu7.trade.tradeAmount = tonumber(p591) or 1
-            vu524()
-        end
-    })
-    local vu593 = v509:AddDropdown({
-        Options = {},
-        Multi = false,
-        Title = "Select Player",
-        Callback = function(p592)
-            vu7.trade.selectedPlayer = p592
-            vu524()
-        end
-    })
-    v509:AddButton({
-        Title = "Refresh Player",
-        Callback = function()
-            local v594, v595, v596 = ipairs(vu1.Players:GetPlayers())
-            local v597 = {}
-            while true do
-                local v598
-                v596, v598 = v594(v595, v596)
-                if v596 == nil then
-                    break
-                end
-                if v598 ~= vu7.player then
-                    table.insert(v597, v598.Name)
-                end
-            end
-            vu593:SetValues(v597 or {})
-        end
-    })
-    v509:AddToggle({
-        Title = "Start By Name",
-        Default = false,
-        Callback = function(p599)
-            if p599 then
-                task.spawn(startTradeByName)
-            else
-                vu7.trade.trading = false
-                vu524()
+                WindUI:Notify({ Title = "Walk on Water OFF!", Duration = 3, Icon = "x", })
+                isWalkOnWater = false
+                if walkOnWaterConnection then walkOnWaterConnection:Disconnect() walkOnWaterConnection = nil end
+                if waterPlatform then waterPlatform:Destroy() waterPlatform = nil end
             end
         end
+    }))
+
+    -- OTHER
+    local other = player:Section({
+        Title = "Other",
+        TextSize = 20,
     })
-    local vu601 = v510:AddDropdown({
-        Options = {},
-        Multi = false,
-        Title = "Select Player",
-        Callback = function(p600)
-            vu7.trade.selectedPlayer = p600
-            vu529()
+
+    local isHideActive = false
+    local hideConnection = nil
+    
+    local customName = ".gg/CatrazHub|VynHub"
+    local customLevel = "Lvl. 0" 
+
+    local custname = Reg("cfakennme",other:Input({
+        Title = "Custom Fake Name",
+        Desc = "Nama samaran yang akan muncul di atas kepala player.",
+        Value = customName,
+        Placeholder = "Hidden User",
+        Icon = "user-x",
+        Callback = function(text)
+            customName = text
         end
-    })
-    v510:AddButton({
-        Title = "Refresh Player",
-        Callback = function()
-            local v602, v603, v604 = ipairs(vu1.Players:GetPlayers())
-            local v605 = {}
-            while true do
-                local v606
-                v604, v606 = v602(v603, v604)
-                if v604 == nil then
-                    break
-                end
-                if v606 ~= vu7.player then
-                    table.insert(v605, v606.Name)
-                end
-            end
-            vu601:SetValues(v605 or {})
+    }))
+
+   local custlvl = Reg("cfkelvl",other:Input({
+        Title = "Custom Fake Level",
+        Desc = "Level samaran (misal: 'Lvl. 100' atau 'Max').",
+        Value = customLevel,
+        Placeholder = "Lvl. 0",
+        Icon = "bar-chart-2",
+        Callback = function(text)
+            customLevel = text
         end
-    })
-    v510:AddInput({
-        Title = "Target Coin",
-        Default = "0",
-        Callback = function(p607)
-            vu7.trade.targetCoins = tonumber(p607) or 0
-            vu529()
-        end
-    })
-    v510:AddToggle({
-        Title = "Start By Coin",
-        Default = false,
-        Callback = function(p608)
-            if p608 then
-                task.spawn(startTradeByCoin)
-            else
-                vu7.trade.trading = false
-            end
-        end
-    })
-    TradeByRarity = v163.Trade:AddSection("Trading Rarity Features")
-    Rarity_Monitor = TradeByRarity:AddParagraph({
-        Title = "Panel Rarity Trading",
-        Content = "\r\nPlayer  : ???\r\nRarity  : ???\r\nCount   : 0\r\nStatus  : Idle\r\nSuccess : 0 / 0\r\n"
-    })
-    local function vu613(p609)
-        local v610 = vu7.trade
-        local v611 = "200,200,200"
-        if p609 and p609:lower():find("send") then
-            v611 = "51,153,255"
-        elseif p609 and p609:lower():find("complete") then
-            v611 = "0,204,102"
-        elseif p609 then
-            v611 = p609:lower():find("time") and "255,69,0" or v611
-        end
-        local v612 = string.format("\r\n<font color=\'rgb(173,216,230)\'>Player  : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Rarity  : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Count   : %d</font>\r\n<font color=\'rgb(%s)\'>Status  : %s</font>\r\n<font color=\'rgb(173,216,230)\'>Success : %d / %d</font>\r\n", v610.selectedPlayer or "???", v610.selectedRarity or "???", v610.totalToTrade or 0, v611, p609 or "Idle", v610.successCount or 0, v610.totalToTrade or 0)
-        _G.safeSetContent(Rarity_Monitor, v612)
-    end
-    TradeByRarity:AddDropdown({
-        Options = {
-            "Common",
-            "Uncommon",
-            "Rare",
-            "Epic",
-            "Legendary",
-            "Mythic",
-            "Secret"
-        },
-        Multi = false,
-        Title = "Select Rarity",
-        Callback = function(p614)
-            vu7.trade.selectedRarity = p614
-            vu613("Selected rarity: " .. (p614 or "???"))
-        end
-    })
-    rarityPlayerDropdown = TradeByRarity:AddDropdown({
-        Options = {},
-        Multi = false,
-        Title = "Select Player",
-        Callback = function(p615)
-            vu7.trade.selectedPlayer = p615
-            vu613()
-        end
-    })
-    TradeByRarity:AddButton({
-        Title = "Refresh Player",
-        Callback = function()
-            local v616, v617, v618 = ipairs(vu1.Players:GetPlayers())
-            local v619 = {}
-            while true do
-                local v620
-                v618, v620 = v616(v617, v618)
-                if v618 == nil then
-                    break
-                end
-                if v620 ~= vu7.player then
-                    table.insert(v619, v620.Name)
-                end
-            end
-            rarityPlayerDropdown:SetValues(v619 or {})
-        end
-    })
-    TradeByRarity:AddInput({
-        Title = "Amount to Trade",
-        Default = "1",
-        Callback = function(p621)
-            vu7.trade.rarityAmount = tonumber(p621) or 1
-            vu613("Set amount: " .. tostring(vu7.trade.rarityAmount))
-        end
-    })
-    function startTradeByRarity()
-        local v622 = vu7.trade
-        if not v622.trading then
-            if not (v622.selectedPlayer and v622.selectedRarity) then
-                return chloex("\226\154\160 Select player & rarity first!")
-            end
-            v622.trading = true
-            v622.successCount = 0
-            chloex("Starting rarity trade (" .. v622.selectedRarity .. ") with " .. v622.selectedPlayer)
-            vu613("<font color=\'#ffaa00\'>Scanning " .. v622.selectedRarity .. " fishes...</font>")
-            local v623, v624, v625 = ipairs(vu6.Data:GetExpect({
-                "Inventory",
-                "Items"
-            }))
-            local v626 = {}
-            while true do
-                local v627
-                v625, v627 = v623(v624, v625)
-                if v625 == nil then
-                    break
-                end
-                if not v627.Favorited then
-                    local v628 = vu4.ItemUtility.GetItemDataFromItemType("Items", v627.Id)
-                    if v628 and (v628.Data.Type == "Fish" and _G.TierFish[v628.Data.Tier] == v622.selectedRarity) then
-                        table.insert(v626, {
-                            UUID = v627.UUID,
-                            Name = v628.Data.Name
-                        })
-                    end
-                end
-            end
-            if # v626 == 0 then
-                v622.trading = false
-                vu613("<font color=\'#ff3333\'>No " .. v622.selectedRarity .. " fishes found</font>")
-                return chloex("No " .. v622.selectedRarity .. " fishes found")
-            end
-            v622.totalToTrade = math.min(# v626, v622.rarityAmount or # v626)
-            vu613(string.format("Sending %d %s fishes...", v622.totalToTrade, v622.selectedRarity))
-            local v629 = 1
-            while v622.trading and v629 <= v622.totalToTrade do
-                local v630 = v626[v629]
-                if vu551(v622.selectedPlayer, v630.UUID, v630.Name) then
-                    v622.successCount = v622.successCount + 1
-                    vu613(string.format("Progress: %d / %d (%s)", v622.successCount, v622.totalToTrade, v622.selectedRarity))
-                end
-                v629 = v629 + 1
-                task.wait(2.5)
-            end
-            v622.trading = false
-            vu613("<font color=\'#66ccff\'>Rarity trade finished</font>")
-            chloex("Rarity trade finished (" .. v622.selectedRarity .. ")")
-        end
-    end
-    TradeByRarity:AddToggle({
-        Title = "Start By Rarity",
-        Default = false,
-        Callback = function(p631)
-            if p631 then
-                task.spawn(startTradeByRarity)
-            else
-                vu7.trade.trading = false
-                vu613("Idle")
-            end
-        end
-    })
-    AcceptTrade = v163.Trade:AddSection("Auto Accept Features")
-    AcceptTrade:AddToggle({
-        Title = "Auto Accept Trade",
-        Default = _G.AutoAccept,
-        Callback = function(p632)
-            _G.AutoAccept = p632
-        end
-    })
-    spawn(function()
-        while true do
-            repeat
-                task.wait(1)
-            until _G.AutoAccept
+    }))
+
+    local hideusn = Reg("hideallusr",other:Toggle({
+        Title = "Hide All Usernames (Streamer Mode)",
+        Value = false,
+        Callback = function(state)
+            isHideActive = state
+            
+            -- 1. Atur Visibilitas Leaderboard (PlayerList)
             pcall(function()
-                local v633 = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Prompt")
-                if v633 and v633:FindFirstChild("Blackout") then
-                    local v634 = v633.Blackout
-                    local v635 = v634:FindFirstChild("Options") and v634.Options:FindFirstChild("Yes")
-                    if v635 then
-                        local v636 = game:GetService("VirtualInputManager")
-                        local v637 = v635.AbsolutePosition
-                        local v638 = v635.AbsoluteSize
-                        local v639 = v637.X + v638.X / 2
-                        local v640 = v637.Y + v638.Y / 2 + 50
-                        v636:SendMouseButtonEvent(v639, v640, 0, true, game, 1)
-                        task.wait(0.03)
-                        v636:SendMouseButtonEvent(v639, v640, 0, false, game, 1)
-                    end
-                end
+                game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, not state)
             end)
-        end
-    end)
-    ThresholdSec = v163.Farm:AddSection("Threshold Features")
-    ThresholdParagraph = ThresholdSec:AddParagraph({
-        Title = "Farm Threshold Panel",
-        Content = "\r\nCurrent : 0\r\nTarget : 0\r\nProgress : 0%\r\n"
-    })
-    ThresholdTotalBase = 0
-    ThresholdBase = 0
-    ThresholdTarget = 0
-    ThresholdPos2 = ""
-    ThresholdPos1 = ""
-    ThresholdSec:AddInput({
-        Title = "Position 1",
-        Callback = function(p641)
-            ThresholdPos1 = p641 == "" and ("" or p641) or p641
-        end
-    })
-    ThresholdSec:AddInput({
-        Title = "Position 2",
-        Callback = function(p642)
-            ThresholdPos2 = p642 == "" and ("" or p642) or p642
-        end
-    })
-    ThresholdSec:AddButton({
-        Title = "Copy Current Position",
-        Callback = function()
-            local v643 = vu1.Players.LocalPlayer
-            local v644 = (v643.Character or v643.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v644 then
-                local v645 = string.format("%.1f, %.1f, %.1f", v644.Position.X, v644.Position.Y, v644.Position.Z)
-                if setclipboard then
-                    setclipboard(v645)
-                end
-                chloex("Successfully copied your position to clipboard!")
-            end
-        end
-    })
-    ThresholdSec:AddInput({
-        Title = "Target Fish Caught",
-        Callback = function(p646)
-            ThresholdTarget = tonumber(p646) or 0
-        end
-    })
-    ThresholdSec:AddToggle({
-        Title = "Enable Threshold Farm",
-        Default = false,
-        Callback = function(p647)
-            _G.ThresholdFarm = p647
-            if p647 then
-                ThresholdBase = (vu6.Data:Get({
-                    "Statistics"
-                }) or {}).FishCaught or 0
-                ThresholdTotalBase = ThresholdBase
-            end
-        end
-    })
-    CoinSec = v163.Farm:AddSection("Coin Features")
-    CoinParagraph = CoinSec:AddParagraph({
-        Title = "Coin Farm Panel",
-        Content = "\r\nCurrent : 0\r\nTarget : 0\r\nProgress : 0%\r\n"
-    })
-    CoinBase = 0
-    CoinTarget = 0
-    CoinSpotOptions = {
-        ["Kohana Volcano"] = Vector3.new(- 552, 19, 183),
-        ["Tropical Grove"] = Vector3.new(- 2084, 3, 3700)
-    }
-    CoinSec:AddDropdown({
-        Title = "Coin Location",
-        Options = {
-            "Kohana Volcano",
-            "Tropical Grove"
-        },
-        Multi = false,
-        Callback = function(p648)
-            SelectedCoinSpot = CoinSpotOptions[p648]
-        end
-    })
-    CoinSec:AddInput({
-        Title = "Target Coin",
-        Placeholder = "Enter coin target...",
-        Callback = function(p649)
-            local v650 = tonumber(p649)
-            if v650 then
-                CoinTarget = v650
-            end
-        end
-    })
-    CoinSec:AddToggle({
-        Title = "Enable Coin Farm",
-        Default = false,
-        Callback = function(p651)
-            _G.CoinFarm = p651
-            if p651 then
-                repeat
-                    task.wait()
-                until vu6.Data
-                CoinBase = vu6.Data:Get({
-                    "Coins"
-                }) or 0
-            end
-        end
-    })
-    EnchantSec = v163.Farm:AddSection("Enchant Stone Features")
-    vu374 = EnchantSec:AddParagraph({
-        Title = "Enchant Stone Farm Panel",
-        Content = "\r\nCurrent : 0\r\nTarget : 0\r\nProgress : 0%\r\n"
-    })
-    EnchantBase = 0
-    EnchantTarget = 0
-    EnchantSpotOptions = {
-        ["Tropical Grove"] = Vector3.new(- 2084, 3, 3700),
-        ["Esoteric Depths"] = Vector3.new(3272, - 1302, 1404)
-    }
-    EnchantSec:AddDropdown({
-        Title = "Enchant Stone Location",
-        Options = {
-            "Tropical Grove",
-            "Esoteric Depths"
-        },
-        Multi = false,
-        Callback = function(p652)
-            SelectedEnchantSpot = EnchantSpotOptions[p652]
-        end
-    })
-    EnchantSec:AddInput({
-        Title = "Target Enchant Stone",
-        Placeholder = "Enter enchant stone target...",
-        Callback = function(p653)
-            local v654 = tonumber(p653)
-            if v654 then
-                EnchantTarget = v654
-            end
-        end
-    })
-    EnchantSec:AddToggle({
-        Title = "Enable Enchant Farm",
-        Default = false,
-        Callback = function(p655)
-            _G.EnchantFarm = p655
-            if p655 then
-                local v656 = vu6.Data:Get({
-                    "Inventory",
-                    "Items"
-                }) or {}
-                local v657, v658, v659 = ipairs(v656)
-                local v660 = 0
-                while true do
-                    local v661
-                    v659, v661 = v657(v658, v659)
-                    if v659 == nil then
-                        break
-                    end
-                    if v661.Id == 10 then
-                        v660 = v660 + v661.Amount
-                        if not v660 then
-                            v660 = 1
-                        end
-                    end
-                end
-                EnchantBase = v660
-            end
-        end
-    })
-    task.spawn(function()
-        local v662 = nil
-        local v663 = 0
-        local v664 = false
-        while task.wait(1) do
-            local vu665 = vu6.Data
-            if vu665 then
-                local vu666 = vu1.Players.LocalPlayer.Character
-                if vu666 then
-                    vu666 = vu666:FindFirstChild("HumanoidRootPart")
-                end
-                if vu666 and not v662 then
-                    v662 = vu666.CFrame
-                end
-                if _G.ThresholdFarm then
-                    local vu667 = (vu665:Get({
-                        "Statistics"
-                    }) or {}).FishCaught or 0
-                    if v663 == 0 then
-                        v663 = ThresholdBase
-                    end
-                    local v668 = vu667 - ThresholdBase
-                    local v669 = ThresholdTarget <= 0 and 0 or (math.min(v668 / ThresholdTarget * 100, 100) or 0)
-                    ThresholdParagraph:SetContent(string.format("Current : %s\nTarget : %s\nProgress : %.1f%%", v668, ThresholdTarget, v669))
-                    if vu666 and (ThresholdPos1 ~= "" and (ThresholdPos2 ~= "" and not v664)) then
-                        local vu670 = true
-                        task.spawn(function()
-                            local v671 = Vector3.new(unpack(string.split(ThresholdPos1, ",")))
-                            local v672 = Vector3.new(unpack(string.split(ThresholdPos2, ",")))
-                            local v673 = vu667 + ThresholdTarget
-                            while _G.ThresholdFarm do
-                                repeat
-                                    task.wait(1)
-                                    vu667 = (vu665:Get({
-                                        "Statistics"
-                                    }) or {}).FishCaught or 0
-                                until v673 <= vu667 or not _G.ThresholdFarm
-                                if not _G.ThresholdFarm then
-                                    break
-                                end
-                                vu666.CFrame = CFrame.new(v672 + Vector3.new(0, 3, 0))
-                                ThresholdBase = vu667
-                                local v674 = vu667 + ThresholdTarget
-                                repeat
-                                    task.wait(1)
-                                    vu667 = (vu665:Get({
-                                        "Statistics"
-                                    }) or {}).FishCaught or 0
-                                until v674 <= vu667 or not _G.ThresholdFarm
-                                if not _G.ThresholdFarm then
-                                    break
-                                end
-                                vu666.CFrame = CFrame.new(v671 + Vector3.new(0, 3, 0))
-                                ThresholdBase = vu667
-                                v673 = vu667 + ThresholdTarget
+
+            if state then
+                WindUI:Notify({ Title = "Hide Name ON", Content = "Nama & Level disamarkan.", Duration = 3, Icon = "eye-off" })
+                
+                -- 2. Loop Agresif (RenderStepped)
+                if hideConnection then hideConnection:Disconnect() end
+                hideConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                    for _, plr in ipairs(game.Players:GetPlayers()) do
+                        if plr.Character then
+                            -- A. Ubah Humanoid Name (Standard)
+                            local hum = plr.Character:FindFirstChild("Humanoid")
+                            if hum and hum.DisplayName ~= customName then 
+                                hum.DisplayName = customName 
                             end
-                            vu670 = false
-                        end)
-                        v664 = vu670
-                    end
-                end
-                if _G.CoinFarm then
-                    local v675 = (vu665:Get({
-                        "Coins"
-                    }) or 0) - CoinBase
-                    local v676 = CoinTarget <= 0 and 0 or (math.min(v675 / CoinTarget * 100, 100) or 0)
-                    CoinParagraph:SetContent(string.format("Current : %s\nTarget : %s\nProgress : %.1f%%", v675, CoinTarget, v676))
-                    if SelectedCoinSpot and vu666 then
-                        if v675 >= CoinTarget then
-                            if v662 then
-                                vu666.CFrame = v662
-                            end
-                            _G.CoinFarm = false
-                        elseif (vu666.Position - SelectedCoinSpot).Magnitude > 10 then
-                            vu666.CFrame = CFrame.new(SelectedCoinSpot + Vector3.new(0, 3, 0))
-                        end
-                    end
-                end
-                if _G.EnchantFarm then
-                    local v677 = vu665:Get({
-                        "Inventory",
-                        "Items"
-                    }) or {}
-                    local v678, v679, v680 = ipairs(v677)
-                    local v681 = 0
-                    while true do
-                        local v682
-                        v680, v682 = v678(v679, v680)
-                        if v680 == nil then
-                            break
-                        end
-                        if v682.Id == 10 then
-                            v681 = v681 + v682.Amount
-                            if not v681 then
-                                v681 = 1
-                            end
-                        end
-                    end
-                    local v683 = v681 - EnchantBase
-                    local v684 = EnchantTarget <= 0 and 0 or (math.min(v683 / EnchantTarget * 100, 100) or 0)
-                    vu374:SetContent(string.format("Current : %s\nTarget : %s\nProgress : %.1f%%", v683, EnchantTarget, v684))
-                    if SelectedEnchantSpot and vu666 then
-                        if v683 >= EnchantTarget then
-                            if v662 then
-                                vu666.CFrame = v662
-                            end
-                            _G.EnchantFarm = false
-                        elseif (vu666.Position - SelectedEnchantSpot).Magnitude > 10 then
-                            vu666.CFrame = CFrame.new(SelectedEnchantSpot + Vector3.new(0, 3, 0))
-                        end
-                    end
-                end
-            else
-                task.wait(1)
-            end
-        end
-    end)
-    XAdm = v163.Farm:AddSection("Event Features")
-    countdownParagraph = XAdm:AddParagraph({
-        Title = "Ancient Lochness Monster Countdown",
-        Content = "<font color=\'#ff4d4d\'><b>waiting for ... for joined event!</b></font>"
-    })
-    vu7.FarmPosition = vu7.FarmPosition or nil
-    vu7.autoCountdownUpdate = false
-    XAdm:AddToggle({
-        Title = "Auto Admin Event",
-        Default = false,
-        Callback = function(p685)
-            local vu686 = game:GetService("Players").LocalPlayer
-            vu7.autoCountdownUpdate = p685
-            local function vu689()
-                local v687, v688 = pcall(function()
-                    return workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
-                end)
-                return v687 and v688 and v688 or nil
-            end
-            local function vu691(p690)
-                p690.CFrame = CFrame.new(Vector3.new(6063, - 586, 4715))
-            end
-            local function vu693(p692)
-                if vu7.FarmPosition then
-                    p692.CFrame = vu7.FarmPosition
-                    countdownParagraph:SetContent("<font color=\'#00ff99\'><b>\226\156\133 Returned to saved farm position!</b></font>")
-                else
-                    countdownParagraph:SetContent("<font color=\'#ff4d4d\'><b>\226\157\140 No saved farm position found!</b></font>")
-                end
-            end
-            if p685 then
-                local v694 = (vu686.Character or vu686.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart", 5)
-                if v694 then
-                    vu7.FarmPosition = v694.CFrame
-                    countdownParagraph:SetContent(string.format("<font color=\'#00ff99\'><b>Farm position saved!</b></font>"))
-                end
-                local vu695 = vu689()
-                if not vu695 then
-                    countdownParagraph:SetContent("<font color=\'#ff4d4d\'><b>Label not found!</b></font>")
-                    return
-                end
-                task.spawn(function()
-                    local v696 = false
-                    while vu7.autoCountdownUpdate do
-                        task.wait(1)
-                        local vu697 = ""
-                        pcall(function()
-                            vu697 = vu695.Text or ""
-                        end)
-                        if vu697 == "" then
-                            countdownParagraph:SetContent("<font color=\'#ff4d4d\'><b>Waiting for countdown...</b></font>")
-                        else
-                            countdownParagraph:SetContent(string.format("<font color=\'#4de3ff\'><b>Timer: %s</b></font>", vu697))
-                            local v698 = (vu686.Character or vu686.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart", 5)
-                            if v698 then
-                                local v699, v700, v701 = vu697:match("(%d+)H%s*(%d+)M%s*(%d+)S")
-                                local v702 = tonumber(v699)
-                                local v703 = tonumber(v700)
-                                local v704 = tonumber(v701)
-                                if v702 == 3 and (v703 == 59 and (v704 == 59 and not v696)) then
-                                    countdownParagraph:SetContent("<font color=\'#00ff99\'><b>Event started! Teleporting...</b></font>")
-                                    vu691(v698)
-                                    v696 = true
-                                elseif v702 == 3 and (v703 == 49 and (v704 == 59 and v696)) then
-                                    countdownParagraph:SetContent("<font color=\'#ffaa00\'><b>Event ended! Returning...</b></font>")
-                                    vu693(v698)
-                                    v696 = false
-                                end
-                            else
-                                countdownParagraph:SetContent("<font color=\'#ff4d4d\'><b>\226\154\160\239\184\143 HRP not found, retrying...</b></font>")
-                            end
-                        end
-                        if not (vu695 and vu695.Parent) then
-                            vu695 = vu689()
-                            if not vu695 then
-                                countdownParagraph:SetContent("<font color=\'#ff4d4d\'><b>Label lost. Reconnecting...</b></font>")
-                                task.wait(2)
-                                vu695 = vu689()
-                            end
-                        end
-                    end
-                end)
-            else
-                local v705 = (vu686.Character or vu686.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart", 5)
-                if v705 then
-                    vu693(v705)
-                end
-                countdownParagraph:SetContent("<font color=\'#ff4d4d\'><b>Auto Admin Event disabled.</b></font>")
-            end
-        end
-    })
-    Panel = v163.Farm:AddSection("Semi Kaitun [BETA]")
-    RS = game:GetService("ReplicatedStorage")
-    ItemsFolder = RS:WaitForChild("Items")
-    BaitsFolder = RS:WaitForChild("Baits")
-    local vu706 = vu1.Players.LocalPlayer
-    SellEvent = vu4.Net["RF/SellAllItems"]
-    _G.SelectedFarmLocation = "Kohana Volcano"
-    _G.DeepSeaDone = _G.DeepSeaDone or false
-    _G.ArtifactDone = _G.ArtifactDone or false
-    _G.LastArtifactTP = _G.LastArtifactTP or 0
-    function getItemNameFromFolder(p707, p708, p709)
-        local v710, v711, v712 = ipairs(p707:GetChildren())
-        while true do
-            local v713
-            v712, v713 = v710(v711, v712)
-            if v712 == nil then
-                break
-            end
-            if v713:IsA("ModuleScript") then
-                local v714, v715 = pcall(require, v713)
-                if v714 and (v715 and v715.Data) then
-                    local v716 = v715.Data
-                    if v716.Id == p708 and (not p709 or v716.Type == p709) then
-                        if v715.IsSkin then
-                            return nil
-                        else
-                            return v716.Name
-                        end
-                    end
-                end
-            end
-        end
-        return nil
-    end
-    Locations = {
-        ["Kohana Volcano"] = Vector3.new(- 552, 19, 183),
-        ["Tropical Grove"] = Vector3.new(- 2084, 3, 3700),
-        ["Esoteric Deep"] = CFrame.new(3269, - 1302, 1406) * CFrame.Angles(0, math.rad(- 180), 0),
-        DeepSea_Start = CFrame.new(- 3633, - 279, - 1603) * CFrame.Angles(0, math.rad(- 45), 0),
-        DeepSea_2 = CFrame.new(- 3735, - 135, - 1011) * CFrame.Angles(0, math.rad(180), 0),
-        ["Arrow Artifact"] = CFrame.new(875, 3, - 368) * CFrame.Angles(0, math.rad(90), 0),
-        ["Crescent Artifact"] = CFrame.new(1403, 3, 123) * CFrame.Angles(0, math.rad(180), 0),
-        ["Hourglass Diamond Artifact"] = CFrame.new(1487, 3, - 842) * CFrame.Angles(0, math.rad(180), 0),
-        ["Diamond Artifact"] = CFrame.new(1844, 3, - 287) * CFrame.Angles(0, math.rad(- 90), 0),
-        Element_Stage1 = CFrame.new(1484, 3, - 336) * CFrame.Angles(0, math.rad(180), 0),
-        Element_Stage2 = CFrame.new(1453, - 22, - 636),
-        Element_Final = CFrame.new(1480, 128, - 593)
-    }
-    orderList = {
-        "Arrow Artifact",
-        "Crescent Artifact",
-        "Hourglass Diamond Artifact",
-        "Diamond Artifact"
-    }
-    function tp(p717)
-        local v718 = (vu706.Character or vu706.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart")
-        if v718 then
-            v718.CFrame = CFrame.new(p717)
-        end
-    end
-    function hasRod(p719)
-        local v720 = vu6.Data:Get({
-            "Inventory"
-        }) or {}
-        local v721, v722, v723 = ipairs(v720["Fishing Rods"] or {})
-        while true do
-            local v724
-            v723, v724 = v721(v722, v723)
-            if v723 == nil then
-                break
-            end
-            if getItemNameFromFolder(ItemsFolder, v724.Id, "Fishing Rods") == p719 then
-                return true
-            end
-        end
-        return false
-    end
-    function hasBait(p725)
-        local v726 = vu6.Data:Get({
-            "Inventory"
-        }) or {}
-        local v727, v728, v729 = ipairs(v726.Baits or {})
-        while true do
-            local v730
-            v729, v730 = v727(v728, v729)
-            if v729 == nil then
-                break
-            end
-            if getItemNameFromFolder(BaitsFolder, v730.Id) == p725 then
-                return true
-            end
-        end
-        return false
-    end
-    function hasArtifactWorld(p731)
-        local v732 = workspace:FindFirstChild("JUNGLE INTERACTIONS")
-        if not v732 then
-            return false
-        end
-        local v733 = p731:lower():gsub(" artifact", "")
-        local v734, v735, v736 = ipairs(v732:GetDescendants())
-        while true do
-            local v737
-            v736, v737 = v734(v735, v736)
-            if v736 == nil then
-                break
-            end
-            if v737:IsA("Model") and v737.Name == "TempleLever" and tostring(v737:GetAttribute("Type") or ""):lower():find(v733) then
-                local v738 = v737:FindFirstChild("RootPart")
-                if v738 then
-                    v738 = v737.RootPart:FindFirstChildWhichIsA("ProximityPrompt")
-                end
-                return v738 == nil
-            end
-        end
-        return false
-    end
-    function readTracker(p739)
-        local v740 = workspace["!!! MENU RINGS"]:FindFirstChild(p739)
-        if not v740 then
-            return ""
-        end
-        local v741 = v740:FindFirstChild("Board") and v740.Board:FindFirstChild("Gui")
-        if v741 then
-            v741 = v740.Board.Gui:FindFirstChild("Content")
-        end
-        if not v741 then
-            return ""
-        end
-        local v742, v743, v744 = ipairs(v741:GetChildren())
-        local v745 = {}
-        local v746 = 1
-        while true do
-            local v747
-            v744, v747 = v742(v743, v744)
-            if v744 == nil then
-                break
-            end
-            if v747:IsA("TextLabel") and v747.Name ~= "Header" then
-                table.insert(v745, v746 .. ". " .. v747.Text)
-                v746 = v746 + 1
-            end
-        end
-        return table.concat(v745, "\n")
-    end
-    function hasArtifactInv(p748)
-        local v749 = (vu6.Data:Get({
-            "Inventory"
-        }) or {}).Items or {}
-        local v750 = ({
-            ["Arrow Artifact"] = 265,
-            ["Crescent Artifact"] = 266,
-            ["Diamond Artifact"] = 267,
-            ["Hourglass Diamond Artifact"] = 271
-        })[p748]
-        if not v750 then
-            return false
-        end
-        local v751, v752, v753 = ipairs(v749)
-        while true do
-            local v754
-            v753, v754 = v751(v752, v753)
-            if v753 == nil then
-                break
-            end
-            if v754.Id == v750 then
-                return true
-            end
-        end
-        return false
-    end
-    function tp(p755)
-        local v756 = (vu706.Character or vu706.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart")
-        if v756 then
-            if typeof(p755) ~= "Vector3" then
-                v756.CFrame = p755
-            else
-                v756.CFrame = CFrame.new(p755)
-            end
-        end
-    end
-    function getLeverStatus()
-        local v757 = workspace:FindFirstChild("JUNGLE INTERACTIONS")
-        if not v757 then
-            return {}
-        end
-        local v758, v759, v760 = ipairs(v757:GetDescendants())
-        local v761 = {}
-        local v762 = 1
-        while true do
-            local v763
-            v760, v763 = v758(v759, v760)
-            if v760 == nil then
-                break
-            end
-            if v763:IsA("Model") and v763.Name == "TempleLever" then
-                local v764 = v763:FindFirstChild("RootPart")
-                if v764 then
-                    v764 = v763.RootPart:FindFirstChildWhichIsA("ProximityPrompt")
-                end
-                v761[v763:GetAttribute("Type") or "Lever" .. v762] = v764 == nil
-                v762 = v762 + 1
-            end
-        end
-        return v761
-    end
-    s = getLeverStatus()
-    function seg(p765, p766)
-        return ("%s : <b><font color=\"rgb(%s)\">%s</font></b>"):format(p765 == "Hourglass Diamond Artifact" and "Hourglass Diamond" or (p765 == "Arrow Artifact" and "Arrow" or (p765 == "Crescent Artifact" and "Crescent" or "Diamond")), p766 and "0,255,0" or "255,0,0", p766 and "ACTIVE" or "DISABLE")
-    end
-    function triggerLever(p767)
-        local v768 = workspace:FindFirstChild("JUNGLE INTERACTIONS")
-        if not v768 then
-            return
-        end
-        local v769 = string.match(p767, "^(%w+)")
-        local v770, v771, v772 = ipairs(v768:GetDescendants())
-        while true do
-            local v773
-            v772, v773 = v770(v771, v772)
-            if v772 == nil then
-                break
-            end
-            if v773:IsA("Model") and v773.Name == "TempleLever" then
-                local v774 = v773:GetAttribute("Type")
-                local vu775 = v773:FindFirstChild("RootPart")
-                if vu775 then
-                    vu775 = v773.RootPart:FindFirstChildWhichIsA("ProximityPrompt")
-                end
-                if v774 and (string.find(v774:lower(), v769:lower()) and vu775) then
-                    print("[AUTO] Triggering lever:", v774)
-                    pcall(function()
-                        fireproximityprompt(vu775)
-                    end)
-                    break
-                end
-            end
-        end
-    end
-    Panel:AddDropdown({
-        Title = "Farming Location",
-        Options = {
-            "Kohana Volcano",
-            "Tropical Grove"
-        },
-        Default = "Kohana Volcano",
-        Callback = function(p776)
-            _G.SelectedFarmLocation = p776
-        end
-    })
-    Panel:AddToggle({
-        Title = "Start Kaitun",
-        Default = false,
-        Callback = function(p777)
-            _G.KaitunPanel = p777
-            if p777 then
-                if vu1.CoreGui:FindFirstChild("ChloeX_KaitunPanel") then
-                    vu1.CoreGui:FindFirstChild("ChloeX_KaitunPanel"):Destroy()
-                end
-                local v778 = Instance.new("ScreenGui")
-                v778.Name = "ChloeX_KaitunPanel"
-                v778.IgnoreGuiInset = true
-                v778.ResetOnSpawn = false
-                v778.ZIndexBehavior = Enum.ZIndexBehavior.Global
-                v778.Parent = vu1.CoreGui
-                local vu779 = Instance.new("Frame", v778)
-                vu779.Size = UDim2.new(0, 500, 0, 250)
-                vu779.AnchorPoint = Vector2.new(0.5, 0.5)
-                vu779.Position = UDim2.new(0.5, 0, 0.5, 0)
-                vu779.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-                vu779.BorderSizePixel = 0
-                vu779.Active = true
-                vu779.Draggable = true
-                local v780 = Instance.new("TextLabel", vu779)
-                v780.Size = UDim2.new(1, - 20, 0, 36)
-                v780.Position = UDim2.new(0, 10, 0, 8)
-                v780.BackgroundTransparency = 1
-                v780.Font = Enum.Font.GothamBold
-                v780.Text = "CHLOEX KAITUN PANEL"
-                v780.TextSize = 22
-                v780.TextColor3 = Color3.fromRGB(255, 255, 255)
-                v780.TextXAlignment = Enum.TextXAlignment.Center
-                local v781 = Instance.new("UIGradient", v780)
-                v781.Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 200, 255)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 90, 255)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 200, 255))
-                })
-                v781.Rotation = 0
-                local v782 = Instance.new("UIStroke", vu779)
-                v782.Thickness = 2
-                v782.Color = Color3.fromRGB(80, 150, 255)
-                v782.Transparency = 0.35
-                Instance.new("UICorner", vu779).CornerRadius = UDim.new(0, 14)
-                local vu783 = game:GetService("UserInputService")
-                local vu784 = game:GetService("TweenService")
-                local vu785 = false
-                local vu786 = false
-                local vu787 = nil
-                local vu788 = nil
-                local vu789 = nil
-                local v790 = Instance.new("ImageButton")
-                v790.Name = "ResizeHandle"
-                v790.Parent = vu779
-                v790.Size = UDim2.new(0, 24, 0, 24)
-                v790.AnchorPoint = Vector2.new(1, 1)
-                v790.Position = UDim2.new(1, - 6, 1, - 6)
-                v790.Image = "rbxassetid://6153965696"
-                v790.BackgroundTransparency = 1
-                v790.ZIndex = 10
-                v790.Active = true
-                local function vu792(p791)
-                    return p791.UserInputType == Enum.UserInputType.MouseButton1 or p791.UserInputType == Enum.UserInputType.Touch
-                end
-                local function vu800(_, pu793)
-                    local vu794 = nil
-                    local _ = vu783.InputChanged:Connect(function(p795)
-                        if p795.UserInputType == Enum.UserInputType.MouseMovement or p795.UserInputType == Enum.UserInputType.Touch then
-                            if pu793 ~= "drag" or not vu785 then
-                                if pu793 ~= "resize" or not vu786 then
-                                    vu794:Disconnect()
-                                else
-                                    local v796 = p795.Position - vu787
-                                    local v797 = math.clamp(vu789.X.Offset + v796.X, 350, 700)
-                                    local v798 = math.clamp(vu789.Y.Offset + v796.Y, 250, 900)
-                                    vu784:Create(vu779, TweenInfo.new(0.05, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                                        Size = UDim2.new(0, v797, 0, v798)
-                                    }):Play()
-                                end
-                            else
-                                local v799 = p795.Position - vu787
-                                vu779.Position = UDim2.new(vu788.X.Scale, vu788.X.Offset + v799.X, vu788.Y.Scale, vu788.Y.Offset + v799.Y)
-                            end
-                        end
-                    end)
-                end
-                vu779.InputBegan:Connect(function(p801)
-                    if vu792(p801) and not vu786 then
-                        vu785 = true
-                        vu787 = p801.Position
-                        vu788 = vu779.Position
-                        vu800(p801, "drag")
-                    end
-                end)
-                vu779.InputEnded:Connect(function(p802)
-                    if vu792(p802) then
-                        vu785 = false
-                    end
-                end)
-                v790.InputBegan:Connect(function(p803)
-                    if vu792(p803) then
-                        vu786 = true
-                        vu789 = vu779.Size
-                        vu787 = p803.Position
-                        vu800(p803, "resize")
-                    end
-                end)
-                v790.InputEnded:Connect(function(p804)
-                    if vu792(p804) then
-                        vu786 = false
-                    end
-                end)
-                local vu805 = Instance.new("ScrollingFrame", vu779)
-                vu805.Position = UDim2.new(0, 0, 0, 50)
-                vu805.Size = UDim2.new(1, 0, 1, - 60)
-                vu805.BackgroundTransparency = 1
-                vu805.ScrollBarThickness = 0
-                vu805.ScrollingDirection = Enum.ScrollingDirection.Y
-                vu805.AutomaticCanvasSize = Enum.AutomaticSize.Y
-                vu805.CanvasSize = UDim2.new(0, 0, 0, 0)
-                vu805.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-                local v806 = Instance.new("UIListLayout", vu805)
-                v806.Padding = UDim.new(0, 10)
-                v806.SortOrder = Enum.SortOrder.LayoutOrder
-                local function v812(p807, p808)
-                    local v809 = Instance.new("TextLabel", vu805)
-                    v809.Size = UDim2.new(1, - 30, 0, 25)
-                    v809.Font = Enum.Font.GothamBold
-                    v809.TextSize = 18
-                    v809.BackgroundTransparency = 1
-                    v809.TextColor3 = Color3.fromRGB(140, 200, 255)
-                    v809.Text = p807
-                    v809.TextXAlignment = Enum.TextXAlignment.Left
-                    local v810 = Instance.new("Frame", vu805)
-                    v810.Size = UDim2.new(1, - 30, 0, p808 or 80)
-                    v810.BackgroundTransparency = 1
-                    local v811 = Instance.new("TextLabel", v810)
-                    v811.Size = UDim2.new(1, 0, 1, 0)
-                    v811.Font = Enum.Font.Gotham
-                    v811.TextSize = 16
-                    v811.BackgroundTransparency = 1
-                    v811.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    v811.TextXAlignment = Enum.TextXAlignment.Left
-                    v811.TextYAlignment = Enum.TextYAlignment.Top
-                    v811.TextWrapped = true
-                    v811.Text = "Loading..."
-                    v811.RichText = true
-                    return v811
-                end
-                local vu813 = v812("OWNED RODS", 50)
-                local vu814 = v812("OWNED BAITS", 50)
-                local vu815 = v812("FARMING PROGRESS", 40)
-                local vu816 = v812("COINS", 30)
-                local vu817 = v812("DEEP SEA QUEST", 120)
-                local vu818 = v812("ARTIFACT QUEST", 120)
-                local vu819 = v812("ELEMENT QUEST", 120)
-                local vu820 = v812("FLOW STATUS", 50)
-                task.spawn(function()
-                    while _G.KaitunPanel do
-                        pcall(function()
-                            SellEvent:InvokeServer()
-                        end)
-                        task.wait(180)
-                    end
-                end)
-                task.spawn(function()
-                    while true do
-                        while true do
-                            if not _G.KaitunPanel then
-                                return
-                            end
-                            task.wait(1)
-                            local v821 = vu6.Data
-                            if not v821 then
-                                break
-                            end
-                            local v822 = v821:Get({
-                                "Coins"
-                            }) or 0
-                            vu816.Text = "$" .. tostring(v822)
-                            local v823 = v821:Get({
-                                "Inventory"
-                            }) or {}
-                            local v824, v825, v826 = ipairs(v823["Fishing Rods"] or {})
-                            local v827 = {}
-                            local v828 = {}
-                            while true do
-                                local v829
-                                v826, v829 = v824(v825, v826)
-                                if v826 == nil then
-                                    break
-                                end
-                                local v830 = getItemNameFromFolder(ItemsFolder, v829.Id, "Fishing Rods")
-                                if v830 then
-                                    table.insert(v827, v830)
-                                end
-                            end
-                            local v831, v832, v833 = ipairs(v823.Baits or {})
-                            while true do
-                                local v834
-                                v833, v834 = v831(v832, v833)
-                                if v833 == nil then
-                                    break
-                                end
-                                local v835 = getItemNameFromFolder(BaitsFolder, v834.Id)
-                                if v835 then
-                                    table.insert(v828, v835)
-                                end
-                            end
-                            vu813.Text = # v827 > 0 and table.concat(v827, ", ") or "No rods found."
-                            vu814.Text = # v828 > 0 and table.concat(v828, ", ") or "No baits found."
-                            vu817.Text = readTracker("Deep Sea Tracker")
-                            vu819.Text = readTracker("Element Tracker")
-                            function seg(p836)
-                                local v837 = hasArtifactWorld(p836)
-                                local v838 = p836 == "Hourglass Diamond Artifact" and "Hourglass Diamond" or (p836 == "Arrow Artifact" and "Arrow" or (p836 == "Crescent Artifact" and "Crescent" or "Diamond"))
-                                return string.format("%s : <b><font color=\'rgb(%s)\'>%s</font></b>", v838, v837 and "0,255,0" or "255,0,0", v837 and "ACTIVE" or "DISABLE")
-                            end
-                            vu818.Text = table.concat({
-                                seg("Arrow Artifact"),
-                                seg("Crescent Artifact"),
-                                seg("Hourglass Diamond Artifact"),
-                                seg("Diamond Artifact")
-                            }, "\n")
-                            if hasRod("Midnight Rod") then
-                                if hasRod("Midnight Rod") and (not hasRod("Astral Rod") and 1000001 <= v822) then
-                                    vu820.Text = "Status: Buying Astral Rod"
-                                    task.spawn(function()
-                                        pcall(function()
-                                            vu5.Functions.BuyRod:InvokeServer(5)
-                                        end)
-                                        task.wait(2)
-                                        pcall(function()
-                                            vu5.Functions.BuyBait:InvokeServer(15)
-                                        end)
-                                    end)
-                                elseif hasRod("Astral Rod") and (not hasBait("Floral Bait") and 4000001 <= v822) then
-                                    vu820.Text = "Status: Buying Floral Bait"
-                                    task.spawn(function()
-                                        pcall(function()
-                                            vu5.Functions.BuyBait:InvokeServer(20)
-                                        end)
-                                    end)
-                                elseif hasRod("Midnight Rod") and not _G.DeepSeaDone then
-                                    vu820.Text = "Status: Deep Sea Quest"
-                                    _G.DeepSeaDone = false
-                                    local v839 = nil
-                                    while _G.KaitunPanel and not _G.DeepSeaDone do
-                                        vu817.Text = readTracker("Deep Sea Tracker")
-                                        local v840 = vu817.Text:lower()
-                                        local v841 = string.find(v840, "catch 1 secret fish at sisyphus statue %- 100%%")
-                                        local v842 = string.find(v840, "catch 3 mythic fish at sisyphus statue %- 100%%")
-                                        local v843 = string.find(v840, "treasure room %- 100%%")
-                                        if v843 and (v841 and (v842 and string.find(v840, "earn 1m coins %- 100%%"))) then
-                                            _G.DeepSeaDone = true
-                                            break
-                                        end
-                                        if v843 then
-                                            if v843 and not (v841 and v842) and v839 ~= "DeepSea_2" then
-                                                tp(Locations.DeepSea_2)
-                                                v839 = "DeepSea_2"
-                                            end
-                                        elseif v839 ~= "DeepSea_Start" then
-                                            tp(Locations.DeepSea_Start)
-                                            v839 = "DeepSea_Start"
-                                        end
-                                        task.wait(1)
-                                    end
-                                elseif _G.DeepSeaDone and not _G.ArtifactDone then
-                                    vu820.Text = "Status: Artifact Quest"
-                                    _G.ArtifactDone = false
-                                    task.spawn(function()
-                                        while _G.KaitunPanel and not _G.ArtifactDone do
-                                            local v844, v845, v846 = ipairs(orderList)
-                                            while true do
-                                                local v847
-                                                v846, v847 = v844(v845, v846)
-                                                if v846 == nil then
-                                                    break
-                                                end
-                                                if not hasArtifactWorld(v847) then
-                                                    vu820.Text = "Status: Collecting " .. v847
-                                                    tp(Locations[v847])
-                                                    repeat
-                                                        task.wait(2)
-                                                    until hasArtifactInv(v847) or (hasArtifactWorld(v847) or not _G.KaitunPanel)
-                                                    if hasArtifactInv(v847) or hasArtifactWorld(v847) then
-                                                        vu820.Text = "Status: Triggering " .. v847
-                                                        triggerLever(v847)
-                                                        local v848 = tick()
-                                                        repeat
-                                                            task.wait(1)
-                                                        until hasArtifactWorld(v847) or (tick() - v848 > 10 or not _G.KaitunPanel)
+
+                            -- B. Ubah Custom UI (BillboardGui) - Logic Deteksi Cerdas
+                            for _, obj in ipairs(plr.Character:GetDescendants()) do
+                                if obj:IsA("BillboardGui") then
+                                    for _, lbl in ipairs(obj:GetDescendants()) do
+                                        if lbl:IsA("TextLabel") or lbl:IsA("TextButton") then
+                                            if lbl.Visible then
+                                                local txt = lbl.Text
+                                                
+                                                -- LOGIKA DETEKSI:
+                                                -- 1. Jika teks mengandung Nama Asli Player -> Ubah jadi Custom Name
+                                                if txt:find(plr.Name) or txt:find(plr.DisplayName) then
+                                                    if txt ~= customName then
+                                                        lbl.Text = customName
+                                                    end
+                                                
+                                                -- 2. Jika teks terlihat seperti Level (angka atau 'Lvl.') -> Ubah jadi Custom Level
+                                                -- Regex sederhana: mengecek apakah ada angka atau kata 'Lvl'
+                                                elseif txt:match("%d+") or txt:lower():find("lvl") or txt:lower():find("level") then
+                                                    -- Hindari mengubah teks UI lain yang bukan level (misal HP bar angka)
+                                                    -- Biasanya level teksnya pendek (< 10 karakter)
+                                                    if #txt < 15 and txt ~= customLevel then 
+                                                        lbl.Text = customLevel
                                                     end
                                                 end
                                             end
-                                            if hasArtifactWorld("Arrow Artifact") and (hasArtifactWorld("Crescent Artifact") and (hasArtifactWorld("Hourglass Diamond Artifact") and hasArtifactWorld("Diamond Artifact"))) then
-                                                _G.ArtifactDone = true
-                                                vu820.Text = "Status: Artifact Quest Complete \226\156\133"
-                                            end
-                                            task.wait(3)
                                         end
-                                    end)
-                                elseif not _G.ElementDone then
-                                    vu820.Text = "Status: Element Quest"
-                                    _G.ElementDone = false
-                                    local v849 = nil
-                                    while _G.KaitunPanel and not _G.ElementDone do
-                                        vu819.Text = readTracker("Element Tracker")
-                                        local v850 = vu819.Text:lower()
-                                        print("[DEBUG Element Text]\n" .. v850)
-                                        local v851 = v850:find("catch 1 secret fish at sacred temple %- 100%%")
-                                        local v852 = v850:find("catch 1 secret fish at ancient jungle %- 100%%")
-                                        local v853 = v850:find("create 3 transcended stones %- 100%%")
-                                        if v851 and (v852 and v853) then
-                                            _G.ElementDone = true
-                                            vu820.Text = "Status: Element Quest Complete \226\156\133"
-                                            break
-                                        end
-                                        if v852 then
-                                            if v852 and not v851 then
-                                                if v849 ~= "Element_Stage2" then
-                                                    tp(Locations.Element_Stage2)
-                                                    v849 = "Element_Stage2"
-                                                end
-                                            elseif v852 and (v851 and (not v853 and v849 ~= "Element_Final")) then
-                                                tp(Locations.Element_Final)
-                                                v849 = "Element_Final"
-                                            end
-                                        elseif v849 ~= "Element_Stage1" then
-                                            tp(Locations.Element_Stage1)
-                                            v849 = "Element_Stage1"
-                                        end
-                                        task.wait(1)
                                     end
                                 end
-                            else
-                                vu820.Text = "Status: Buying Midnight Rod"
-                                if v822 >= 53001 then
-                                    task.spawn(function()
-                                        pcall(function()
-                                            vu5.Functions.BuyRod:InvokeServer(80)
-                                        end)
-                                        task.wait(2)
-                                        pcall(function()
-                                            vu5.Functions.BuyBait:InvokeServer(3)
-                                        end)
-                                    end)
-                                else
-                                    vu815.Text = "Farming coins... (" .. v822 .. "/53000)"
-                                    vu820.Text = "Status: Farming"
-                                    tp(Locations[_G.SelectedFarmLocation or "Kohana Volcano"])
-                                end
                             end
                         end
-                        task.wait(1)
                     end
                 end)
             else
-                _G.KaitunPanel = false
-                local v854 = vu1.CoreGui:FindFirstChild("ChloeX_KaitunPanel")
-                if v854 then
-                    v854:Destroy()
+                WindUI:Notify({ Title = "Hide Name OFF", Content = "Tampilan dikembalikan.", Duration = 3, Icon = "eye" })
+                
+                if hideConnection then 
+                    hideConnection:Disconnect() 
+                    hideConnection = nil 
                 end
-            end
-        end
-    })
-    Panel:AddToggle({
-        Title = "Hide Kaitun Panel",
-        Default = false,
-        Callback = function(p855)
-            local v856 = vu1.CoreGui:FindFirstChild("ChloeX_KaitunPanel")
-            local v857 = v856 and (v856:FindFirstChild("MainCard") or v856:FindFirstChildWhichIsA("Frame"))
-            if v857 then
-                v857.Visible = not p855
-            end
-        end
-    })
-    RodPriority = {
-        "Element Rod",
-        "Ghostfin Rod",
-        "Bambo Rod",
-        "Angler Rod",
-        "Ares Rod",
-        "Hazmat Rod",
-        "Astral Rod",
-        "Midnight Rod"
-    }
-    function equipBestRod()
-        local v858 = vu6.Data
-        if v858 then
-            local v859 = (v858:Get({
-                "Inventory"
-            }) or {})["Fishing Rods"] or {}
-            local v860 = (v858:Get({
-                "EquippedItems"
-            }) or {})["Fishing Rods"]
-            local v861 = math.huge
-            local v862, v863, v864 = ipairs(v859)
-            local vu865 = nil
-            local v866 = nil
-            while true do
-                local v867
-                v864, v867 = v862(v863, v864)
-                if v864 == nil then
-                    break
-                end
-                local v868 = getItemNameFromFolder(ItemsFolder, v867.Id, "Fishing Rods")
-                if v868 and v867.UUID then
-                    local v869, v870, v871 = ipairs(RodPriority)
-                    while true do
-                        local v872
-                        v871, v872 = v869(v870, v871)
-                        if v871 == nil then
-                            break
-                        end
-                        if string.find(v868, v872) and v871 < v861 then
-                            vu865 = v867.UUID
-                            v866 = v868
-                            v861 = v871
-                        end
+                
+                -- Restore Nama Humanoid
+                for _, plr in ipairs(game.Players:GetPlayers()) do
+                    if plr.Character then
+                        local hum = plr.Character:FindFirstChild("Humanoid")
+                        if hum then hum.DisplayName = plr.DisplayName end
                     end
                 end
             end
-            if vu865 and v860 ~= vu865 then
-                print("[AUTO EQUIP] Equipping best rod:", v866)
-                pcall(function()
-                    vu5.Functions.Cancel:InvokeServer()
-                    task.wait(0.3)
-                    vu5.Events.REEquipItem:FireServer(vu865, "Fishing Rods")
-                end)
-            end
+        end
+    }))
+
+    -- 2. TOGGLE PLAYER ESP
+    local runService = game:GetService("RunService")
+    local players = game:GetService("Players")
+    local STUD_TO_M = 0.28
+    local espEnabled = false
+    local espConnections = {}
+
+    local function removeESP(targetPlayer)
+        if not targetPlayer then return end
+        local data = espConnections[targetPlayer]
+        if data then
+            if data.distanceConn then pcall(function() data.distanceConn:Disconnect() end) end
+            if data.charAddedConn then pcall(function() data.charAddedConn:Disconnect() end) end
+            if data.billboard and data.billboard.Parent then pcall(function() data.billboard:Destroy() end) end
+            espConnections[targetPlayer] = nil
         else
-            return
+            if targetPlayer.Character then
+                for _, v in ipairs(targetPlayer.Character:GetChildren()) do
+                    if v.Name == "CatrazHubESP" and v:IsA("BillboardGui") then pcall(function() v:Destroy() end) end
+                end
+            end
         end
     end
-    Panel:AddToggle({
-        Title = "Auto Equip Best Rod",
-        Default = false,
-        Callback = function(p873)
-            _G.AutoEquipBestRod = p873
-            if p873 then
-                local v874 = vu6.Data
-                if v874 then
-                    local v875 = (v874:Get({
-                        "Inventory"
-                    }) or {})["Fishing Rods"] or {}
-                    local v876 = (v874:Get({
-                        "EquippedItems"
-                    }) or {})["Fishing Rods"]
-                    local v877 = math.huge
-                    local v878, v879, v880 = ipairs(v875)
-                    local vu881 = nil
-                    local v882 = nil
-                    while true do
-                        local v883
-                        v880, v883 = v878(v879, v880)
-                        if v880 == nil then
-                            break
-                        end
-                        local v884 = getItemNameFromFolder(ItemsFolder, v883.Id, "Fishing Rods")
-                        if v884 and v883.UUID then
-                            local v885, v886, v887 = ipairs(RodPriority)
-                            while true do
-                                local v888
-                                v887, v888 = v885(v886, v887)
-                                if v887 == nil then
-                                    break
-                                end
-                                if string.find(v884, v888) and v887 < v877 then
-                                    vu881 = v883.UUID
-                                    v882 = v884
-                                    v877 = v887
-                                end
-                            end
-                        end
-                    end
-                    if vu881 and v876 ~= vu881 then
-                        print("[AUTO EQUIP] Equipping best rod:", v882)
-                        pcall(function()
-                            vu5.Functions.Cancel:InvokeServer()
-                            task.wait(0.3)
-                            vu5.Events.REEquipItem:FireServer(vu881, "Fishing Rods")
-                            task.wait(0.3)
-                            vu5.Events.REEquip:FireServer(1)
-                        end)
-                    else
-                        print("[AUTO EQUIP] Already using best rod or none found.")
-                    end
+
+    local function createESP(targetPlayer)
+        if not targetPlayer or not targetPlayer.Character or targetPlayer == LocalPlayer then return end
+
+        removeESP(targetPlayer)
+        local char = targetPlayer.Character
+        local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+        if not hrp then return end
+
+        local BillboardGui = Instance.new("BillboardGui")
+        BillboardGui.Name = "CatrazHubESP"
+        BillboardGui.Adornee = hrp
+        BillboardGui.Size = UDim2.new(0, 140, 0, 40)
+        BillboardGui.AlwaysOnTop = true
+        BillboardGui.StudsOffset = Vector3.new(0, 2.6, 0)
+        BillboardGui.Parent = char
+
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, 0, 1, 0)
+        Frame.BackgroundTransparency = 1
+        Frame.BorderSizePixel = 0
+        Frame.Parent = BillboardGui
+
+        local NameLabel = Instance.new("TextLabel")
+        NameLabel.Parent = Frame
+        NameLabel.Size = UDim2.new(1, 0, 0.6, 0)
+        NameLabel.Position = UDim2.new(0, 0, 0, 0)
+        NameLabel.BackgroundTransparency = 1
+        NameLabel.Text = tostring(targetPlayer.DisplayName or targetPlayer.Name)
+        NameLabel.TextColor3 = Color3.fromRGB(255, 230, 230)
+        NameLabel.TextStrokeTransparency = 0.7
+        NameLabel.Font = Enum.Font.GothamBold
+        NameLabel.TextScaled = true
+
+        local DistanceLabel = Instance.new("TextLabel")
+        DistanceLabel.Parent = Frame
+        DistanceLabel.Size = UDim2.new(1, 0, 0.4, 0)
+        DistanceLabel.Position = UDim2.new(0, 0, 0.6, 0)
+        DistanceLabel.BackgroundTransparency = 1
+        DistanceLabel.Text = "0.0 m"
+        DistanceLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+        NameLabel.TextStrokeTransparency = 0.85
+        DistanceLabel.Font = Enum.Font.GothamSemibold
+        DistanceLabel.TextScaled = true
+
+        espConnections[targetPlayer] = { billboard = BillboardGui }
+
+        local distanceConn = runService.RenderStepped:Connect(function()
+            if not espEnabled or not hrp or not hrp.Parent then removeESP(targetPlayer) return end
+            local localChar = LocalPlayer.Character
+            local localHRP = localChar and localChar:FindFirstChild("HumanoidRootPart")
+            if localHRP then
+                local distStuds = (localHRP.Position - hrp.Position).Magnitude
+                local distMeters = distStuds * STUD_TO_M
+                DistanceLabel.Text = string.format("%.1f m", distMeters)
+            end
+        end)
+        espConnections[targetPlayer].distanceConn = distanceConn
+
+        local charAddedConn = targetPlayer.CharacterAdded:Connect(function()
+            task.wait(0.8)
+            if espEnabled then createESP(targetPlayer) end
+        end)
+        espConnections[targetPlayer].charAddedConn = charAddedConn
+    end
+
+    local espplay = Reg("esp",other:Toggle({
+        Title = "Player ESP",
+        Value = false,
+        Callback = function(state)
+            espEnabled = state
+            if state then
+                WindUI:Notify({ Title = "ESP Aktif", Duration = 3, Icon = "eye", })
+                for _, plr in ipairs(players:GetPlayers()) do
+                    if plr ~= LocalPlayer then createESP(plr) end
                 end
+                espConnections["playerAddedConn"] = players.PlayerAdded:Connect(function(plr)
+                    task.wait(1)
+                    if espEnabled then createESP(plr) end
+                end)
+                espConnections["playerRemovingConn"] = players.PlayerRemoving:Connect(function(plr)
+                    removeESP(plr)
+                end)
             else
+                WindUI:Notify({ Title = "ESP Nonaktif", Content = "Semua marker ESP dihapus.", Duration = 3, Icon = "eye-off", })
+                for plr, _ in pairs(espConnections) do
+                    if plr and typeof(plr) == "Instance" then removeESP(plr) end
+                end
+                if espConnections["playerAddedConn"] then espConnections["playerAddedConn"]:Disconnect() end
+                if espConnections["playerRemovingConn"] then espConnections["playerRemovingConn"]:Disconnect() end
+                espConnections = {}
+            end
+        end
+    }))
+
+    local respawnin = other:Button({
+        Title = "Reset Character (In Place)",
+        Icon = "refresh-cw",
+        Callback = function()
+            local character = LocalPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+            if not character or not hrp or not humanoid then
+                WindUI:Notify({ Title = "Gagal Reset", Content = "Karakter tidak ditemukan!", Duration = 3, Icon = "x", })
                 return
             end
+
+            local lastPos = hrp.Position
+
+            WindUI:Notify({ Title = "Reset Character...", Content = "Respawning di posisi yang sama...", Duration = 2, Icon = "rotate-cw", })
+            humanoid:TakeDamage(999999)
+
+            LocalPlayer.CharacterAdded:Wait()
+            task.wait(0.5)
+            local newChar = LocalPlayer.Character
+            local newHRP = newChar:WaitForChild("HumanoidRootPart", 5)
+
+            if newHRP then
+                newHRP.CFrame = CFrame.new(lastPos + Vector3.new(0, 3, 0))
+                WindUI:Notify({ Title = "Character Reset Sukses!", Content = "Kamu direspawn di posisi yang sama ✅", Duration = 3, Icon = "check", })
+            else
+                WindUI:Notify({ Title = "Gagal Reset", Content = "HumanoidRootPart baru tidak ditemukan.", Duration = 3, Icon = "x", })
+            end
         end
     })
-    local v889 = v163.Quest:AddSection("Artifact Lever Location")
-    local vu890 = workspace:WaitForChild("JUNGLE INTERACTIONS")
-    local vu891 = 1
-    local vu892 = false
-    local vu893 = nil
-    local vu894 = "0,255,0"
-    local vu895 = "255,0,0"
-    _G.artifactPositions = {
-        ["Arrow Artifact"] = CFrame.new(875, 3, - 368) * CFrame.Angles(0, math.rad(90), 0),
-        ["Crescent Artifact"] = CFrame.new(1403, 3, 123) * CFrame.Angles(0, math.rad(180), 0),
-        ["Hourglass Diamond Artifact"] = CFrame.new(1487, 3, - 842) * CFrame.Angles(0, math.rad(180), 0),
-        ["Diamond Artifact"] = CFrame.new(1844, 3, - 287) * CFrame.Angles(0, math.rad(- 90), 0)
-    }
-    local vu896 = {
-        "Arrow Artifact",
-        "Crescent Artifact",
-        "Hourglass Diamond Artifact",
-        "Diamond Artifact"
-    }
-    local function vu903()
-        local v897 = vu890
-        local v898, v899, v900 = ipairs(v897:GetDescendants())
-        local v901 = {}
-        while true do
-            local v902
-            v900, v902 = v898(v899, v900)
-            if v900 == nil then
-                break
-            end
-            if v902:IsA("Model") and v902.Name == "TempleLever" then
-                v901[v902:GetAttribute("Type")] = not v902:FindFirstChild("RootPart") and true or not v902.RootPart:FindFirstChildWhichIsA("ProximityPrompt")
-            end
-        end
-        return v901
-    end
-    local function vu908(p904)
-        local function v907(p905, p906)
-            return ("%s : <b><font color=\"rgb(%s)\">%s</font></b>"):format(p905 == "Hourglass Diamond Artifact" and "Hourglass Diamond" or (p905 == "Arrow Artifact" and "Arrow" or (p905 == "Crescent Artifact" and "Crescent" or "Diamond")), p906 and vu894 or vu895, p906 and "ACTIVE" or "DISABLE")
-        end
-        ArtifactParagraph:SetContent(table.concat({
-            v907("Arrow Artifact", p904["Arrow Artifact"]),
-            v907("Crescent Artifact", p904["Crescent Artifact"]),
-            v907("Hourglass Diamond Artifact", p904["Hourglass Diamond Artifact"]),
-            v907("Diamond Artifact", p904["Diamond Artifact"])
-        }, "\n"))
-    end
-    local function vu916(p909)
-        local v910 = vu890
-        local v911, v912, v913 = ipairs(v910:GetDescendants())
-        while true do
-            local v914
-            v913, v914 = v911(v912, v913)
-            if v913 == nil then
-                break
-            end
-            if v914:IsA("Model") and (v914.Name == "TempleLever" and v914:GetAttribute("Type") == p909) then
-                local v915 = v914:FindFirstChild("RootPart")
-                if v915 then
-                    v915 = v914.RootPart:FindFirstChildWhichIsA("ProximityPrompt")
-                end
-                if v915 then
-                    fireproximityprompt(v915)
-                end
-                break
-            end
-        end
-    end
-    ArtifactParagraph = v889:AddParagraph({
-        Title = "Panel Progress Artifact",
-        Content = "\r\nArrow : <b><font color=\"rgb(255,0,0)\">DISABLE</font></b>\r\nCrescent : <b><font color=\"rgb(255,0,0)\">DISABLE</font></b>\r\nHourglass Diamond : <b><font color=\"rgb(255,0,0)\">DISABLE</font></b>\r\nDiamond : <b><font color=\"rgb(255,0,0)\">DISABLE</font></b>\r\n"
+
+end
+
+do
+    local farm = Window:Tab({
+        Title = "Fishing",
+        Icon = "fish",
+        Locked = false,
     })
-    vu5.Events.REFishGot.OnClientEvent:Connect(function(p917)
-        if vu892 and vu893 then
-            local v918 = string.split(vu893, " ")[1]
-            if v918 and string.find(p917, v918, 1, true) then
-                task.wait(0)
-                vu916(vu893)
-                vu893 = nil
+
+    -----------------------------------------------------------------
+    -- 🚩 VARIABEL GLOBAL UNTUK TAB FARM
+    -----------------------------------------------------------------
+    -- Variabel Auto Fishing
+    local legitAutoState = false
+    local normalInstantState = false
+    local blatantInstantState = false
+    
+    -- Thread Utama
+    local normalLoopThread = nil
+    local blatantLoopThread = nil
+    
+    -- Thread Khusus Auto Equip (Anti-Stuck)
+    local normalEquipThread = nil
+    local blatantEquipThread = nil
+    local legitEquipThread = nil -- Thread baru untuk Legit
+
+    local NormalInstantSlider = nil
+
+    -- Variabel Fishing Area
+    local isTeleportFreezeActive = false
+    local freezeToggle = nil
+    local selectedArea = nil
+    
+    local savedPosition = nil -- Menyimpan {Pos = Vector3, Look = Vector3}
+
+    -----------------------------------------------------------------
+    -- 🛠️ FUNGSI HELPER
+    -----------------------------------------------------------------
+    
+    local function GetHRP()
+        local Character = game.Players.LocalPlayer.Character
+        if not Character then
+            Character = game.Players.LocalPlayer.CharacterAdded:Wait()
+        end
+        return Character:WaitForChild("HumanoidRootPart", 5)
+    end
+    
+    local function TeleportToLookAt(position, lookVector)
+        local hrp = GetHRP()
+        
+        if hrp and typeof(position) == "Vector3" and typeof(lookVector) == "Vector3" then
+            local targetCFrame = CFrame.new(position, position + lookVector)
+            hrp.CFrame = targetCFrame * CFrame.new(0, 0.5, 0)
+            
+            WindUI:Notify({ Title = "Teleport Sukses!", Duration = 3, Icon = "map-pin", })
+        else
+            WindUI:Notify({ Title = "Teleport Gagal", Duration = 3, Icon = "x", })
+        end
+    end
+    
+    local RPath = {"Packages", "_Index", "sleitnick_net@0.2.0", "net"}
+    local RE_EquipToolFromHotbar = GetRemote(RPath, "RE/EquipToolFromHotbar")
+    local RF_ChargeFishingRod = GetRemote(RPath, "RF/ChargeFishingRod")
+    local RF_RequestFishingMinigameStarted = GetRemote(RPath, "RF/RequestFishingMinigameStarted")
+    local RE_FishingCompleted = GetRemote(RPath, "RE/FishingCompleted")
+    local RF_CancelFishingInputs = GetRemote(RPath, "RF/CancelFishingInputs")
+    local RF_UpdateAutoFishingState = GetRemote(RPath, "RF/UpdateAutoFishingState")
+
+    local function checkFishingRemotes(silent)
+        local remotes = { RE_EquipToolFromHotbar, RF_ChargeFishingRod, RF_RequestFishingMinigameStarted,
+                          RE_FishingCompleted, RF_CancelFishingInputs, RF_UpdateAutoFishingState }
+        for _, remote in ipairs(remotes) do
+            if not remote then
+                if not silent then
+                    WindUI:Notify({ Title = "Remote Error!", Content = "Remote Fishing tidak ditemukan! Cek jalur RPath.", Duration = 5, Icon = "x", })
+                end
+                return false
             end
         end
-    end)
-    v889:AddToggle({
-        Title = "Artifact Progress",
-        Default = false,
-        Callback = function(p919)
-            vu892 = p919
-            if p919 then
-                task.spawn(function()
-                    while vu892 do
-                        local v920 = vu903()
-                        local v921, v922, v923 = pairs(v920)
-                        local v924 = true
-                        while true do
-                            local v925
-                            v923, v925 = v921(v922, v923)
-                            if v923 == nil then
-                                break
-                            end
-                            if not v925 then
-                                v924 = false
-                                break
-                            end
-                        end
-                        vu908(v920)
-                        if v924 then
-                            vu892 = false
-                        end
-                        local v926, v927, v928 = ipairs(vu896)
-                        while true do
-                            local v929
-                            v928, v929 = v926(v927, v928)
-                            if v928 == nil then
-                                break
-                            end
-                            if not v920[v929] then
-                                vu893 = v929
-                                local v930 = (vu706.Character or vu706.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart")
-                                if v930 and _G.artifactPositions[v929] then
-                                    v930.CFrame = _G.artifactPositions[v929]
-                                end
-                                repeat
-                                    task.wait(vu891)
-                                until not (vu893 and vu892)
-                                break
-                            end
-                        end
-                        task.wait(vu891)
+        return true
+    end
+
+    local function disableOtherModes(currentMode)
+        pcall(function()
+            -- Find Toggles based on titles
+            local toggleLegit = farm:GetElementByTitle("Auto Fish (Legit)")
+            local toggleNormal = farm:GetElementByTitle("Normal Instant Fish")
+            local toggleBlatant = farm:GetElementByTitle("Instant Fishing (Blatant)")
+
+            if currentMode ~= "legit" and legitAutoState then 
+                legitAutoState = false
+                if toggleLegit and toggleLegit.Set then toggleLegit:Set(false) end
+                if legitClickThread then task.cancel(legitClickThread) legitClickThread = nil end
+                if legitEquipThread then task.cancel(legitEquipThread) legitEquipThread = nil end -- Matikan Equip Thread
+            end
+            if currentMode ~= "normal" and normalInstantState then 
+                normalInstantState = false
+                if toggleNormal and toggleNormal.Set then toggleNormal:Set(false) end
+                if normalLoopThread then task.cancel(normalLoopThread) normalLoopThread = nil end
+                if normalEquipThread then task.cancel(normalEquipThread) normalEquipThread = nil end
+            end
+            if currentMode ~= "blatant" and blatantInstantState then 
+                blatantInstantState = false
+                if toggleBlatant and toggleBlatant.Set then toggleBlatant:Set(false) end
+                if blatantLoopThread then task.cancel(blatantLoopThread) blatantLoopThread = nil end
+                if blatantEquipThread then task.cancel(blatantEquipThread) blatantEquipThread = nil end -- Matikan Equip Thread
+            end
+        end)
+        
+        -- Reset server-side auto fishing state if moving away from Legit mode
+        if currentMode ~= "legit" then
+            pcall(function() if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(false) end end)
+        end
+    end
+    
+    -- ===================================================================
+    -- LOGIKA BARU UNTUK AUTO FISH LEGIT
+    -- ===================================================================
+
+    local FishingController = require(RepStorage:WaitForChild("Controllers").FishingController)
+    local AutoFishingController = require(RepStorage:WaitForChild("Controllers").AutoFishingController)
+
+    local AutoFishState = {
+        IsActive = false,
+        MinigameActive = false
+    }
+
+    local SPEED_LEGIT = 0.05
+    local legitClickThread = nil
+
+    local function performClick()
+        if FishingController then
+            FishingController:RequestFishingMinigameClick()
+            task.wait(SPEED_LEGIT)
+        end
+    end
+    
+    -- Hook FishingRodStarted (Minigame Aktif)
+    local originalRodStarted = FishingController.FishingRodStarted
+    FishingController.FishingRodStarted = function(self, arg1, arg2)
+        originalRodStarted(self, arg1, arg2)
+
+        if AutoFishState.IsActive and not AutoFishState.MinigameActive then
+            AutoFishState.MinigameActive = true
+
+            if legitClickThread then
+                task.cancel(legitClickThread)
+            end
+
+            legitClickThread = task.spawn(function()
+                while AutoFishState.IsActive and AutoFishState.MinigameActive do
+                    performClick()
+                end
+            end)
+        end
+    end
+
+    -- Hook FishingStopped
+    local originalFishingStopped = FishingController.FishingStopped
+    FishingController.FishingStopped = function(self, arg1)
+        originalFishingStopped(self, arg1)
+
+        if AutoFishState.MinigameActive then
+            AutoFishState.MinigameActive = false
+        end
+    end
+
+    local function ensureServerAutoFishingOn()
+        local replionClient = require(RepStorage:WaitForChild("Packages").Replion).Client
+        local replionData = replionClient:WaitReplion("Data", 5)
+
+        local remoteFunctionName = "RF/UpdateAutoFishingState"
+        local UpdateAutoFishingRemote = GetRemote(RPath, remoteFunctionName)
+
+        if UpdateAutoFishingRemote then
+            pcall(function()
+                UpdateAutoFishingRemote:InvokeServer(true)
+            end)
+        end
+    end
+    
+    local function ToggleAutoClick(shouldActivate)
+        if not FishingController or not AutoFishingController then
+            WindUI:Notify({ Title = "Error", Content = "Gagal memuat Fishing Controllers.", Duration = 4, Icon = "x" })
+            return
+        end
+        
+        AutoFishState.IsActive = shouldActivate
+
+        local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+        local fishingGui = playerGui:FindFirstChild("Fishing") and playerGui.Fishing:FindFirstChild("Main")
+        local chargeGui = playerGui:FindFirstChild("Charge") and playerGui.Charge:FindFirstChild("Main")
+
+
+        if shouldActivate then
+            -- 1. Equip Rod Awal
+            pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+            
+            -- 2. Force Server AutoFishing State
+            ensureServerAutoFishingOn()
+            
+            -- 3. Sembunyikan UI Minigame
+            if fishingGui then fishingGui.Visible = false end
+            if chargeGui then chargeGui.Visible = false end
+
+            WindUI:Notify({ Title = "Auto Fish Legit ON!", Content = "Auto-Equip Protection Active.", Duration = 3, Icon = "check" })
+
+        else
+            if legitClickThread then
+                task.cancel(legitClickThread)
+                legitClickThread = nil
+            end
+            AutoFishState.MinigameActive = false
+            
+            -- 4. Tampilkan kembali UI Minigame
+            if fishingGui then fishingGui.Visible = true end
+            if chargeGui then chargeGui.Visible = true end
+
+            WindUI:Notify({ Title = "Auto Fish Legit OFF!", Duration = 3, Icon = "x" })
+        end
+    end
+
+    -- =================================================================
+    -- 🎣 AUTO FISHING SECTION UI
+    -- =================================================================
+    local autofish = farm:Section({
+        Title = "Auto Fishing",
+        TextSize = 20,
+        FontWeight = Enum.FontWeight.SemiBold,
+    })
+
+    -- 1. TOGGLE AUTO FISH (LEGIT - UPDATED)
+    local slidlegit = Reg("klikd",autofish:Slider({
+        Title = "Legit Click Speed (Delay)",
+        Step = 0.01,
+        Value = { Min = 0.01, Max = 0.5, Default = SPEED_LEGIT },
+        Callback = function(value)
+            local newSpeed = tonumber(value)
+            if newSpeed and newSpeed >= 0.01 then
+                SPEED_LEGIT = newSpeed
+            end
+        end
+    }))
+
+    local toglegit = Reg("legit",autofish:Toggle({
+        Title = "Auto Fish (Legit)",
+        Value = false,
+        Callback = function(state)
+            if not checkFishingRemotes() then return false end
+            disableOtherModes("legit")
+            legitAutoState = state
+            ToggleAutoClick(state)
+
+            -- [THREAD BARU] AUTO EQUIP BACKGROUND - LEGIT MODE
+            if state then
+                if legitEquipThread then task.cancel(legitEquipThread) end
+                legitEquipThread = task.spawn(function()
+                    while legitAutoState do
+                        pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+                        task.wait(0.1) -- Delay spam 0.1 detik
                     end
                 end)
-            end
-        end
-    })
-    task.spawn(function()
-        while task.wait(vu891) do
-            vu908(vu903())
-        end
-    end)
-    v889:AddButton({
-        Title = "Arrow",
-        Callback = function()
-            local v931 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v931 then
-                v931.CFrame = _G.artifactPositions["Arrow Artifact"]
-            end
-        end,
-        SubTitle = "Hourglass Diamond",
-        SubCallback = function()
-            local v932 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v932 then
-                v932.CFrame = _G.artifactPositions["Hourglass Diamond Artifact"]
-            end
-        end
-    })
-    v889:AddButton({
-        Title = "Crescent",
-        Callback = function()
-            local v933 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v933 then
-                v933.CFrame = _G.artifactPositions["Crescent Artifact"]
-            end
-        end,
-        SubTitle = "Diamond",
-        SubCallback = function()
-            local v934 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v934 then
-                v934.CFrame = _G.artifactPositions["Diamond Artifact"]
-            end
-        end
-    })
-    local v935 = v163.Quest:AddSection("Sisyphus Statue Quest")
-    local vu936 = v935:AddParagraph({
-        Title = "Deep Sea Panel",
-        Content = ""
-    })
-    v935:AddDivider()
-    v935:AddToggle({
-        Title = "Auto Deep Sea Quest",
-        Content = "Automatically complete Deep Sea Quest!",
-        Default = false,
-        Callback = function(p937)
-            vu7.autoDeepSea = p937
-            task.spawn(function()
-                while true do
-                    if true then
-                        if not vu7.autoDeepSea then
-                            return
-                        end
-                        local v938 = workspace:FindFirstChild("!!! MENU RINGS")
-                        if v938 then
-                            v938 = v938:FindFirstChild("Deep Sea Tracker")
-                        end
-                        if not v938 then
-                        end
-                    end
-                    local v939 = v938:FindFirstChild("Board") and v938.Board:FindFirstChild("Gui")
-                    if v939 then
-                        v939 = v938.Board.Gui:FindFirstChild("Content")
-                    end
-                    if v939 then
-                        local v940, v941, v942 = ipairs(v939:GetChildren())
-                        local v943 = nil
-                        while true do
-                            local v944
-                            v942, v944 = v940(v941, v942)
-                            if v942 == nil then
-                                v944 = v943
-                            end
-                            if v944:IsA("TextLabel") and v944.Name ~= "Header" then
-                                break
-                            end
-                        end
-                        if v944 then
-                            local v945 = string.lower(v944.Text)
-                            local v946 = vu7.player.Character
-                            if v946 then
-                                v946 = vu7.player.Character:FindFirstChild("HumanoidRootPart")
-                            end
-                            if v946 then
-                                if string.find(v945, "100%%") then
-                                    v946.CFrame = CFrame.new(- 3763, - 135, - 995) * CFrame.Angles(0, math.rad(180), 0)
-                                else
-                                    v946.CFrame = CFrame.new(- 3599, - 276, - 1641)
-                                end
-                            end
-                        end
-                    end
-                    task.wait(1)
-                end
-            end)
-        end
-    })
-    v935:AddButton({
-        Title = "Treasure Room",
-        Callback = function()
-            local v947 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v947 then
-                v947.CFrame = CFrame.new(- 3601, - 283, - 1611)
-            end
-        end,
-        SubTitle = "Sisyphus Statue",
-        SubCallback = function()
-            local v948 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v948 then
-                v948.CFrame = CFrame.new(- 3698, - 135, - 1008)
-            end
-        end
-    })
-    local v949 = v163.Quest:AddSection("Element Quest")
-    local vu950 = v949:AddParagraph({
-        Title = "Element Panel",
-        Content = ""
-    })
-    v949:AddDivider()
-    v949:AddToggle({
-        Title = "Auto Element Quest",
-        Content = "Automatically teleport through Element quest stages.",
-        Default = false,
-        Callback = function(p951)
-            vu7.autoElement = p951
-            task.spawn(function()
-                while vu7.autoElement do
-                    local v952 = vu7.player.Character
-                    if v952 then
-                        v952 = vu7.player.Character:FindFirstChild("HumanoidRootPart")
-                    end
-                    local v953 = workspace:FindFirstChild("!!! MENU RINGS")
-                    if v953 then
-                        v953 = v953:FindFirstChild("Element Tracker")
-                    end
-                    if v952 and v953 then
-                        local v954 = v953:FindFirstChild("Board")
-                        if v954 then
-                            v954 = v954:FindFirstChild("Gui")
-                        end
-                        if v954 then
-                            v954 = v954:FindFirstChild("Content")
-                        end
-                        if v954 then
-                            local v955, v956, v957 = ipairs(v954:GetChildren())
-                            local v958 = {}
-                            while true do
-                                local v959
-                                v957, v959 = v955(v956, v957)
-                                if v957 == nil then
-                                    break
-                                end
-                                if v959:IsA("TextLabel") and v959.Name ~= "Header" then
-                                    table.insert(v958, string.lower(v959.Text))
-                                end
-                            end
-                            if # v958 >= 4 then
-                                local v960 = v958[2]
-                                local v961 = v958[4]
-                                if string.find(v961, "100%%") then
-                                    if string.find(v961, "100%%") and not string.find(v960, "100%%") then
-                                        local v962 = CFrame.new(1453, - 22, - 636)
-                                        v952.CFrame = v962
-                                        autoReturn(v952, v962, 100)
-                                    elseif string.find(v960, "100%%") then
-                                        local v963 = CFrame.new(1480, 128, - 593)
-                                        v952.CFrame = v963
-                                        autoReturn(v952, v963, 100)
-                                        vu7.autoElement = false
-                                        vu950:SetContent("Element Quest Completed!")
-                                        break
-                                    end
-                                else
-                                    local v964 = CFrame.new(1484, 3, - 336) * CFrame.Angles(0, math.rad(180), 0)
-                                    v952.CFrame = v964
-                                    autoReturn(v952, v964, 100)
-                                end
-                            end
-                        end
-                    end
-                    task.wait(1)
-                end
-            end)
-        end
-    })
-    v949:AddButton({
-        Title = "Secred Temple",
-        Callback = function()
-            local v965 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v965 then
-                v965.CFrame = CFrame.new(1453, - 22, - 636)
-            end
-        end,
-        SubTitle = "Underground Cellar",
-        SubCallback = function()
-            local v966 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v966 then
-                v966.CFrame = CFrame.new(2136, - 91, - 701)
-            end
-        end
-    })
-    v949:AddButton({
-        Title = "Transcended Stones",
-        Callback = function()
-            local v967 = (vu7.player.Character or vu7.player.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
-            if v967 then
-                v967.CFrame = CFrame.new(1480, 128, - 593)
-            end
-        end
-    })
-    local function vu977(p968)
-        local v969 = workspace["!!! MENU RINGS"]:FindFirstChild(p968)
-        if not v969 then
-            return ""
-        end
-        local v970 = v969:FindFirstChild("Board") and v969.Board:FindFirstChild("Gui")
-        if v970 then
-            v970 = v969.Board.Gui:FindFirstChild("Content")
-        end
-        if not v970 then
-            return ""
-        end
-        local v971, v972, v973 = ipairs(v970:GetChildren())
-        local v974 = {}
-        local v975 = 1
-        while true do
-            local v976
-            v973, v976 = v971(v972, v973)
-            if v973 == nil then
-                break
-            end
-            if v976:IsA("TextLabel") and v976.Name ~= "Header" then
-                table.insert(v974, v975 .. ". " .. v976.Text)
-                v975 = v975 + 1
-            end
-        end
-        return table.concat(v974, "\n")
-    end
-    task.spawn(function()
-        while task.wait(2) do
-            vu950:SetContent(vu977("Element Tracker"))
-            vu936:SetContent(vu977("Deep Sea Tracker"))
-        end
-    end)
-    QuestSec = v163.Quest:AddSection("Auto Progress Quest Features")
-    QuestProgress = QuestSec:AddParagraph({
-        Title = "Progress Quest Panel",
-        Content = "Waiting for start..."
-    })
-    QuestSec:AddToggle({
-        Title = "Auto Teleport Quest",
-        Default = false,
-        Callback = function(p978)
-            vu7.autoQuestFlow = p978
-            task.spawn(function()
-                function updateParagraph(p979)
-                    if QuestProgress and QuestProgress.SetContent then
-                        QuestProgress:SetContent(p979)
-                    end
-                end
-                local v980 = false
-                local v981 = false
-                local v982 = false
-                local v983 = {
-                    Deep = false,
-                    Lever = false,
-                    Element = false
-                }
-                while true do
-                    if not vu7.autoQuestFlow or v980 and (v981 and v982) then
-                        return
-                    end
-                    if not v980 then
-                        local v984 = workspace:FindFirstChild("!!! MENU RINGS")
-                        if v984 then
-                            v984 = v984:FindFirstChild("Deep Sea Tracker")
-                        end
-                        local v985 = v984 and v984:FindFirstChild("Board") and v984.Board:FindFirstChild("Gui")
-                        if v985 then
-                            v985 = v984.Board.Gui:FindFirstChild("Content")
-                        end
-                        local v986 = true
-                        local v987 = 0
-                        local v988 = 0
-                        if v985 then
-                            local v989, v990, v991 = ipairs(v985:GetChildren())
-                            while true do
-                                local v992
-                                v991, v992 = v989(v990, v991)
-                                if v991 == nil then
-                                    break
-                                end
-                                if v992:IsA("TextLabel") and v992.Name ~= "Header" then
-                                    v988 = v988 + 1
-                                    if string.find(v992.Text, "100%%") then
-                                        v987 = v987 + 1
-                                    else
-                                        v986 = false
-                                    end
-                                end
-                            end
-                        end
-                        local v993 = 0 < v988 and math.floor(v987 / v988 * 100) or 0
-                        updateParagraph(string.format("Doing objective on Deep Sea Quest...\nProgress now %d%%.", v993))
-                        if v986 or v983.Deep then
-                            if v986 then
-                                updateParagraph("Deep Sea Quest Completed!\nProceeding to Artifact Lever...")
-                                v980 = true
-                            end
-                        else
-                            local v994 = vu706.Character
-                            if v994 then
-                                v994 = vu706.Character:FindFirstChild("HumanoidRootPart")
-                            end
-                            if v994 then
-                                v994.CFrame = CFrame.new(- 3599, - 276, - 1641)
-                                v983.Deep = true
-                            end
-                        end
-                        task.wait(1)
-                    end
-                    if v980 and (not v981 and vu7.autoQuestFlow) then
-                        workspace:FindFirstChild("JUNGLE INTERACTIONS")
-                        local v995 = vu903()
-                        local v996, v997, v998 = pairs(v995)
-                        local v999 = true
-                        while true do
-                            local v1000
-                            v998, v1000 = v996(v997, v998)
-                            if v998 == nil then
-                                break
-                            end
-                            if not v1000 then
-                                v999 = false
-                                break
-                            end
-                        end
-                        if v999 or v983.Lever then
-                            if v999 then
-                                updateParagraph("Artifact Lever Completed!\nProceeding to Element Quest...")
-                                v981 = true
-                            end
-                        else
-                            local v1001 = vu706.Character
-                            if v1001 then
-                                v1001 = vu706.Character:FindFirstChild("HumanoidRootPart")
-                            end
-                            if v1001 and _G.artifactPositions["Arrow Artifact"] then
-                                v1001.CFrame = _G.artifactPositions["Arrow Artifact"]
-                                v983.Lever = true
-                            end
-                            updateParagraph("Doing objective on Artifact Lever...\nProgress now 75%.")
-                        end
-                        task.wait(1)
-                    end
-                    if v980 and (v981 and (not v982 and vu7.autoQuestFlow)) then
-                        local v1002 = workspace:FindFirstChild("!!! MENU RINGS")
-                        if v1002 then
-                            v1002 = v1002:FindFirstChild("Element Tracker")
-                        end
-                        local v1003 = v1002 and v1002:FindFirstChild("Board") and v1002.Board:FindFirstChild("Gui")
-                        if v1003 then
-                            v1003 = v1002.Board.Gui:FindFirstChild("Content")
-                        end
-                        if v1003 then
-                            local v1004, v1005, v1006 = ipairs(v1003:GetChildren())
-                            local v1007 = {}
-                            while true do
-                                local v1008
-                                v1006, v1008 = v1004(v1005, v1006)
-                                if v1006 == nil then
-                                    break
-                                end
-                                if v1008:IsA("TextLabel") and v1008.Name ~= "Header" then
-                                    table.insert(v1007, v1008.Text)
-                                end
-                            end
-                            local v1009 = v1007[2] and (string.lower(v1007[2]) or "") or ""
-                            local v1010 = v1007[4] and string.lower(v1007[4]) or ""
-                            local v1011 = vu706.Character
-                            if v1011 then
-                                v1011 = vu706.Character:FindFirstChild("HumanoidRootPart")
-                            end
-                            if string.find(v1009, "100%%") and string.find(v1010, "100%%") then
-                                updateParagraph("All Quest Completed Successfully! :3")
-                                vu7.autoQuestFlow = false
-                                v982 = true
-                            else
-                                if not v983.Element and v1011 then
-                                    v1011.CFrame = CFrame.new(1484, 3, - 336) * CFrame.Angles(0, math.rad(180), 0)
-                                    v983.Element = true
-                                end
-                                if string.find(v1010, "100%%") then
-                                    if string.find(v1010, "100%%") and not string.find(v1009, "100%%") then
-                                        v1011.CFrame = CFrame.new(1453, - 22, - 636)
-                                        updateParagraph("Doing objective on Element Quest...\nProgress now 75%.")
-                                    end
-                                else
-                                    updateParagraph("Doing objective on Element Quest...\nProgress now 50%.")
-                                end
-                            end
-                        end
-                        task.wait(1)
-                    end
-                end
-            end)
-        end
-    })
-    local v1012 = v163.Quest:AddSection("Crystalline Pessage Features")
-    local vu1013 = workspace:FindFirstChild("RUIN INTERACTIONS")
-    local vu1014 = {
-        "Rare",
-        "Epic",
-        "Legendary",
-        "Mythic"
-    }
-    FishTargetIDs = {
-        Rare = 284,
-        Epic = 270,
-        Legendary = 283,
-        Mythic = 263
-    }
-    PromptParagraph = v1012:AddParagraph({
-        Title = "Panel Ancient Ruin",
-        Content = "Checking..."
-    })
-    task.spawn(function()
-        while task.wait(1) do
-            if vu1013 and vu1013:FindFirstChild("PressurePlates") then
-                local v1015 = vu1013.PressurePlates
-                local v1016 = v1015:FindFirstChild("Rare")
-                if v1016 then
-                    v1016 = v1015.Rare.Part:FindFirstChild("ProximityPrompt")
-                end
-                local v1017 = v1015:FindFirstChild("Epic")
-                if v1017 then
-                    v1017 = v1015.Epic.Part:FindFirstChild("ProximityPrompt")
-                end
-                local v1018 = v1015:FindFirstChild("Legendary")
-                if v1018 then
-                    v1018 = v1015.Legendary.Part:FindFirstChild("ProximityPrompt")
-                end
-                local v1019 = v1015:FindFirstChild("Mythic")
-                if v1019 then
-                    v1019 = v1015.Mythic.Part:FindFirstChild("ProximityPrompt")
-                end
-                PromptParagraph:SetContent(string.format("Rare : %s\nEpic : %s\nLegendary : %s\nMythic : %s", v1016 and "<b>Disable</b>" or "<b>Active</b>", v1017 and "<b>Disable</b>" or "<b>Active</b>", v1018 and "<b>Disable</b>" or "<b>Active</b>", v1019 and "<b>Disable</b>" or "<b>Active</b>"))
             else
-                PromptParagraph:SetContent("<font color=\'rgb(255,69,0)\'>PressurePlates folder not found!</font>")
+                if legitEquipThread then task.cancel(legitEquipThread) legitEquipThread = nil end
+            end
+        end
+    }))
+
+    farm:Divider()
+    
+    -- Variabel & Slider Delay
+    local normalCompleteDelay = 1.50
+
+    NormalInstantSlider = Reg("normalslid",autofish:Slider({
+        Title = "Normal Complete Delay",
+        Step = 0.05,
+        Value = { Min = 0.5, Max = 5.0, Default = normalCompleteDelay },
+        Callback = function(value) normalCompleteDelay = tonumber(value) end
+    }))
+
+    -- Fungsi Utama Mancing (Looping Action)
+    local function runNormalInstant()
+        if not normalInstantState then return end
+        if not checkFishingRemotes(true) then normalInstantState = false return end
+        
+        local timestamp = os.time() + os.clock()
+        pcall(function() RF_ChargeFishingRod:InvokeServer(timestamp) end)
+        pcall(function() RF_RequestFishingMinigameStarted:InvokeServer(-139.630452165, 0.99647927980797) end)
+        
+        task.wait(normalCompleteDelay)
+        
+        pcall(function() RE_FishingCompleted:FireServer() end)
+        task.wait(0.3)
+        pcall(function() RF_CancelFishingInputs:InvokeServer() end)
+    end
+
+    local normalins = Reg("tognorm",autofish:Toggle({
+        Title = "Normal Instant Fish",
+        Value = false,
+        Callback = function(state)
+            if not checkFishingRemotes() then return end
+            disableOtherModes("normal")
+            normalInstantState = state
+            
+            if state then
+                -- THREAD 1: Logic Mancing Utama
+                normalLoopThread = task.spawn(function()
+                    while normalInstantState do
+                        runNormalInstant()
+                        task.wait(0.1) 
+                    end
+                end)
+
+                -- THREAD 2: Background Auto Equip (Anti-Stuck)
+                if normalEquipThread then task.cancel(normalEquipThread) end
+                normalEquipThread = task.spawn(function()
+                    while normalInstantState do
+                        pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+                        task.wait(0.1) -- Delay spam 0.1 detik
+                    end
+                end)
+                
+                WindUI:Notify({ Title = "Auto Fish ON", Content = "Auto-Equip Protection Active.", Duration = 3, Icon = "fish" })
+            else
+                -- Matikan kedua thread saat toggle OFF
+                if normalLoopThread then task.cancel(normalLoopThread) normalLoopThread = nil end
+                if normalEquipThread then task.cancel(normalEquipThread) normalEquipThread = nil end
+                
+                pcall(function() RE_EquipToolFromHotbar:FireServer(0) end)
+                WindUI:Notify({ Title = "Auto Fish OFF", Duration = 3, Icon = "x" })
+            end
+        end
+    }))
+
+
+    -- 3. INSTANT FISHING (BLATANT) - V5 (PERFECTION + GHOST UI)
+    local blatant = farm:Section({ Title = "Blatant Mode", TextSize = 20, })
+
+    local completeDelay = 3.055
+    local cancelDelay = 0.3
+    local loopInterval = 1.715
+    
+    _G.CatrazHub_BlatantActive = false
+
+    -- [[ 1. LOGIC KILLER: LUMPUHKAN CONTROLLER ]]
+    task.spawn(function()
+        local S1, FishingController = pcall(function() return require(game:GetService("ReplicatedStorage").Controllers.FishingController) end)
+        if S1 and FishingController then
+            local Old_Charge = FishingController.RequestChargeFishingRod
+            local Old_Cast = FishingController.SendFishingRequestToServer
+            
+            -- Matikan fungsi charge & cast game asli saat Blatant ON
+            FishingController.RequestChargeFishingRod = function(...)
+                if _G.CatrazHub_BlatantActive then return end 
+                return Old_Charge(...)
+            end
+            FishingController.SendFishingRequestToServer = function(...)
+                if _G.CatrazHub_BlatantActive then return false, "Blocked by CatrazHub" end
+                return Old_Cast(...)
             end
         end
     end)
-    v1012:AddToggle({
-        Title = "Auto Ancient Ruin",
-        Default = false,
-        Callback = function(p1020)
-            vu7.triggerRuin = p1020
-            task.spawn(function()
-                while true do
-                    if not vu7.triggerRuin then
-                        return
+
+    -- [[ 2. REMOTE KILLER: BLOKIR KOMUNIKASI ]]
+    local mt = getrawmetatable(game)
+    local old_namecall = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if _G.CatrazHub_BlatantActive and not checkcaller() then
+            -- Cegah game mengirim request mancing atau request update state
+            if method == "InvokeServer" and (self.Name == "RequestFishingMinigameStarted" or self.Name == "ChargeFishingRod" or self.Name == "UpdateAutoFishingState") then
+                return nil 
+            end
+            if method == "FireServer" and self.Name == "FishingCompleted" then
+                return nil
+            end
+        end
+        return old_namecall(self, ...)
+    end)
+    setreadonly(mt, true)
+
+    -- [[ 3. UI & NOTIF KILLER (VISUAL SPOOFING) ]]
+    -- Ini yang bikin UI tetep kelihatan mati padahal server taunya idup
+    local function SuppressGameVisuals(active)
+        -- A. Hook Notifikasi biar ga spam "Auto Fishing: Enabled"
+        local Succ, TextController = pcall(function() return require(game.ReplicatedStorage.Controllers.TextNotificationController) end)
+        if Succ and TextController then
+            if active then
+                if not TextController._OldDeliver then TextController._OldDeliver = TextController.DeliverNotification end
+                TextController.DeliverNotification = function(self, data)
+                    -- Filter pesan Auto Fishing
+                    if data and data.Text and (string.find(tostring(data.Text), "Auto Fishing") or string.find(tostring(data.Text), "Reach Level")) then
+                        return 
                     end
-                    local v1021 = vu6.Data:GetExpect({
-                        "Inventory",
-                        "Items"
-                    })
-                    if vu1013 and vu1013:FindFirstChild("PressurePlates") then
-                        local v1022 = vu1013.PressurePlates
-                        local v1023, v1024, v1025 = ipairs(vu1014)
-                        while true do
-                            local v1026
-                            v1025, v1026 = v1023(v1024, v1025)
-                            if v1025 == nil then
-                                break
-                            end
-                            local v1027 = FishTargetIDs[v1026]
-                            local v1028, v1029, v1030 = ipairs(v1021)
-                            local v1031 = false
-                            while true do
-                                local v1032
-                                v1030, v1032 = v1028(v1029, v1030)
-                                if v1030 == nil then
-                                    break
-                                end
-                                if v1032.Id == v1027 then
-                                    v1031 = true
-                                    break
-                                end
-                            end
-                            if v1031 then
-                                local v1033 = v1022:FindFirstChild(v1026)
-                                if v1033 then
-                                    v1033 = v1033:FindFirstChild("Part")
-                                end
-                                if v1033 then
-                                    v1033 = v1033:FindFirstChild("ProximityPrompt")
-                                end
-                                if v1033 then
-                                    fireproximityprompt(v1033)
-                                end
-                            end
+                    return TextController._OldDeliver(self, data)
+                end
+            elseif TextController._OldDeliver then
+                TextController.DeliverNotification = TextController._OldDeliver
+                TextController._OldDeliver = nil
+            end
+        end
+
+        -- B. Paksa Tombol Jadi Merah (Inactive) Setiap Frame
+        if active then
+            task.spawn(function()
+                local RunService = game:GetService("RunService")
+                local CollectionService = game:GetService("CollectionService")
+                local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+                
+                -- Warna Merah (Inactive) dari kode game yang kamu kasih
+                local InactiveColor = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromHex("ff5d60")), 
+                    ColorSequenceKeypoint.new(1, Color3.fromHex("ff2256"))
+                })
+
+                while _G.CatrazHub_BlatantActive do
+                    -- Cari tombol Auto Fishing (Bisa di Backpack atau tagged)
+                    local targets = {}
+                    
+                    -- Cek Tag (Cara paling akurat sesuai script game)
+                    for _, btn in ipairs(CollectionService:GetTagged("AutoFishingButton")) do
+                        table.insert(targets, btn)
+                    end
+                    
+                    -- Fallback cek path manual
+                    if #targets == 0 then
+                        local btn = PlayerGui:FindFirstChild("Backpack") and PlayerGui.Backpack:FindFirstChild("AutoFishingButton")
+                        if btn then table.insert(targets, btn) end
+                    end
+
+                    -- Paksa Gradientnya jadi Merah
+                    for _, btn in ipairs(targets) do
+                        local grad = btn:FindFirstChild("UIGradient")
+                        if grad then
+                            grad.Color = InactiveColor -- Timpa animasi spr game
                         end
                     end
-                    task.wait(1)
+                    
+                    RunService.RenderStepped:Wait()
                 end
             end)
         end
-    })
-    ClassicX = v163.Quest:AddSection("Classic Event Features [BETA]")
-    ReqFish = {
-        "Builderman Guppy",
-        "Brighteyes Guppy",
-        "Shedletsky Guppy",
-        "Guest Guppy"
-    }
-    FishTargetIDs = {
-        ["Builderman Guppy"] = 434,
-        ["Brighteyes Guppy"] = 435,
-        ["Shedletsky Guppy"] = 415,
-        ["Guest Guppy"] = 422
-    }
-    FishRootTargets = {
-        ["Brighteyes Guppy"] = CFrame.new(- 8865.5, - 580.75, 174.225006, - 1.1920929e-7, 0, - 1.00000012, 0, 1, 0, 1.00000012, 0, - 1.1920929e-7),
-        ["Builderman Guppy"] = CFrame.new(- 8829.5, - 580.75, 138.024994, - 1.1920929e-7, 0, 1.00000012, 0, 1, 0, - 1.00000012, 0, - 1.1920929e-7),
-        ["Guest Guppy"] = CFrame.new(- 8865.5, - 580.75, 138.024994, - 1.1920929e-7, 0, 1.00000012, 0, 1, 0, - 1.00000012, 0, - 1.1920929e-7),
-        ["Shedletsky Guppy"] = CFrame.new(- 8830.48926, - 580.75, 174.635254, 0, 0, - 1, 0, 1, 0, 1, 0, 0)
-    }
-    Pillars = workspace.ClassicEvent["Fish Pillars"]
-    function findRoot(p1034)
-        local v1035 = math.huge
-        local v1036, v1037, v1038 = ipairs(Pillars:GetChildren())
-        local v1039 = nil
-        while true do
-            local v1040
-            v1038, v1040 = v1036(v1037, v1038)
-            if v1038 == nil then
-                break
-            end
-            local v1041 = v1040:FindFirstChild("Movement")
-            if v1041 then
-                v1041 = v1041:FindFirstChild("Root")
-            end
-            if v1041 then
-                local v1042 = (v1041.CFrame.Position - p1034.Position).Magnitude
-                if v1042 < v1035 then
-                    v1039 = v1041
-                    v1035 = v1042
-                end
-            end
-        end
-        return v1039
     end
-    ClassicX:AddToggle({
-        Title = "Auto Classic Event",
-        Default = false,
-        Callback = function(p1043)
-            vu7.autoClassicEvent = p1043
-            task.spawn(function()
-                if not vu7.autoClassicEvent then
-                    return
-                end
-                local v1044 = vu6.Data:GetExpect({
-                    "Inventory",
-                    "Items"
-                })
-                local v1045, v1046, v1047 = ipairs(ReqFish)
-                local v1048 = FishTargetIDs[v1057]
-                local v1049, v1050, v1051 = ipairs(v1044)
-                local v1052 = false
-                while true do
-                    local v1053
-                    v1051, v1053 = v1049(v1050, v1051)
-                    if v1051 == nil then
-                        break
-                    end
-                    if v1053.Id == v1048 then
-                        v1052 = true
-                        break
-                    end
-                end
-                if v1052 then
-                    local v1054 = FishRootTargets[v1057]
-                    local v1055 = findRoot(v1054)
-                    if v1055 then
-                        local v1056 = v1055:FindFirstChild("ProximityPrompt")
-                        if v1056 then
-                            fireproximityprompt(v1056)
-                            task.wait(0.3)
-                        end
-                    end
-                end
-                local v1057
-                v1047, v1057 = v1045(v1046, v1047)
-                if v1047 ~= nil then
-                else
+
+    -- [[ UI CONFIG ]]
+    local LoopIntervalInput = Reg("blatantint", blatant:Input({
+        Title = "Blatant Interval", Value = tostring(loopInterval), Icon = "fast-forward", Type = "Input", Placeholder = "1.58",
+        Callback = function(input)
+            local newInterval = tonumber(input)
+            if newInterval and newInterval >= 0.5 then loopInterval = newInterval end
+        end
+    }))
+
+    local CompleteDelayInput = Reg("blatantcom", blatant:Input({
+        Title = "Complete Delay", Value = tostring(completeDelay), Icon = "loader", Type = "Input", Placeholder = "2.75",
+        Callback = function(input)
+            local newDelay = tonumber(input)
+            if newDelay and newDelay >= 0.5 then completeDelay = newDelay end
+        end
+    }))
+
+    local CancelDelayInput = Reg("blatantcanc",blatant:Input({
+        Title = "Cancel Delay", Value = tostring(cancelDelay), Icon = "clock", Type = "Input", Placeholder = "0.3", Flag = "canlay",
+        Callback = function(input)
+            local newDelay = tonumber(input)
+            if newDelay and newDelay >= 0.1 then cancelDelay = newDelay end
+        end
+    }))
+
+    local function runBlatantInstant()
+        if not blatantInstantState then return end
+        if not checkFishingRemotes(true) then blatantInstantState = false return end
+
+        task.spawn(function()
+            local startTime = os.clock()
+            local timestamp = os.time() + os.clock()
+            
+            -- Bypass: Panggil remote langsung (Script kita lolos hook checkcaller)
+            pcall(function() RF_ChargeFishingRod:InvokeServer(timestamp) end)
+            task.wait(0.001)
+            pcall(function() RF_RequestFishingMinigameStarted:InvokeServer(-139.6379699707, 0.99647927980797) end)
+            
+            local completeWaitTime = completeDelay - (os.clock() - startTime)
+            if completeWaitTime > 0 then task.wait(completeWaitTime) end
+            
+            pcall(function() RE_FishingCompleted:FireServer() end)
+            task.wait(cancelDelay)
+            pcall(function() RF_CancelFishingInputs:InvokeServer() end)
+        end)
+    end
+
+    local togblat = Reg("blatantt",blatant:Toggle({
+        Title = "Instant Fishing (Blatant)",
+        Value = false,
+        Callback = function(state)
+            if not checkFishingRemotes() then return end
+            disableOtherModes("blatant")
+            blatantInstantState = state
+            _G.CatrazHub_BlatantActive = state
+            
+            -- Jalankan Visual Killer
+            SuppressGameVisuals(state)
+            
+            if state then
+                -- 1. Server State: ON (Perfection)
+                if RF_UpdateAutoFishingState then
+                    pcall(function() RF_UpdateAutoFishingState:InvokeServer(true) end)
                 end
                 task.wait(0.5)
-            end)
-        end
-    })
-    local v1058 = v163.Tele:AddSection("Teleport To Player")
-    local vu1060 = v1058:AddDropdown({
-        Title = "Select Player to Teleport",
-        Content = "Choose target player",
-        Options = vu149(),
-        Default = {},
-        Callback = function(p1059)
-            vu7.trade.teleportTarget = p1059
-        end
-    })
-    v1058:AddButton({
-        Title = "Refresh Player List",
-        Content = "Refresh list!",
-        Callback = function()
-            vu1060:SetValues(vu149())
-            chloex("Player list refreshed!")
-        end
-    })
-    v1058:AddButton({
-        Title = "Teleport to Player",
-        Content = "Teleport to selected player from dropdown",
-        Callback = function()
-            local v1061 = vu7.trade.teleportTarget
-            if v1061 then
-                local v1062 = vu1.Players:FindFirstChild(v1061)
-                if v1062 and v1062.Character and v1062.Character:FindFirstChild("HumanoidRootPart") then
-                    local v1063 = vu706.Character
-                    if v1063 then
-                        v1063 = vu706.Character:FindFirstChild("HumanoidRootPart")
-                    end
-                    if v1063 then
-                        v1063.CFrame = v1062.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-                        chloex("Teleported to " .. v1062.Name)
-                    else
-                        chloex("Your HumanoidRootPart not found.")
-                    end
-                else
-                    chloex("Target not found or not loaded.")
+                if RF_UpdateAutoFishingState then
+                    pcall(function() RF_UpdateAutoFishingState:InvokeServer(true) end)
                 end
+                if RF_UpdateAutoFishingState then
+                    pcall(function() RF_UpdateAutoFishingState:InvokeServer(true) end)
+                end
+
+                -- 2. Loop Kita
+                blatantLoopThread = task.spawn(function()
+                    while blatantInstantState do
+                        runBlatantInstant()
+                        task.wait(loopInterval)
+                    end
+                end)
+
+                -- 3. Auto Equip
+                if blatantEquipThread then task.cancel(blatantEquipThread) end
+                blatantEquipThread = task.spawn(function()
+                    while blatantInstantState do
+                        pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+                        task.wait(0.1) 
+                    end
+                end)
+                
+                WindUI:Notify({ Title = "Blatant Mode ON", Duration = 3, Icon = "zap" })
             else
-                chloex("Please select a player first!")
+                -- 4. Server State: OFF
+                if RF_UpdateAutoFishingState then
+                    pcall(function() RF_UpdateAutoFishingState:InvokeServer(false) end)
+                end
+
+                if blatantLoopThread then task.cancel(blatantLoopThread) blatantLoopThread = nil end
+                if blatantEquipThread then task.cancel(blatantEquipThread) blatantEquipThread = nil end
+                
+                WindUI:Notify({ Title = "Stopped", Duration = 2 })
+            end
+        end
+    }))
+
+    farm:Divider()
+
+    -- -----------------------------------------------------------------
+    -- 🎯 FISHING AREA SECTION (POSITION + LOOKVECTOR)
+    -- -----------------------------------------------------------------
+    local areafish = farm:Section({
+        Title = "Fishing Area",
+        TextSize = 20,
+    })
+
+    -- 1. DROPDOWN Choose Area
+    local choosearea = areafish:Dropdown({
+        Title = "Choose Area",
+        Values = AreaNames,
+        AllowNone = true,
+        Value = nil,
+        Callback = function(option)
+            selectedArea = option
+            local display = option or "None"
+        end
+    })
+
+    local freezeToggle = areafish:Toggle({
+        Title = "Teleport & Freeze at Area (Fix Server Lag)",
+        Desc = "Teleport -> Tunggu Sync Server -> Freeze.",
+        Value = false,
+        Callback = function(state)
+            isTeleportFreezeActive = state
+            
+            local hrp = GetHRP()
+            if not hrp then
+                if freezeToggle and freezeToggle.Set then freezeToggle:Set(false) end
+                return
+            end
+
+            if state then
+                if not selectedArea then
+                    WindUI:Notify({ Title = "Aksi Gagal", Content = "Pilih Area dulu di Dropdown!", Duration = 3, Icon = "alert-triangle", })
+                    if freezeToggle and freezeToggle.Set then freezeToggle:Set(false) end
+                    return
+                end
+                
+                local areaData = (selectedArea == "Custom: Saved" and savedPosition) or FishingAreas[selectedArea]
+
+                if not areaData or not areaData.Pos or not areaData.Look then
+                    WindUI:Notify({ Title = "Aksi Gagal", Duration = 3, Icon = "alert-triangle", })
+                    if freezeToggle and freezeToggle.Set then freezeToggle:Set(false) end
+                    return
+                end
+                
+                -- 1. Unanchor dulu
+                hrp.Anchored = false
+                
+                -- 2. Teleport ke Posisi Target
+                TeleportToLookAt(areaData.Pos, areaData.Look)
+                
+                -- 3. [FIX] Tahan posisi tanpa Anchor selama 1.5 detik agar Server update Zona
+                WindUI:Notify({ Title = "Syncing Zone...", Content = "Menahan posisi agar server membaca lokasi baru...", Duration = 1.5, Icon = "wifi" })
+                
+                local startTime = os.clock()
+                -- Loop selama 1.5 detik: Paksa diam tapi Physics tetap jalan (Server Update)
+                while (os.clock() - startTime) < 1.5 and isTeleportFreezeActive do
+                    if hrp then
+                        hrp.Velocity = Vector3.new(0,0,0)
+                        hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                        -- Sedikit koreksi posisi biar server sadar kita disana
+                        hrp.CFrame = CFrame.new(areaData.Pos, areaData.Pos + areaData.Look) * CFrame.new(0, 0.5, 0)
+                    end
+                    game:GetService("RunService").Heartbeat:Wait()
+                end
+                
+                -- 4. Baru Freeze Total (Anchored) setelah server sync
+                if isTeleportFreezeActive and hrp then
+                    hrp.Anchored = true
+                    WindUI:Notify({ Title = "Ready to Fish", Content = "Posisi dikunci & Zona terupdate.", Duration = 2, Icon = "check" })
+                end
+                
+            else
+                -- Matikan Freeze (UNANCHORED)
+                if hrp then hrp.Anchored = false end
+                WindUI:Notify({ Title = "Unfrozen", Content = "Gerakan kembali normal.", Duration = 2, Icon = "unlock" })
             end
         end
     })
-    local v1064 = v163.Tele:AddSection("Location")
-    v1064:AddDropdown({
-        Title = "Select Location",
-        Options = locationNames,
-        Default = locationNames[1],
-        Callback = function(p1065)
-            vu7.teleportTarget = p1065
-        end
-    })
-    v1064:AddButton({
-        Title = "Teleport to Location",
-        Content = "Teleport to selected location",
+
+    local teleto = areafish:Button({
+        Title = "Teleport to Choosen Area",
+        Icon = "corner-down-right",
         Callback = function()
-            local v1066 = vu7.teleportTarget
-            if v1066 then
-                local v1067 = vu139[v1066]
-                local v1068 = v1067 and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if v1068 then
-                    v1068.CFrame = CFrame.new(v1067 + Vector3.new(0, 3, 0))
-                    chloex("Teleported to " .. v1066)
-                end
-            else
-                chloex("Please select a location first!")
+            if not selectedArea then
+                WindUI:Notify({ Title = "Teleport Gagal", Content = "Pilih Area dulu di Dropdown.", Duration = 3, Icon = "alert-triangle", })
+                return
             end
+
+            local areaData = (selectedArea == "Custom: Saved" and savedPosition) or FishingAreas[selectedArea]
+            
+            if not areaData or not areaData.Pos or not areaData.Look then
+                WindUI:Notify({ Title = "Teleport Gagal",Duration = 3, Icon = "alert-triangle", })
+                return
+            end
+
+            if isTeleportFreezeActive and freezeToggle then
+                freezeToggle:Set(false)
+                task.wait(0.1)
+            end
+            
+            TeleportToLookAt(areaData.Pos, areaData.Look)
         end
     })
-    local v1069 = v163.Misc:AddSection("Miscellaneous")
-    v1069:AddToggle({
-        Title = "Anti Staff",
-        Content = "Auto kick if staff/developer joins the server.",
-        Default = false,
-        Callback = function(p1070)
-            _G.AntiStaff = p1070
-            if p1070 then
-                local vu1071 = 35102746
-                local vu1072 = {
-                    [2] = "OG",
-                    [3] = "Tester",
-                    [4] = "Moderator",
-                    [75] = "Community Staff",
-                    [79] = "Analytics",
-                    [145] = "Divers / Artist",
-                    [250] = "Devs",
-                    [252] = "Partner",
-                    [254] = "Talon",
-                    [255] = "Wildes",
-                    [55] = "Swimmer",
-                    [30] = "Contrib",
-                    [35] = "Contrib 2",
-                    [100] = "Scuba",
-                    [76] = "CC"
+
+    farm:Divider()
+
+    -- 3. BUTTON Save Current Position
+    local savepos = areafish:Button({
+        Title = "Save Current Position",
+        Icon = "map-pin",
+        Callback = function()
+            local hrp = GetHRP()
+            if hrp then
+                savedPosition = {
+                    Pos = hrp.Position,
+                    Look = hrp.CFrame.LookVector
                 }
-                task.spawn(function()
-                    while _G.AntiStaff do
-                        local v1073, v1074, v1075 = ipairs(game:GetService("Players"):GetPlayers())
-                        while true do
-                            local v1076
-                            v1075, v1076 = v1073(v1074, v1075)
-                            if v1075 == nil then
-                                break
-                            end
-                            if v1076 ~= game.Players.LocalPlayer and vu1072[v1076:GetRankInGroup(vu1071)] then
-                                game.Players.LocalPlayer:Kick("Chloe Detected Staff, Automatically Kicked!")
-                                return
-                            end
-                        end
+                FishingAreas["Custom: Saved"] = savedPosition
+                WindUI:Notify({
+                    Title = "Posisi Disimpan!",
+                    Duration = 3,
+                    Icon = "save",
+                })
+            else
+                WindUI:Notify({ Title = "Gagal Simpan", Duration = 3, Icon = "x", })
+            end
+        end
+    })
+
+    
+    -- 6. BUTTON Teleport to SAVED POS
+    local teletosave = areafish:Button({
+        Title = "Teleport to SAVED Pos",
+        Icon = "navigation",
+        Callback = function()
+            if not savedPosition then
+                WindUI:Notify({ Title = "Teleport Gagal", Content = "Belum ada posisi yang disimpan.", Duration = 3, Icon = "alert-triangle", })
+                return
+            end
+            
+            local areaData = savedPosition
+            
+            if isTeleportFreezeActive and freezeToggle then
+                freezeToggle:Set(false)
+                task.wait(0.1)
+            end
+            
+            TeleportToLookAt(areaData.Pos, areaData.Look)
+        end
+    })
+end
+
+do
+    local automatic = Window:Tab({
+        Title = "Automatic",
+        Icon = "loader",
+        Locked = false,
+    })
+
+    -- Variabel untuk Auto Sell
+    local sellDelay = 50
+    local autoSellDelayState = false
+    local autoSellDelayThread = nil
+    local sellCount = 50
+    local autoSellCountState = false
+    local autoSellCountThread = nil
+
+    -- Variabel Auto Favorite/Unfavorite
+    local autoFavoriteState = false
+    local autoFavoriteThread = nil
+    local autoUnfavoriteState = false
+    local autoUnfavoriteThread = nil
+    local selectedRarities = {}
+    local selectedItemNames = {}
+    local selectedMutations = {}
+
+    local RE_FavoriteItem = GetRemote(RPath, "RE/FavoriteItem")
+
+    -- Helper Function: Get Fish/Item Count
+    local function GetFishCount()
+        local replion = GetPlayerDataReplion()
+        if not replion then return 0 end
+
+        local totalFishCount = 0
+        local success, inventoryData = pcall(function()
+            return replion:GetExpect("Inventory")
+        end)
+        
+        if not success or not inventoryData or not inventoryData.Items or typeof(inventoryData.Items) ~= "table" then
+            return 0
+        end
+
+        for _, item in ipairs(inventoryData.Items) do
+            local isSellableFish = false
+
+            -- EKSKLUSI GEAR/CRATE/ETC.
+            if item.Type == "Fishing Rods" or item.Type == "Boats" or item.Type == "Bait" or item.Type == "Pets" or item.Type == "Chests" or item.Type == "Crates" or item.Type == "Totems" then
+                continue
+            end
+            if item.Identifier and (item.Identifier:match("Artifact") or item.Identifier:match("Key") or item.Identifier:match("Token") or item.Identifier:match("Booster") or item.Identifier:match("hourglass")) then
+                continue
+            end
+            
+            -- INKLUSI JIKA ITEM MEMILIKI WEIGHT METADATA
+            if item.Metadata and item.Metadata.Weight then
+                isSellableFish = true
+            elseif item.Type == "Fish" or (item.Identifier and item.Identifier:match("fish")) then
+                isSellableFish = true
+            end
+
+            if isSellableFish then
+                totalFishCount = totalFishCount + (item.Count or 1)
+            end
+        end
+        
+        return totalFishCount
+    end
+
+    -- Helper Function: Menonaktifkan mode Auto Sell lain
+    local function disableOtherAutoSell(currentMode)
+        if currentMode ~= "delay" and autoSellDelayState then
+            autoSellDelayState = false
+            local toggle = automatic:GetElementByTitle("Auto Sell All (Delay)")
+            if toggle and toggle.Set then toggle:Set(false) end
+            if autoSellDelayThread then task.cancel(autoSellDelayThread) autoSellDelayThread = nil end
+        end
+        if currentMode ~= "count" and autoSellCountState then
+            autoSellCountState = false
+            local toggle = automatic:GetElementByTitle("Auto Sell by Count")
+            if toggle and toggle.Set then toggle:Set(false) end
+            if autoSellCountThread then task.cancel(autoSellCountThread) autoSellCountThread = nil end
+        end
+    end
+
+    -- LOGIC AUTO SELL BY DELAY
+    local function RunAutoSellDelayLoop()
+        if autoSellDelayThread then task.cancel(autoSellDelayThread) end
+        autoSellDelayThread = task.spawn(function()
+            while autoSellDelayState do
+                if RF_SellAllItems then
+                    pcall(function() RF_SellAllItems:InvokeServer() end)
+                end
+                task.wait(math.max(sellDelay, 1))
+            end
+        end)
+    end
+    
+    -- LOGIC AUTO SELL BY COUNT
+    local function RunAutoSellCountLoop()
+        if autoSellCountThread then task.cancel(autoSellCountThread) end
+        autoSellCountThread = task.spawn(function()
+            while autoSellCountState do
+                local currentCount = GetFishCount()
+                
+                if currentCount >= sellCount then
+                    if RF_SellAllItems then
+                        pcall(function() RF_SellAllItems:InvokeServer() end)
                         task.wait(1)
                     end
+                end
+                task.wait(1)
+            end
+        end)
+    end
+
+
+   -- =================================================================
+    -- 💰 UNIFIED AUTO SELL SYSTEM (BY DELAY / BY COUNT)
+    -- =================================================================
+    local sellall = automatic:Section({ Title = "Autosell Fish", TextSize = 20 })
+
+    -- Variabel Global Auto Sell Baru
+    local autoSellMethod = "Delay" -- Default: Delay
+    local autoSellValue = 50       -- Default Value (Detik atau Jumlah)
+    local autoSellState = false
+    local autoSellThread = nil
+
+    -- 1. Helper: Unified Loop Logic
+    local function RunAutoSellLoop()
+        if autoSellThread then task.cancel(autoSellThread) end
+        
+        autoSellThread = task.spawn(function()
+            while autoSellState do
+                if autoSellMethod == "Delay" then
+                    -- === LOGIC BY DELAY ===
+                    if RF_SellAllItems then
+                        pcall(function() RF_SellAllItems:InvokeServer() end)
+                    end
+                    -- Wait sesuai input (minimal 1 detik biar ga crash)
+                    task.wait(math.max(autoSellValue, 1))
+
+                elseif autoSellMethod == "Count" then
+                    -- === LOGIC BY COUNT ===
+                    local currentCount = GetFishCount() -- Pastikan fungsi GetFishCount ada di atas
+                    
+                    if currentCount >= autoSellValue then
+                        if RF_SellAllItems then
+                            pcall(function() RF_SellAllItems:InvokeServer() end)
+                            WindUI:Notify({ Title = "Auto Sell", Content = "Menjual " .. currentCount .. " items.", Duration = 2, Icon = "dollar-sign" })
+                            task.wait(2) -- Cooldown sebentar setelah jual
+                        end
+                    end
+                    task.wait(1) -- Cek setiap 1 detik
+                end
+            end
+        end)
+    end
+
+    -- 2. UI Elements
+    
+    -- Dropdown untuk memilih metode
+    local inputElement -- Forward declaration untuk update judul input
+    
+    local dropMethod = sellall:Dropdown({
+        Title = "Select Method",
+        Values = {"Delay", "Count"},
+        Value = "Delay",
+        Multi = false,
+        AllowNone = false,
+        Callback = function(val)
+            autoSellMethod = val
+            
+            -- Update Judul Input agar user paham
+            if inputElement then
+                if val == "Delay" then
+                    inputElement:SetTitle("Sell Delay (Seconds)")
+                    inputElement:SetPlaceholder("e.g. 50")
+                else
+                    inputElement:SetTitle("Sell at Item Count")
+                    inputElement:SetPlaceholder("e.g. 100")
+                end
+            end
+            
+            -- Restart loop jika sedang aktif agar logika langsung berubah
+            if autoSellState then
+                RunAutoSellLoop()
+            end
+        end
+    })
+
+    -- Input Tunggal (Dinamis)
+    inputElement = Reg("sellval",sellall:Input({
+        Title = "Sell Delay (Seconds)", -- Judul awal
+        Value = tostring(autoSellValue),
+        Placeholder = "50",
+        Icon = "hash",
+        Callback = function(text)
+            local num = tonumber(text)
+            if num then
+                autoSellValue = num
+            end
+        end
+    }))
+
+    -- Display Jumlah Ikan Saat Ini (Berguna untuk mode Count)
+    local CurrentCountDisplay = sellall:Paragraph({ Title = "Current Fish Count: 0", Icon = "package" })
+    task.spawn(function() 
+        while true do 
+            if CurrentCountDisplay and GetPlayerDataReplion() then 
+                local count = GetFishCount() 
+                CurrentCountDisplay:SetTitle("Current Fish Count: " .. tostring(count)) 
+            end 
+            task.wait(1) 
+        end 
+    end)
+
+    -- Toggle Tunggal
+    local togSell = Reg("tsell",sellall:Toggle({
+        Title = "Enable Auto Sell",
+        Desc = "Menjalankan auto sell sesuai metode di atas.",
+        Value = false,
+        Callback = function(state)
+            autoSellState = state
+            if state then
+                if not RF_SellAllItems then
+                    WindUI:Notify({ Title = "Error", Content = "Remote Sell tidak ditemukan.", Duration = 3, Icon = "x" })
+                    return false
+                end
+                
+                local msg = (autoSellMethod == "Delay") and ("Setiap " .. autoSellValue .. " detik.") or ("Saat jumlah >= " .. autoSellValue)
+                WindUI:Notify({ Title = "Auto Sell ON (" .. autoSellMethod .. ")", Content = msg, Duration = 3, Icon = "check" })
+                RunAutoSellLoop()
+            else
+                WindUI:Notify({ Title = "Auto Sell OFF", Duration = 3, Icon = "x" })
+                if autoSellThread then task.cancel(autoSellThread) autoSellThread = nil end
+            end
+        end
+    }))
+    
+    local favsec = automatic:Section({ Title = "Auto Favorite / Unfavorite", TextSize = 20, })
+    
+    -- 1. FUNGSI BARU UNTUK MENGAMBIL SEMUA NAMA ITEM (GLOBAL)
+    local function getAutoFavoriteItemOptions()
+        local itemNames = {}
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local itemsContainer = ReplicatedStorage:FindFirstChild("Items")
+
+        if not itemsContainer then
+            return {"(Kontainer 'Items' di ReplicatedStorage Tidak Ditemukan)"}
+        end
+
+        for _, itemObject in ipairs(itemsContainer:GetChildren()) do
+            local itemName = itemObject.Name
+            
+            if type(itemName) == "string" and #itemName >= 3 then
+                -- Menggunakan string:sub untuk mengecek prefix '!!!'
+                local prefix = itemName:sub(1, 3)
+                
+                if prefix ~= "!!!" then
+                    table.insert(itemNames, itemName)
+                end
+            end
+        end
+
+        table.sort(itemNames)
+        
+        if #itemNames == 0 then
+            return {"(Kontainer 'Items' Kosong atau Semua Item '!!!')"}
+        end
+        
+        return itemNames
+    end
+    
+    local allItemNames = getAutoFavoriteItemOptions()
+    
+    -- FUNGSI HELPER: Mendapatkan semua item yang memenuhi kriteria (DIFORWARD KE FAVORITE)
+    -- GANTI FUNGSI LAMA 'GetItemsToFavorite' DENGAN YANG INI:
+
+local function GetItemsToFavorite()
+    local replion = GetPlayerDataReplion()
+    if not replion or not ItemUtility or not TierUtility then return {} end
+
+    local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+    if not success or not inventoryData or not inventoryData.Items then return {} end
+
+    local itemsToFavorite = {}
+    
+    -- Cek apakah ada filter yang aktif? (Kalau semua kosong, jangan favorite apa-apa biar aman)
+    local isRarityFilterActive = #selectedRarities > 0
+    local isNameFilterActive = #selectedItemNames > 0
+    local isMutationFilterActive = #selectedMutations > 0
+
+    if not (isRarityFilterActive or isNameFilterActive or isMutationFilterActive) then
+        return {} -- Tidak ada filter dipilih, return kosong.
+    end
+
+    for _, item in ipairs(inventoryData.Items) do
+        -- SKIP JIKA SUDAH FAVORIT
+        if item.IsFavorite or item.Favorited then continue end
+        
+        local itemUUID = item.UUID
+        if typeof(itemUUID) ~= "string" or itemUUID:len() < 10 then continue end
+        
+        local name, rarity = GetFishNameAndRarity(item)
+        local mutationFilterString = GetItemMutationString(item)
+        
+        -- LOGIKA BARU (MULTI-SUPPORT / OR LOGIC)
+        local isMatch = false
+
+        -- 1. Cek Rarity (Hanya jika filter rarity dipilih)
+        if isRarityFilterActive and table.find(selectedRarities, rarity) then
+            isMatch = true
+        end
+
+        -- 2. Cek Nama (Hanya jika filter nama dipilih)
+        -- Kita pakai 'if not isMatch' biar gak double check kalau udah match di rarity
+        if not isMatch and isNameFilterActive and table.find(selectedItemNames, name) then
+            isMatch = true
+        end
+
+        -- 3. Cek Mutasi (Hanya jika filter mutasi dipilih)
+        if not isMatch and isMutationFilterActive and table.find(selectedMutations, mutationFilterString) then
+            isMatch = true
+        end
+
+        -- Jika SALAH SATU kondisi di atas terpenuhi, masukkan ke daftar favorite
+        if isMatch then
+            table.insert(itemsToFavorite, itemUUID)
+        end
+    end
+
+    return itemsToFavorite
+end
+    
+    -- PERBAIKAN LOGIKA UNFAVORITE: Mendapatkan item yang SUDAH FAVORIT dan MASUK filter (untuk di-unfavorite)
+    local function GetItemsToUnfavorite()
+        local replion = GetPlayerDataReplion()
+        if not replion or not ItemUtility or not TierUtility then return {} end
+
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData.Items then return {} end
+
+        local itemsToUnfavorite = {}
+        
+        for _, item in ipairs(inventoryData.Items) do
+            -- 1. HANYA PROSES ITEM YANG SUDAH FAVORIT
+            if not (item.IsFavorite or item.Favorited) then
+                continue
+            end
+            local itemUUID = item.UUID
+            if typeof(itemUUID) ~= "string" or itemUUID:len() < 10 then
+                continue
+            end
+            
+            -- 2. CHECK APAKAH MASUK KE CRITERIA FILTER YANG DIPILIH
+            local name, rarity = GetFishNameAndRarity(item)
+            local mutationFilterString = GetItemMutationString(item)
+            
+            local passesRarity = #selectedRarities > 0 and table.find(selectedRarities, rarity)
+            local passesName = #selectedItemNames > 0 and table.find(selectedItemNames, name)
+            local passesMutation = #selectedMutations > 0 and table.find(selectedMutations, mutationFilterString)
+            
+            -- LOGIKA BARU: Unfavorite JIKA item SUDAH FAVORIT DAN MEMENUHI SALAH SATU CRITERIA FILTER.
+            local isTargetedForUnfavorite = passesRarity or passesName or passesMutation
+            
+            if isTargetedForUnfavorite then
+                table.insert(itemsToUnfavorite, itemUUID)
+            end
+        end
+
+        return itemsToUnfavorite
+    end
+
+    -- FUNGSI UTAMA: Mengirim Remote untuk Favorite/Unfavorite
+    local function SetItemFavoriteState(itemUUID, isFavorite)
+        if not RE_FavoriteItem then return false end
+        pcall(function() RE_FavoriteItem:FireServer(itemUUID) end)
+        return true
+    end
+
+    -- LOGIC AUTO FAVORITE LOOP
+    local function RunAutoFavoriteLoop()
+        if autoFavoriteThread then task.cancel(autoFavoriteThread) end
+        
+        autoFavoriteThread = task.spawn(function()
+            local waitTime = 1
+            local actionDelay = 0.5
+            
+            while autoFavoriteState do
+                local itemsToFavorite = GetItemsToFavorite()
+                
+                if #itemsToFavorite > 0 then
+                    WindUI:Notify({ Title = "Auto Favorite", Content = string.format("Mem-favorite %d item...", #itemsToFavorite), Duration = 1, Icon = "star" })
+                    for _, itemUUID in ipairs(itemsToFavorite) do
+                        SetItemFavoriteState(itemUUID, true)
+                        task.wait(actionDelay)
+                    end
+                end
+                
+                task.wait(waitTime)
+            end
+        end)
+    end
+
+    -- LOGIC AUTO UNFAVORITE LOOP
+    local function RunAutoUnfavoriteLoop()
+        if autoUnfavoriteThread then task.cancel(autoUnfavoriteThread) end
+        
+        autoUnfavoriteThread = task.spawn(function()
+            local waitTime = 1
+            local actionDelay = 0.5
+            
+            while autoUnfavoriteState do
+                local itemsToUnfavorite = GetItemsToUnfavorite()
+                
+                if #itemsToUnfavorite > 0 then
+                    WindUI:Notify({ Title = "Auto Unfavorite", Content = string.format("Menghapus favorite dari %d item yang dipilih...", #itemsToUnfavorite), Duration = 1, Icon = "x" })
+                    for _, itemUUID in ipairs(itemsToUnfavorite) do
+                        SetItemFavoriteState(itemUUID, false)
+                        task.wait(actionDelay)
+                    end
+                end
+                
+                task.wait(waitTime)
+            end
+        end)
+    end
+
+
+    -- UI ELEMENTS FAVORITE / UNFAVORITE --
+    
+    local RarityDropdown = Reg("drer",favsec:Dropdown({
+        Title = "by Rarity",
+        Values = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET"},
+        Multi = true, AllowNone = true, Value = false,
+        Callback = function(values) selectedRarities = values or {} end
+    }))
+
+    local ItemNameDropdown = Reg("dtem",favsec:Dropdown({
+        Title = "by Item Name",
+        Values = allItemNames, -- Menggunakan daftar nama item universal
+        Multi = true, AllowNone = true, Value = false,
+        Callback = function(values) selectedItemNames = values or {} end -- Multi select untuk nama
+    }))
+
+    local MutationDropdown = Reg("dmut",favsec:Dropdown({
+        Title = "by Mutation",
+        Values = {"Shiny", "Gemstone", "Corrupt", "Galaxy", "Holographic", "Ghost", "Lightning", "Fairy Dust", "Gold", "Midnight", "Radioactive", "Stone", "Albino", "Sandy", "Acidic", "Disco", "Frozen","Noob"},
+        Multi = true, AllowNone = true, Value = false,
+        Callback = function(values) selectedMutations = values or {} end
+    }))
+
+    -- Toggle Auto Favorite
+    local togglefav = Reg("tvav",favsec:Toggle({
+        Title = "Enable Auto Favorite",
+        Value = false,
+        Callback = function(state)
+            autoFavoriteState = state
+            if state then
+                if autoUnfavoriteState then -- Menonaktifkan Unfavorite jika Favorite ON
+                    autoUnfavoriteState = false
+                    local unfavToggle = automatic:GetElementByTitle("Enable Auto Unfavorite")
+                    if unfavToggle and unfavToggle.Set then unfavToggle:Set(false) end
+                    if autoUnfavoriteThread then task.cancel(autoUnfavoriteThread) autoUnfavoriteThread = nil end
+                end
+
+                if not GetPlayerDataReplion() or not ItemUtility or not TierUtility then WindUI:Notify({ Title = "Error", Content = "Gagal memuat data ItemUtility/TierUtility/Replion.", Duration = 3, Icon = "x" }) return false end
+                
+                WindUI:Notify({ Title = "Auto Favorite ON!", Duration = 3, Icon = "check", })
+                RunAutoFavoriteLoop()
+            else
+                WindUI:Notify({ Title = "Auto Favorite OFF!", Duration = 3, Icon = "x", })
+                if autoFavoriteThread then task.cancel(autoFavoriteThread) autoFavoriteThread = nil end
+            end
+        end
+    }))
+    
+    -- Toggle Auto Unfavorite (LOGIKA YANG DIPERBAIKI)
+    local toggleunfav = Reg("tunfa",favsec:Toggle({
+        Title = "Enable Auto Unfavorite",
+        Value = false,
+        Callback = function(state)
+            autoUnfavoriteState = state
+            if state then
+                if autoFavoriteState then -- Menonaktifkan Favorite jika Unfavorite ON
+                    autoFavoriteState = false
+                    local favToggle = automatic:GetElementByTitle("Enable Auto Favorite")
+                    if favToggle and favToggle.Set then favToggle:Set(false) end
+                    if autoFavoriteThread then task.cancel(autoFavoriteThread) autoFavoriteThread = nil end
+                end
+                
+                if #selectedRarities == 0 and #selectedItemNames == 0 and #selectedMutations == 0 then
+                    WindUI:Notify({ Title = "Peringatan!", Content = "Semua filter kosong. Non-aktifkan toggle ini.", Duration = 5, Icon = "alert-triangle" })
+                    return false -- Batalkan aksi jika tidak ada filter
+                end
+
+                WindUI:Notify({ Title = "Auto Unfavorite ON!", Content = "Menghapus favorit item yang dipilih.", Duration = 3, Icon = "check", })
+                RunAutoUnfavoriteLoop()
+            else
+                WindUI:Notify({ Title = "Auto Unfavorite OFF!", Duration = 3, Icon = "x", })
+                if autoUnfavoriteThread then task.cancel(autoUnfavoriteThread) autoUnfavoriteThread = nil end
+            end
+        end
+    }))
+    
+    automatic:Divider()
+
+    local trade = automatic:Section({ Title = "Auto Trade", TextSize = 20})
+
+    -- Variabel Lokal Auto Trade (Diperbaiki ke Single Target)
+    local autoTradeState = false
+    local autoTradeThread = nil
+    local tradeHoldFavorite = false
+    local selectedTradeTargetId = nil
+    local selectedTradeItemName = nil
+    local selectedTradeRarity = nil
+    local tradeDelay = 1.0
+    local tradeAmount = 0
+    local tradeStopAtCoins = 0
+    local isTradeByCoinActive = false
+
+    -- Player Target Dropdown (Diperkuat)
+    local PlayerList = {}
+    local function GetPlayerOptions()
+        local options = {}
+        PlayerList = {} -- Reset mapping ID
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                table.insert(options, player.Name)
+                PlayerList[player.Name] = player.UserId
+            end
+        end
+        return options
+    end
+
+    local PlayerDropdown
+    PlayerDropdown = trade:Dropdown({
+        Title = "Pilih Pemain Target",
+        Values = GetPlayerOptions(),
+        Value = false,
+        Multi = false,
+        AllowNone = false,
+        Callback = function(name) -- Callback menerima SATU nama (atau nil jika 'None')
+            local player = game.Players:FindFirstChild(name)
+            
+            if player and player.UserId then
+                selectedTradeTargetId = player.UserId
+                WindUI:Notify({ Title = "Target Dipilih", Content = "Target set: " .. player.Name, Duration = 2, Icon = "user" })
+            else
+                selectedTradeTargetId = nil
+            end
+        end
+    })
+
+    local listplay = trade:Button({
+        Title = "Refresh Player List",
+        Icon = "refresh-ccw",
+        Callback = function()
+            
+            local newOptions = GetPlayerOptions()
+            
+            -- 1. Perbarui nilai di dropdown dengan daftar baru
+            pcall(function() PlayerDropdown:Refresh(newOptions) end) -- Gunakan pcall sebagai safety
+            
+            -- 2. Tunda reset tampilan agar UI sempat memproses SetValues
+            task.wait(0.05)
+            
+            -- 3. Reset tampilan dropdown ke 'None' atau nilai default pertama jika tidak ada
+            pcall(function() PlayerDropdown:Set(false) end)
+            
+            -- 4. Reset ID target (wajib)
+            selectedTradeTargetId = nil
+            
+            -- 5. Berikan notifikasi yang jelas
+            if #newOptions > 0 then
+                WindUI:Notify({ Title = "List Diperbarui", Content = string.format("%d pemain ditemukan.", #newOptions), Duration = 2, Icon = "check" })
+            else
+                WindUI:Notify({ Title = "List Diperbarui", Content = "Tidak ada pemain lain di server.", Duration = 2, Icon = "check" })
+            end
+        end
+    })
+    
+    automatic:Divider()
+    
+    -- 1. Item Auto-Populate Dropdown (SINGLE SELECT)
+    local function getTradeableItemOptions()
+        local itemNames = {}
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local itemsContainer = ReplicatedStorage:FindFirstChild("Items")
+
+        if not itemsContainer then
+            return {"(Kontainer 'Items' di ReplicatedStorage Tidak Ditemukan)"}
+        end
+
+        for _, itemObject in ipairs(itemsContainer:GetChildren()) do
+            local itemName = itemObject.Name
+            
+            if type(itemName) == "string" and #itemName >= 3 then
+                local prefix = itemName:sub(1, 3)
+                
+                if prefix ~= "!!!" then
+                    table.insert(itemNames, itemName)
+                end
+            end
+        end
+
+        table.sort(itemNames)
+        
+        if #itemNames == 0 then
+            return {"(Kontainer 'Items' Kosong atau Semua Item '!!!')"}
+        end
+        
+        return itemNames
+    end
+
+    local ItemNameDropdown
+    ItemNameDropdown = trade:Dropdown({
+        Title = "Filter Item Name",
+        Values = getTradeableItemOptions(),
+        Value = false,
+        Multi = false,
+        AllowNone = true,
+        Callback = function(name)
+            selectedTradeItemName = name or nil -- Set ke nil jika "None"
+        end
+    })
+
+    -- 2. Filter Rarity Dropdown (SINGLE SELECT)
+    local raretrade = trade:Dropdown({
+        Title = "Filter Item Rarity",
+        Values = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET", "Trophy", "Collectible", "DEV", "Default"},
+        Value = false,
+        Multi = false,
+        AllowNone = true,
+        Callback = function(rarity)
+            selectedTradeRarity = rarity or nil -- Set ke nil jika "None"
+        end
+    })
+
+    local ToggleCoinStop = trade:Toggle({
+        Title = "Stop at Coin Amount",
+        Desc = "Berhenti trade jika koin mencapai target.",
+        Value = false,
+        Callback = function(state) isTradeByCoinActive = state end
+    })
+
+    local inputcoint = trade:Input({
+        Title = "Target Coin Amount",
+        Placeholder = "1000000",
+        Value = "0",
+        Icon = "dollar-sign",
+        Callback = function(val)
+            tradeStopAtCoins = tonumber(val) or 0
+        end
+    })
+    
+    
+    -- 3. Limit Trade Input (Amount)
+    local InputAmount = trade:Input({
+        Title = "Trade Amount (0 = Unlimited)",
+        Value = tostring(tradeAmount),
+        Placeholder = "0 (Unlimited)",
+        Icon = "hash",
+        Callback = function(input)
+            local newAmount = tonumber(input)
+            if newAmount == nil or newAmount < 0 then
+                tradeAmount = 0
+            else
+                tradeAmount = math.floor(newAmount)
+            end
+        end
+    })
+
+    -- 4. Trade Delay Slider
+    local DelaySlider = trade:Slider({
+        Title = "Trade Delay (Seconds)",
+        Step = 0.1,
+        Value = { Min = 0.5, Max = 5.0, Default = tradeDelay },
+        Callback = function(value)
+            local newDelay = tonumber(value)
+            if newDelay and newDelay >= 0.5 then
+                tradeDelay = newDelay
+            else
+                tradeDelay = 1.0
+            end
+        end
+    })
+
+
+    local function GetItemsToTrade()
+        local replion = GetPlayerDataReplion()
+        if not replion then return {} end
+
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData.Items then return {} end
+
+        local itemsToTrade = {}
+        
+        for _, item in ipairs(inventoryData.Items) do
+            -- [[ LOGIKA HOLD FAVORITE ]]
+            local isFavorited = item.IsFavorite or item.Favorited
+            if tradeHoldFavorite and isFavorited then
+                continue 
+            end
+            
+            if typeof(item.UUID) ~= "string" or item.UUID:len() < 10 then continue end
+            
+            local name, rarity = GetFishNameAndRarity(item)
+            local itemRarity = (rarity and rarity:upper() ~= "COMMON") and rarity or "Default"
+            
+            -- Filter Logic
+            local passesRarity = not selectedTradeRarity or (selectedTradeRarity and itemRarity:upper() == selectedTradeRarity:upper())
+            local passesName = not selectedTradeItemName or (name == selectedTradeItemName)
+            
+            if passesRarity and passesName then
+                -- [UPDATE] Masukkan Id dan Metadata juga untuk hitung harga
+                table.insert(itemsToTrade, { 
+                    UUID = item.UUID, 
+                    Name = name, 
+                    Rarity = rarity, 
+                    Identifier = item.Identifier,
+                    Id = item.Id,
+                    Metadata = item.Metadata or {}
+                })
+            end
+        end
+        return itemsToTrade
+    end
+
+    -- Helper: Cek apakah item dengan UUID tertentu masih ada di inventory
+    local function IsItemStillInInventory(targetUUID)
+        local replion = GetPlayerDataReplion()
+        if not replion then return true end -- Asumsikan masih ada biar ga error
+        
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData.Items then return true end
+
+        for _, item in ipairs(inventoryData.Items) do
+            if item.UUID == targetUUID then
+                return true -- Item masih ada!
+            end
+        end
+        return false -- Item sudah hilang (Berhasil Trade)
+    end
+
+    -- LOGIC LOOP UTAMA: Run Auto Trade (MENGGUNAKAN SINGLE TARGET ID)
+    local function RunAutoTradeLoop()
+        if autoTradeThread then task.cancel(autoTradeThread) end
+        
+        autoTradeThread = task.spawn(function()
+            local tradeCount = 0
+            local accumulatedValue = 0 -- [BARU] Penghitung total nilai coin yang SUDAH di-trade sesi ini
+            local targetId = selectedTradeTargetId
+            
+            if not targetId or typeof(targetId) ~= "number" then
+                WindUI:Notify({ Title = "Trade Gagal", Content = "Pilih Target valid.", Duration = 5, Icon = "x" })
+                local toggle = automatic:GetElementByTitle("Enable Auto Trade")
+                if toggle and toggle.Set then toggle:Set(false) end
+                return
+            end
+
+            local RF_InitiateTrade_Local = GetRemote(RPath, "RF/InitiateTrade", 5)
+            if not RF_InitiateTrade_Local then return end
+
+            WindUI:Notify({ Title = "Auto Trade ON", Content = "Tracking Value dimulai (0/"..tradeStopAtCoins..")", Duration = 2, Icon = "zap" })
+
+            while autoTradeState do
+                -- 1. [LOGIKA BARU] Cek Limit Coin Berdasarkan AKUMULASI TRADE
+                if isTradeByCoinActive and tradeStopAtCoins > 0 then
+                    if accumulatedValue >= tradeStopAtCoins then
+                        WindUI:Notify({ 
+                            Title = "Target Value Tercapai!", 
+                            Content = string.format("Total Trade: %s coins.", accumulatedValue), 
+                            Duration = 5, 
+                            Icon = "dollar-sign" 
+                        })
+                        local toggle = automatic:GetElementByTitle("Enable Auto Trade")
+                        if toggle and toggle.Set then toggle:Set(false) end
+                        break
+                    end
+                end
+
+                -- 2. Cek Limit Jumlah Item
+                if tradeAmount > 0 and tradeCount >= tradeAmount then
+                    WindUI:Notify({ Title = "Limit Item Tercapai", Content = "Batas jumlah item terpenuhi.", Duration = 5, Icon = "stop-circle" })
+                    local toggle = automatic:GetElementByTitle("Enable Auto Trade")
+                    if toggle and toggle.Set then toggle:Set(false) end
+                    break
+                end
+
+                -- 3. Ambil Item Target
+                local itemsToTrade = GetItemsToTrade()
+                
+                if #itemsToTrade > 0 then
+                    local itemToTrade = itemsToTrade[1]
+                    local targetUUID = itemToTrade.UUID
+                    
+                    -- Hitung Estimasi Harga Item INI
+                    local itemBasePrice = 0
+                    if ItemUtility then
+                        local iData = ItemUtility:GetItemData(itemToTrade.Id)
+                        if iData then itemBasePrice = iData.SellPrice or 0 end
+                    end
+                    local multiplier = itemToTrade.Metadata.SellMultiplier or 1
+                    local itemValue = math.floor(itemBasePrice * multiplier)
+
+                    -- Kirim Trade
+                    local successCall = pcall(function()
+                        RF_InitiateTrade_Local:InvokeServer(targetId, targetUUID)
+                    end)
+
+                    if successCall then
+                        -- Verifikasi item hilang dari BP
+                        local startTime = os.clock()
+                        local isTraded = false
+                        repeat
+                            task.wait(0.5)
+                            if not IsItemStillInInventory(targetUUID) then isTraded = true end
+                        until isTraded or (os.clock() - startTime > 5)
+                        
+                        if isTraded then
+                            tradeCount = tradeCount + 1
+                            
+                            -- [BARU] Tambahkan value item ini ke akumulasi
+                            accumulatedValue = accumulatedValue + itemValue
+                            
+                            WindUI:Notify({
+                                Title = "Trade Sukses!",
+                                Content = string.format("Item: %s\nValue: %d | Total: %d/%d", itemToTrade.Name, itemValue, accumulatedValue, (isTradeByCoinActive and tradeStopAtCoins or 0)),
+                                Duration = 2,
+                                Icon = "check"
+                            })
+                            task.wait(tradeDelay)
+                        else
+                            WindUI:Notify({ Title = "Trade Gagal/Lag", Content = "Item tidak terkirim.", Duration = 2, Icon = "alert-triangle" })
+                            task.wait(1.5)
+                        end
+                    else
+                        task.wait(1)
+                    end
+                else
+                    task.wait(2)
+                end
+            end
+            WindUI:Notify({ Title = "Auto Trade Berhenti", Duration = 3, Icon = "x" })
+        end)
+    end
+    
+    local togglehold = trade:Toggle({
+        Title = "Hold Favorite Items",
+        Desc = "Jika ON, item yang di-Favorite tidak akan ikut di-trade.",
+        Value = false,
+        Callback = function(state)
+            tradeHoldFavorite = state
+            if state then
+                WindUI:Notify({ Title = "Safe Mode", Content = "Item Favorite aman dari Auto Trade.", Duration = 2, Icon = "lock" })
+            else
+                WindUI:Notify({ Title = "Warning", Content = "Item Favorite bisa ikut ter-trade!", Duration = 2, Icon = "alert-triangle" })
+            end
+        end
+    })
+
+    -- UI Toggle Auto Trade
+    local autotrd = trade:Toggle({
+        Title = "Enable Auto Trade",
+        Icon = "arrow-right-left",
+        Value = false,
+        Callback = function(state)
+            autoTradeState = state
+            
+            if state then
+                -- 1. Validasi Target ID
+                if not selectedTradeTargetId or typeof(selectedTradeTargetId) ~= "number" then
+                    WindUI:Notify({ Title = "Error", Content = "Pilih pemain target yang valid terlebih dahulu!", Duration = 3, Icon = "alert-triangle" })
+                    return false
+                end
+
+                -- 2. [FITUR BARU] TELEPORT KE TARGET
+                local targetPlayer = game.Players:GetPlayerByUserId(selectedTradeTargetId)
+                
+                if targetPlayer then
+                    local targetChar = targetPlayer.Character
+                    local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+                    
+                    local myChar = LocalPlayer.Character
+                    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+                    if targetHRP and myHRP then
+                        WindUI:Notify({ Title = "Teleporting...", Content = "Menuju ke posisi " .. targetPlayer.Name, Duration = 2, Icon = "map-pin" })
+                        
+                        -- Teleport 5 stud di atas target
+                        myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 5, 0)
+                        
+                        -- Freeze sebentar biar loading map (Opsional, 0.5 detik)
+                        task.wait(0.5)
+                    else
+                        WindUI:Notify({ Title = "Teleport Gagal", Content = "Karakter target tidak ditemukan (Mungkin mati/belum load).", Duration = 3, Icon = "alert-triangle" })
+                    end
+                else
+                    WindUI:Notify({ Title = "Teleport Gagal", Content = "Pemain target sudah keluar server.", Duration = 3, Icon = "x" })
+                    return false
+                end
+
+                -- 3. Jalankan Loop Trade
+                RunAutoTradeLoop()
+            else
+                if autoTradeThread then task.cancel(autoTradeThread) autoTradeThread = nil end
+            end
+        end
+    })
+
+
+    -- UI Toggle Auto Accept Trade
+    local accept = trade:Toggle({
+        Title = "Enable Auto Accept Trade",
+        Icon = "arrow-right-left",
+        Value = false,
+        Callback = function(state)
+            _G.CatrazHub_AutoAcceptTradeEnabled = state
+            
+            if state then
+                WindUI:Notify({
+                    Title = "Auto Accept Trade ON! ✅",
+                    Content = "Menerima semua permintaan trade secara otomatis.",
+                    Duration = 3,
+                    Icon = "check"
+                })
+            else
+                WindUI:Notify({
+                    Title = "Auto Accept Trade OFF! ❌",
+                    Content = "Menerima trade secara manual.",
+                    Duration = 3,
+                    Icon = "x"
+                })
+            end
+        end
+    })
+
+
+    local enchant = automatic:Section({ Title = "Auto Enchant Rod", TextSize = 20,})
+    
+    -- [UPDATE] DATA HARDCODE RODS UNTUK ENCHANT
+    local ENCHANT_ROD_LIST = {
+        {Name = "Luck Rod", ID = 79}, {Name = "Carbon Rod", ID = 76}, {Name = "Grass Rod", ID = 85}, 
+        {Name = "Demascus Rod", ID = 77}, {Name = "Ice Rod", ID = 78}, {Name = "Lucky Rod", ID = 4}, 
+        {Name = "Midnight Rod", ID = 80}, {Name = "Steampunk Rod", ID = 6}, {Name = "Chrome Rod", ID = 7}, 
+        {Name = "Flourescent Rod", ID = 255}, {Name = "Astral Rod", ID = 5}, {Name = "Ares Rod", ID = 126}, 
+        {Name = "Angler Rod", ID = 168}, {Name = "Ghostfin Rod", ID = 169}, {Name = "Element Rod", ID = 257},
+        {Name = "Hazmat Rod", ID = 256}, {Name = "Bamboo Rod", ID = 258}
+    }
+
+    local function GetHardcodedRodNames()
+        local names = {}
+        for _, v in ipairs(ENCHANT_ROD_LIST) do
+            table.insert(names, v.Name)
+        end
+        return names
+    end
+
+    -- Helper: Cari UUID di inventory berdasarkan ID Rod yang dipilih
+    local function GetUUIDByRodID(targetID)
+        local replion = GetPlayerDataReplion()
+        if not replion then return nil end
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData["Fishing Rods"] then return nil end
+
+        for _, rod in ipairs(inventoryData["Fishing Rods"]) do
+            if tonumber(rod.Id) == targetID then
+                return rod.UUID -- Mengembalikan UUID Rod pertama yang cocok dengan ID
+            end
+        end
+        return nil
+    end
+
+    local RodDropdown = enchant:Dropdown({
+        Title = "Select Rod",
+        Desc = "Pilih jenis Rod yang ingin di-enchant.",
+        Values = GetHardcodedRodNames(),
+        Multi = false,
+        AllowNone = true,
+        Callback = function(name)
+            selectedRodUUID = nil
+            -- Cari ID berdasarkan Nama
+            for _, v in ipairs(ENCHANT_ROD_LIST) do
+                if v.Name == name then
+                    -- Cek apakah player punya rod tersebut
+                    local foundUUID = GetUUIDByRodID(v.ID)
+                    if foundUUID then
+                        selectedRodUUID = foundUUID
+                        WindUI:Notify({ Title = "Rod Ditemukan", Content = "UUID tersimpan untuk " .. name, Duration = 2, Icon = "check" })
+                    else
+                        WindUI:Notify({ Title = "Rod Tidak Ada", Content = "Kamu tidak memiliki " .. name .. " di inventory.", Duration = 3, Icon = "x" })
+                    end
+                    break
+                end
+            end
+        end
+    })
+
+    -- Tombol Refresh (Cek ulang ketersediaan Rod yang dipilih)
+    local rodlist = enchant:Button({
+        Title = "Re-Check Selected Rod",
+        Icon = "refresh-ccw",
+        Callback = function()
+            local currentName = RodDropdown.Value
+            if currentName then
+                -- Trigger callback ulang untuk scan UUID baru
+                for _, v in ipairs(ENCHANT_ROD_LIST) do
+                    if v.Name == currentName then
+                        local foundUUID = GetUUIDByRodID(v.ID)
+                        if foundUUID then
+                            selectedRodUUID = foundUUID
+                            WindUI:Notify({ Title = "Re-Check Sukses", Content = "UUID Updated.", Duration = 2, Icon = "check" })
+                        else
+                            selectedRodUUID = nil
+                            WindUI:Notify({ Title = "Hilang", Content = "Rod tidak ditemukan di tas.", Duration = 2, Icon = "x" })
+                        end
+                        break
+                    end
+                end
+            else
+                WindUI:Notify({ Title = "Info", Content = "Pilih Rod di dropdown dulu.", Duration = 2 })
+            end
+        end 
+    })
+
+    -- Dropdown untuk memilih Enchant Target
+    local dropenchant = enchant:Dropdown({
+        Title = "Enchant To Apply (stop when reached)",
+        Desc = "Pilih enchant yang diinginkan. Auto-roll akan berhenti jika salah satu enchant ini didapat.",
+        Values = ENCHANT_NAMES,
+        Multi = true,
+        AllowNone = false,
+        Callback = function(names)
+            selectedEnchantNames = names or {}
+        end
+    })
+
+    -- Toggle Auto Enchant
+    local autoenc = enchant:Toggle({
+        Title = "Enable Auto Enchant",
+        Value = false,
+        Callback = function(state)
+            autoEnchantState = state
+            if state then
+                if not selectedRodUUID then
+                    WindUI:Notify({ Title = "Error", Content = "Pilih Rod target terlebih dahulu.", Duration = 3, Icon = "alert-triangle" })
+                    return false
+                end
+                if #selectedEnchantNames == 0 then
+                    WindUI:Notify({ Title = "Error", Content = "Pilih minimal satu Enchant target.", Duration = 3, Icon = "alert-triangle" })
+                    return false
+                end
+                
+                -- Stone akan dicari di dalam loop RunAutoEnchantLoop
+                RunAutoEnchantLoop(selectedRodUUID)
+            else
+                if autoEnchantThread then task.cancel(autoEnchantThread) autoEnchantThread = nil end
+                WindUI:Notify({ Title = "Auto Enchant OFF!", Duration = 3, Icon = "x",})
+            end
+        end
+    })
+
+-- =================================================================
+    -- 🔮 AUTO SECOND ENCHANT & STONE CREATION
+    -- =================================================================
+    automatic:Divider()
+    local enchant2 = automatic:Section({ Title = "Second Enchant Rod", TextSize = 20})
+
+    -- --- VARIABLES ---
+    local makeStoneState = false
+    local makeStoneThread = nil
+    local secondEnchantState = false
+    local secondEnchantThread = nil
+    
+    local selectedSecretFishUUIDs = {} -- List UUID ikan secret yang dipilih
+    local targetStoneAmount = 1 -- Default jumlah batu yang mau dibuat
+    
+    local TRANSCENDED_STONE_ID = 246
+    local SECOND_ALTAR_POS = FishingAreas["Second Enchant Altar"].Pos
+    local SECOND_ALTAR_LOOK = FishingAreas["Second Enchant Altar"].Look
+
+    -- Remote Definitions (Lokal untuk section ini)
+    local RF_CreateTranscendedStone = GetRemote(RPath, "RF/CreateTranscendedStone")
+    local RE_ActivateSecondEnchantingAltar = GetRemote(RPath, "RE/ActivateSecondEnchantingAltar")
+    local RE_EquipItem = GetRemote(RPath, "RE/EquipItem")
+    local RE_EquipToolFromHotbar = GetRemote(RPath, "RE/EquipToolFromHotbar")
+
+    -- --- HELPER: GET SECRET FISH (FIXED DETECTION) ---
+    local function GetSecretFishOptions()
+        local options = {}
+        local uuidMap = {} -- Mapping Nama -> UUID untuk diproses nanti
+        
+        local replion = GetPlayerDataReplion()
+        if not replion then return {}, {} end
+
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData.Items then return {}, {} end
+
+        for _, item in ipairs(inventoryData.Items) do
+            -- PERBAIKAN 1: Deteksi Ikan berdasarkan 'Weight' (Sama seperti Scan Backpack)
+            -- Karena semua ikan hasil tangkapan pasti punya Metadata Weight
+            local hasWeight = item.Metadata and item.Metadata.Weight
+            
+            -- Fallback: Cek tipe jika weight tidak terbaca
+            local isFishType = item.Type == "Fish" or (item.Identifier and tostring(item.Identifier):lower():find("fish"))
+            
+            if not hasWeight and not isFishType then continue end
+
+            -- PERBAIKAN 2: Ambil Rarity dan paksa Uppercase agar "Secret" == "SECRET"
+            local _, rarity = GetFishNameAndRarity(item)
+            
+            if not rarity or rarity:upper() ~= "SECRET" then continue end
+
+            -- Ambil Nama yang lebih akurat (Dari ItemUtility jika ada)
+            local name = item.Identifier or "Unknown"
+            if ItemUtility then
+                local itemData = ItemUtility:GetItemData(item.Id)
+                if itemData and itemData.Data and itemData.Data.Name then
+                    name = itemData.Data.Name
+                end
+            end
+
+            if item.Metadata and item.Metadata.Weight then
+                name = string.format("%s (%.1fkg)", name, item.Metadata.Weight)
+            end
+            
+            -- Tambahkan penanda jika Favorite
+            if item.IsFavorite or item.Favorited then
+                name = name .. " [⭐]"
+            end
+
+            table.insert(options, name)
+            uuidMap[name] = item.UUID
+        end
+        
+        table.sort(options) -- Urutkan abjad biar rapi
+        return options, uuidMap
+    end
+
+    local secretFishOptions, secretFishUUIDMap = GetSecretFishOptions()
+
+    -- --- HELPER: CEK ENCHANT ID 2 (KHUSUS SECOND ENCHANT) ---
+    local function CheckIfSecondEnchantReached(rodUUID)
+        local replion = GetPlayerDataReplion()
+        local Rods = replion:GetExpect("Inventory")["Fishing Rods"] or {}
+        
+        local targetRod = nil
+        for _, rod in ipairs(Rods) do
+            if rod.UUID == rodUUID then
+                targetRod = rod
+                break
+            end
+        end
+
+        if not targetRod then return true end -- Stop jika rod hilang
+        
+        local metadata = targetRod.Metadata or {}
+        
+        -- PENTING: Cek EnchantId2 (Slot kedua)
+        local currentEnchant2 = metadata.EnchantId2
+        
+        if not currentEnchant2 then return false end -- Belum ada enchant ke-2
+
+        -- Cek apakah enchant ke-2 sesuai target
+        for _, targetName in ipairs(selectedEnchantNames) do
+            local targetID = ENCHANT_MAPPING[targetName]
+            if targetID and currentEnchant2 == targetID then
+                return true -- Berhenti: Enchant target tercapai di slot 2
+            end
+        end
+
+        return false
+    end
+
+    -- --- HELPER: CARI TRANSCENDED STONE (ID 246) ---
+    local function GetTranscendedStoneUUID()
+        local replion = GetPlayerDataReplion()
+        if not replion then return nil end
+        local inventoryData = replion:GetExpect("Inventory")
+        
+        if inventoryData and inventoryData.Items then
+            for _, item in ipairs(inventoryData.Items) do
+                if tonumber(item.Id) == TRANSCENDED_STONE_ID and item.UUID then
+                    return item.UUID
+                end
+            end
+        end
+        return nil
+    end
+
+    -- --- LOGIC 1: MAKE TRANSCENDED STONE ---
+    local function RunMakeStoneLoop()
+        if makeStoneThread then task.cancel(makeStoneThread) end
+
+        makeStoneThread = task.spawn(function()
+            local createdCount = 0
+            
+            -- 1. Teleport ke Altar dulu biar aman
+            TeleportToLookAt(SECOND_ALTAR_POS, SECOND_ALTAR_LOOK)
+            task.wait(1)
+
+            while makeStoneState and createdCount < targetStoneAmount do
+                -- Ambil list baru (jika ada perubahan inventory)
+                local _, currentMap = GetSecretFishOptions()
+                local fishToSacrifice = nil
+                
+                -- Cari ikan pertama yang cocok dengan seleksi user
+                for name, uuid in pairs(currentMap) do
+                    -- Cek apakah nama ini ada di daftar yang dipilih user (selectedSecretFishUUIDs menyimpan Nama di dropdown logic ini)
+                    if table.find(selectedSecretFishUUIDs, name) then
+                        fishToSacrifice = uuid
+                        break
+                    end
+                end
+
+                if not fishToSacrifice then
+                    WindUI:Notify({ Title = "Selesai / Habis", Content = "Tidak ada ikan target tersisa.", Duration = 5, Icon = "check" })
+                    break
+                end
+
+                -- Proses Pembuatan
+                WindUI:Notify({ Title = "Sacrificing...", Content = "Memproses ikan...", Duration = 1, Icon = "refresh-cw" })
+
+                -- 1. Unequip Semua
+                UnequipAllEquippedItems()
+                task.wait(0.3)
+
+                -- 2. Equip Ikan
+                pcall(function() 
+                    RE_EquipItem:FireServer(fishToSacrifice, "Fish") 
+                end)
+                task.wait(0.5)
+
+                -- 3. Equip ke Hotbar (Slot 2 sesuai request)
+                pcall(function() 
+                    RE_EquipToolFromHotbar:FireServer(2) 
+                end)
+                task.wait(0.8) -- Tunggu animasi equip
+
+                -- 4. Create Stone
+                local success = pcall(function() 
+                    RF_CreateTranscendedStone:InvokeServer() 
+                end)
+
+                if success then
+                    createdCount = createdCount + 1
+                    WindUI:Notify({ Title = "Stone Created!", Content = string.format("Total: %d / %d", createdCount, targetStoneAmount), Duration = 2, Icon = "gem" })
+                else
+                    WindUI:Notify({ Title = "Gagal", Content = "Gagal membuat batu (Mungkin bukan secret?).", Duration = 2, Icon = "x" })
+                end
+
+                task.wait(1.5) -- Cooldown antar pembuatan
+            end
+
+            makeStoneState = false
+            local toggle = automatic:GetElementByTitle("Start Make Stones")
+            if toggle and toggle.Set then toggle:Set(false) end
+            
+            -- Unequip tool terakhir
+            pcall(function() RE_EquipToolFromHotbar:FireServer(0) end)
+        end)
+    end
+
+    -- --- LOGIC 2: SECOND ENCHANT LOOP ---
+    local function RunSecondEnchantLoop(rodUUID)
+        if secondEnchantThread then task.cancel(secondEnchantThread) end
+
+        secondEnchantThread = task.spawn(function()
+            -- 1. Unequip Awal
+            UnequipAllEquippedItems()
+            task.wait(0.5)
+
+            -- 2. Teleport ke Second Altar
+            TeleportToLookAt(SECOND_ALTAR_POS, SECOND_ALTAR_LOOK)
+            task.wait(1.5)
+
+            WindUI:Notify({ Title = "2nd Enchant Started", Content = "Rolling Slot 2...", Duration = 2, Icon = "sparkles" })
+
+            while secondEnchantState do
+                -- 3. Cek Enchant Slot 2
+                if CheckIfSecondEnchantReached(rodUUID) then
+                    WindUI:Notify({ Title = "GG!", Content = "Enchant ke-2 didapatkan!", Duration = 5, Icon = "check" })
+                    break
+                end
+
+                -- 4. Cari Transcended Stone (ID 246)
+                local stoneUUID = GetTranscendedStoneUUID()
+                if not stoneUUID then
+                    WindUI:Notify({ Title = "Stone Habis!", Content = "Butuh Transcended Stone", Duration = 5, Icon = "stop-circle" })
+                    break
+                end
+
+                -- === ALUR ENCHANT ===
+                
+                -- 5. Equip Rod
+                pcall(function() RE_EquipItem:FireServer(rodUUID, "Fishing Rods") end)
+                task.wait(0.2)
+
+                -- 6. Equip Transcended Stone
+                pcall(function() RE_EquipItem:FireServer(stoneUUID, "Enchant Stones") end)
+                task.wait(0.2)
+
+                -- 7. Equip Stone ke Hotbar (Slot 2)
+                pcall(function() RE_EquipToolFromHotbar:FireServer(2) end)
+                task.wait(0.3)
+
+                -- 8. Activate Second Altar
+                pcall(function() RE_ActivateSecondEnchantingAltar:FireServer() end)
+
+                -- 9. Tunggu (Trade Delay)
+                task.wait(tradeDelay)
+
+                -- 10. Unequip
+                pcall(function() RE_EquipToolFromHotbar:FireServer(0) end)
+                task.wait(0.5)
+            end
+
+            secondEnchantState = false
+            local toggle = automatic:GetElementByTitle("Start Second Enchant")
+            if toggle and toggle.Set then toggle:Set(false) end
+        end)
+    end
+
+
+    -- --- UI COMPONENTS ---
+
+    -- A. BAGIAN MAKE STONE
+    local SecretFishDropdown = enchant2:Dropdown({
+        Title = "Select Secret Fish (Sacrifice)",
+        Desc = "Pilih ikan SECRET untuk dijadikan Transcended Stone.",
+        Values = secretFishOptions,
+        Multi = true,
+        AllowNone = true,
+        Callback = function(values)
+            -- Di sini kita simpan Namanya saja, nanti di loop kita cocokan Nama -> UUID map terbaru
+            -- karena UUID bisa berubah/item bisa hilang setelah sacrifice
+            selectedSecretFishUUIDs = values or {} 
+        end
+    })
+
+    local butfish = enchant2:Button({
+        Title = "Refresh Secret Fish List",
+        Icon = "refresh-ccw",
+        Callback = function()
+            local newOptions, newMap = GetSecretFishOptions()
+            secretFishUUIDMap = newMap -- Update map global
+            pcall(function() SecretFishDropdown:Refresh(newOptions) end)
+            pcall(function() SecretFishDropdown:Set(false) end)
+            selectedSecretFishUUIDs = {}
+            WindUI:Notify({ Title = "Refreshed", Content = #newOptions .. " ikan secret ditemukan.", Duration = 2, Icon = "check" })
+        end
+    })
+
+    local amountmake = enchant2:Input({
+        Title = "Amount to Make",
+        Desc = "Berapa banyak batu yang ingin dibuat?",
+        Value = "1",
+        Placeholder = "1",
+        Icon = "hash",
+        Callback = function(input)
+            targetStoneAmount = tonumber(input) or 1
+        end
+    })
+
+    local togglestone = enchant2:Toggle({
+        Title = "Start Make Stones",
+        Desc = "Otomatis ubah ikan terpilih menjadi Transcended Stone.",
+        Value = false,
+        Callback = function(state)
+            makeStoneState = state
+            if state then
+                if #selectedSecretFishUUIDs == 0 then
+                    WindUI:Notify({ Title = "Error", Content = "Pilih minimal 1 jenis ikan secret.", Duration = 3, Icon = "alert-triangle" })
+                    return false
+                end
+                RunMakeStoneLoop()
+            else
+                if makeStoneThread then task.cancel(makeStoneThread) end
+                WindUI:Notify({ Title = "Stopped", Duration = 2, Icon = "x" })
+            end
+        end
+    })
+
+    automatic:Divider()
+    
+    -- [UPDATE] UI SECOND ENCHANT (Hardcoded List)
+    
+    local SecondRodDropdown = enchant2:Dropdown({
+        Title = "Select Rod for 2nd Enchant",
+        Desc = "Pilih Rod target. Pastikan Rod ada di inventory.",
+        Values = GetHardcodedRodNames(), -- Menggunakan list nama statis
+        Multi = false,
+        AllowNone = true,
+        Callback = function(name)
+            selectedRodUUID = nil
+            -- Loop cari ID berdasarkan nama di list hardcode
+            for _, v in ipairs(ENCHANT_ROD_LIST) do
+                if v.Name == name then
+                    local foundUUID = GetUUIDByRodID(v.ID)
+                    if foundUUID then
+                        selectedRodUUID = foundUUID
+                        WindUI:Notify({ Title = "Rod Dipilih", Content = "Target: " .. name, Duration = 2, Icon = "check" })
+                    else
+                        WindUI:Notify({ Title = "Gagal", Content = name .. " tidak ditemukan di tas.", Duration = 3, Icon = "x" })
+                    end
+                    break
+                end
+            end
+        end
+    })
+
+    local rodlist2 = enchant2:Button({
+        Title = "Re-Check Selected Rod",
+        Icon = "refresh-ccw",
+        Callback = function()
+             local currentName = SecondRodDropdown.Value
+             if currentName then
+                 -- Trigger ulang pencarian UUID
+                 for _, v in ipairs(ENCHANT_ROD_LIST) do
+                    if v.Name == currentName then
+                        local foundUUID = GetUUIDByRodID(v.ID)
+                        if foundUUID then
+                            selectedRodUUID = foundUUID
+                            WindUI:Notify({ Title = "Sync", Content = "UUID Verified.", Duration = 1, Icon = "check" })
+                        else
+                            WindUI:Notify({ Title = "Missing", Content = "Rod hilang/tidak ada.", Duration = 2, Icon = "x" })
+                        end
+                        break
+                    end
+                 end
+             else
+                WindUI:Notify({ Title = "Info", Content = "Pilih rod dulu.", Duration = 2 })
+             end
+        end
+    })
+
+    local targetenchant2 = enchant2:Dropdown({
+        Title = "Target 2nd Enchant",
+        Desc = "Pilih enchant yang diinginkan di slot ke-2.",
+        Values = ENCHANT_NAMES,
+        Multi = true,
+        AllowNone = false,
+        Callback = function(names)
+            selectedEnchantNames = names or {}
+        end
+    })
+
+    local start2ndenchant = enchant2:Toggle({
+        Title = "Start Second Enchant",
+        Desc = "Auto roll slot ke-2 menggunakan Transcended Stone.",
+        Value = false,
+        Callback = function(state)
+            secondEnchantState = state
+            if state then
+                if not selectedRodUUID then
+                    WindUI:Notify({ Title = "Error", Content = "Pilih Rod terlebih dahulu.", Duration = 3, Icon = "alert-triangle" })
+                    return false
+                end
+                if #selectedEnchantNames == 0 then
+                    WindUI:Notify({ Title = "Error", Content = "Pilih target enchant.", Duration = 3, Icon = "alert-triangle" })
+                    return false
+                end
+                RunSecondEnchantLoop(selectedRodUUID)
+            else
+                if secondEnchantThread then task.cancel(secondEnchantThread) end
+                WindUI:Notify({ Title = "Stopped", Duration = 2, Icon = "x" })
+            end
+        end
+    })
+    
+end
+
+do
+    local teleport = Window:Tab({
+        Title = "Teleport",
+        Icon = "map-pin",
+        Locked = false,
+        
+    })
+
+    local selectedTargetPlayer = nil -- Nama pemain yang dipilih
+    local selectedTargetArea = nil -- Nama area yang dipilih
+
+    -- Helper: Mengambil daftar pemain yang sedang di server (diambil dari kode Automatic)
+    local function GetPlayerListOptions()
+        local options = {}
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                table.insert(options, player.Name)
+            end
+        end
+        return options
+    end
+
+    -- Helper: Mendapatkan HRP target
+    local function GetTargetHRP(playerName)
+        local targetPlayer = game.Players:FindFirstChild(playerName)
+        local character = targetPlayer and targetPlayer.Character
+        if character then
+            return character:FindFirstChild("HumanoidRootPart")
+        end
+        return nil
+    end
+
+
+    -- =================================================================
+    -- A. TELEPORT KE PEMAIN (Button)
+    -- =================================================================
+    local teleplay = teleport:Section({
+        Title = "Teleport to Player",
+        TextSize = 20,
+    })
+
+    local PlayerDropdown = teleplay:Dropdown({
+        Title = "Select Target Player",
+        Values = GetPlayerListOptions(),
+        AllowNone = true,
+        Callback = function(name)
+            selectedTargetPlayer = name
+        end
+    })
+
+    local listplaytel = teleplay:Button({
+        Title = "Refresh Player List",
+        Icon = "refresh-ccw",
+        Callback = function()
+            local newOptions = GetPlayerListOptions()
+            pcall(function() PlayerDropdown:Refresh(newOptions) end)
+            task.wait(0.1)
+            pcall(function() PlayerDropdown:Set(false) end)
+            selectedTargetPlayer = nil
+            WindUI:Notify({ Title = "List Diperbarui", Content = string.format("%d pemain ditemukan.", #newOptions), Duration = 2, Icon = "check" })
+        end
+    })
+
+    local teletoplay = teleplay:Button({
+        Title = "Teleport to Player (One-Time)",
+        Content = "Teleport satu kali ke lokasi pemain yang dipilih.",
+        Icon = "corner-down-right",
+        Callback = function()
+            local hrp = GetHRP()
+            local targetHRP = GetTargetHRP(selectedTargetPlayer)
+            
+            if not selectedTargetPlayer then
+                WindUI:Notify({ Title = "Error", Content = "Pilih pemain target terlebih dahulu.", Duration = 3, Icon = "alert-triangle" })
+                return
+            end
+
+            if hrp and targetHRP then
+                -- Teleport 5 unit di atas target
+                local targetPos = targetHRP.Position + Vector3.new(0, 5, 0)
+                local lookVector = (targetHRP.Position - hrp.Position).Unit 
+                
+                hrp.CFrame = CFrame.new(targetPos, targetPos + lookVector)
+                
+                WindUI:Notify({ Title = "Teleport Sukses", Content = "Teleported ke " .. selectedTargetPlayer, Duration = 3, Icon = "user-check" })
+            else
+                 WindUI:Notify({ Title = "Error", Content = "Gagal menemukan target atau karakter Anda.", Duration = 3, Icon = "x" })
+            end
+        end
+    })
+    
+    teleport:Divider()
+
+    -- =================================================================
+    -- B. TELEPORT KE AREA (Button)
+    -- =================================================================
+    
+    local telearea = teleport:Section({
+        Title = "Teleport to Fishing Area",
+        TextSize = 20,
+    })
+
+    local AreaDropdown = telearea:Dropdown({
+        Title = "Select Target Area",
+        Values = AreaNames, -- Menggunakan variabel AreaNames dari Fishing Tab
+        AllowNone = true,
+        Callback = function(name)
+            selectedTargetArea = name
+        end
+    })
+
+    local butelearea = telearea:Button({
+        Title = "Teleport to Area (One-Time)",
+        Content = "Teleport satu kali ke area yang dipilih.",
+        Icon = "corner-down-right",
+        Callback = function()
+            if not selectedTargetArea or not FishingAreas[selectedTargetArea] then
+                WindUI:Notify({ Title = "Error", Content = "Pilih area target terlebih dahulu.", Duration = 3, Icon = "alert-triangle" })
+                return
+            end
+            
+            local areaData = FishingAreas[selectedTargetArea]
+            
+            TeleportToLookAt(areaData.Pos, areaData.Look)
+            WindUI:Notify({ Title = "Teleport Sukses", Content = "Teleported ke " .. selectedTargetArea, Duration = 3, Icon = "map" })
+        end
+    })
+
+    teleport:Divider()
+
+    local televent = teleport:Section({
+        Title = "Auto Teleport Event",
+        TextSize = 20,
+    })
+
+    local dropvent = televent:Dropdown({
+        Title = "Select Target Event",
+        Content = "Pilih event yang ingin di-monitor secara otomatis.",
+        Values = eventsList,
+        AllowNone = true,
+        Value = false,
+        Callback = function(option)
+            autoEventTargetName = option -- Simpan nama event sebagai target
+            if autoEventTeleportState then
+                 -- Force stop auto-teleport jika target diubah saat sedang aktif
+                 autoEventTeleportState = false
+                 if autoEventTeleportThread then task.cancel(autoEventTeleportThread) autoEventTeleportThread = nil end
+                 Window:GetElementByTitle("Enable Auto Event Teleport"):Set(false)
+            end
+        end
+    })
+
+    local tovent = televent:Button({
+        Title = "Teleport to Chosen Event (Once)",
+        Icon = "corner-down-right",
+        Callback = function()
+            if not autoEventTargetName then
+                WindUI:Notify({ Title = "Error", Content = "Pilih event dulu di dropdown!", Duration = 3, Icon = "alert-triangle" })
+                return
+            end
+            
+            WindUI:Notify({ Title = "Searching...", Content = "Mencari keberadaan event...", Duration = 2, Icon = "search" })
+            
+            local found = FindAndTeleportToTargetEvent()
+            if not found then
+                WindUI:Notify({ Title = "Gagal", Content = "Event tidak ditemukan / belum spawn.", Duration = 3, Icon = "x" })
+            end
+        end
+    })
+
+
+    local togventel = televent:Toggle({
+        Title = "Enable Auto Event Teleport",
+        Content = "Secara otomatis mencari dan teleport ke event yang dipilih.",
+        Value = false,
+        Callback = function(state)
+            if not autoEventTargetName then
+                 WindUI:Notify({ Title = "Error", Content = "Pilih Event Target terlebih dahulu di dropdown.", Duration = 3, Icon = "alert-triangle" })
+                 return false
+            end
+            
+            autoEventTeleportState = state
+            if state then
+                RunAutoEventTeleportLoop()
+            else
+                if autoEventTeleportThread then task.cancel(autoEventTeleportThread) autoEventTeleportThread = nil end
+                WindUI:Notify({ Title = "Auto Event TP OFF", Duration = 3, Icon = "x" })
+            end
+        end
+    })
+    
+end
+
+do
+    local shop = Window:Tab({
+        Title = "Shop",
+        Icon = "shopping-bag",
+        Locked = false,
+    })
+
+    -- === DEFINISI FUNGSI NOTIFIKASI LOKAL UNTUK MENGAKSES WindUI:Notify ===
+    -- Ditinggalkan agar lebih bersih, menggunakan WindUI:Notify() secara langsung
+
+    -- Variabel Tracking Tombol Dinamis
+    local MerchantButtons = {}
+    
+    -- VARIABEL LOKAL DAN FUNGSI HELPER
+    local MerchantReplion = nil
+    local UpdateCleanupFunction = nil
+    local MainDisplayElement = nil
+    local UpdateThread = nil
+    
+    -- Variabel Auto Buy Merchant Statis & Dinamis
+    local selectedStaticItemName = nil
+    local autoBuySelectedState = false
+    local autoBuyStockState = false
+    local autoBuyThread = nil
+
+    -- FUNGSI HELPER: Format Angka
+    local function FormatNumber(n)
+        if n >= 1000000000 then return string.format("%.1fB", n / 1000000000)
+        elseif n >= 1000000 then return string.format("%.1fM", n / 1000000)
+        elseif n >= 1000 then return string.format("%.1fK", n / 1000)
+        else return tostring(n) end
+    end
+
+    -- Data Item Shop & Merchant Item STATIS (CLEANED)
+    local ShopItems = {
+        ["Rods"] = {
+            {Name = "Luck Rod", ID = 70, Price = 325}, {Name = "Carbon Rod", ID = 76, Price = 750},
+            {Name = "Grass Rod", ID = 85, Price = 1500}, {Name = "Demascus Rod", ID = 77, Price = 3000},
+            {Name = "Ice Rod", ID = 78, Price = 5000}, {Name = "Lucky Rod", ID = 4, Price = 15000},
+            {Name = "Midnight Rod", ID = 80, Price = 50000}, {Name = "Steampunk Rod", ID = 6, Price = 215000},
+            {Name = "Chrome Rod", ID = 7, Price = 437000}, {Name = "Flourescent Rod", ID = 255, Price = 715000},
+            {Name = "Astral Rod", ID = 5, Price = 1000000}, {Name = "Ares Rod", ID = 126, Price = 3000000},
+            {Name = "Angler Rod", ID = 168, Price = 8000000},{Name = "Bamboo Rod", ID = 258, Price = 12000000},
+        },
+        ["Bobbers"] = {
+            {Name = "Floral Bait", ID = 20, Price = 4000000}, {Name = "Aether Bait", ID = 16, Price = 3700000},
+            {Name = "Corrupt Bait", ID = 15, Price = 1148484}, {Name = "Dark Matter Bait", ID = 8, Price = 630000},
+            {Name = "Chroma Bait", ID = 6, Price = 290000}, {Name = "Nature Bait", ID = 17, Price = 83500},
+            {Name = "Midnight Bait", ID = 3, Price = 3000}, {Name = "Luck Bait", ID = 2, Price = 1000},
+            {Name = "Topwater Bait", ID = 10, Price = 100},
+        },
+        ["Boats"] = {
+            {Name = "Mini Yach", ID = 14, Price = 1200000}, {Name = "Fish Boat", ID = 6, Price = 180000},
+            {Name = "Speed Boat", ID = 5, Price = 70000}, {Name = "Highfield Boat", ID = 4, Price = 25000},
+            {Name = "Jetski", ID = 3, Price = 7500}, {Name = "Kayak", ID = 2, Price = 1100},
+            {Name = "Small Boat", ID = 1, Price = 100},
+        },
+    }
+
+    local MerchantStaticItems = {
+        {Name = "Fluorescent Rod", ID = 1, Identifier = "Fluorescent Rod", Price = 685000},
+        {Name = "Hazmat Rod", ID = 2, Identifier = "Hazmat Rod", Price = 1380000},
+        {Name = "Singularity Bait", ID = 3, Identifier = "Singularity Bait", Price = 8200000},
+        {Name = "Royal Bait", ID = 4, Identifier = "Royal Bait", Price = 425000},
+        {Name = "Luck Totem", ID = 5, Identifier = "Luck Totem", Price = 650000},
+        {Name = "Shiny Totem", ID = 7, Identifier = "Shiny Totem", Price = 400000},
+        {Name = "Mutation Totem", ID = 8, Identifier = "Mutation Totem", Price = 800000}
+    }
+    
+    local selectedRodName = ShopItems["Rods"][1].Name
+    local selectedBobberName = ShopItems["Bobbers"][1].Name
+    local selectedBoatName = ShopItems["Boats"][1].Name
+
+    -- Remote Functions & Data (diambil dari Global Scope)
+    local RF_PurchaseBait = GetRemote(RPath, "RF/PurchaseBait", 5)
+    local RF_PurchaseFishingRod = GetRemote(RPath, "RF/PurchaseFishingRod", 5)
+    local RF_PurchaseBoat = GetRemote(RPath, "RF/PurchaseBoat", 5)
+    local RF_PurchaseMarketItem = GetRemote(RPath, "RF/PurchaseMarketItem", 5)
+    -- REMOTE KHUSUS UNTUK WEATHER
+    local RF_PurchaseWeatherEvent = GetRemote(RPath, "RF/PurchaseWeatherEvent", 5)
+    
+    local ShopRemotes = {
+        ["Rods"] = RF_PurchaseFishingRod, ["Bobbers"] = RF_PurchaseBait, ["Boats"] = RF_PurchaseBoat,
+    }
+
+    -- FUNGSI UNTUK DROPDOWN STATIS (CLEANED)
+    local function GetStaticMerchantOptions()
+        local options = {}
+        for _, item in ipairs(MerchantStaticItems) do
+            local formattedPrice = FormatNumber(item.Price)
+            -- HANYA MENAMPILKAN HARGA TANPA JENIS MATA UANG
+            table.insert(options, string.format("%s (%s)", item.Name, formattedPrice))
+        end
+        return options
+    end
+
+    -- (Fungsi Helper lainnya)
+    local function GetStaticMerchantItemID(dropdownValue)
+        for _, item in ipairs(MerchantStaticItems) do
+            if dropdownValue:match("^" .. item.Name:gsub("%%", "%%%%") .. " ") then
+                return item.ID, item.Name
+            end
+        end
+        return nil, nil
+    end
+
+    local function getDropdownOptions(itemType)
+        local options = {}
+        for _, item in ipairs(ShopItems[itemType]) do
+            local formattedPrice = FormatNumber(item.Price)
+            table.insert(options, string.format("%s (%s)", item.Name, formattedPrice))
+        end
+        return options
+    end
+    local function getItemID(itemType, dropdownValue)
+        local itemName = dropdownValue:match("^([^%s]+%s[^%s]+)")
+        if not itemName then itemName = dropdownValue:match("^[^%s]+") end
+        for _, item in ipairs(ShopItems[itemType]) do
+            if item.Name == itemName then return item.ID end
+        end
+        return nil
+    end
+    local function handlePurchase(itemType, selectedValue)
+        local itemID = getItemID(itemType, selectedValue)
+        local remote = ShopRemotes[itemType]
+        if not remote or not itemID then
+            WindUI:Notify({ Title = "Purchase Error",Duration = 4, Icon = "x", })
+            return
+        end
+        pcall(function() remote:InvokeServer(itemID) end)
+        WindUI:Notify({ Title = "Purchase Attempted!", Duration = 3, Icon = "check", })
+    end
+    
+    local function GetReplions()
+        if MerchantReplion then return true end
+        local ReplionModule = RepStorage:WaitForChild("Packages"):WaitForChild("Replion", 10)
+        if not ReplionModule then return false end
+        local ReplionClient = require(ReplionModule).Client
+        MerchantReplion = ReplionClient:WaitReplion("Merchant", 5)
+        return MerchantReplion
+    end
+
+    local function getNextRefreshTimeString()
+        local serverTime = workspace:GetServerTimeNow()
+        local secondsInDay = 86400
+        local nextRefreshTime = (math.floor(serverTime / secondsInDay) + 1) * secondsInDay
+        local timeRemaining = math.max(nextRefreshTime - serverTime, 0)
+        local h = math.floor(timeRemaining / 3600)
+        local m = math.floor((timeRemaining % 3600) / 60)
+        local s = math.floor(timeRemaining % 60)
+        local timeString = string.format("Next Refresh: %dH, %dM, %dS", h, m, s)
+        return timeString
+    end
+    
+    -- FUNGSI UNTUK MENDAPATKAN DETAIL ITEM LENGKAP
+    local function GetMerchantStockDetails(merchantData)
+        local itemDetails = {}
+        local MarketItemData = RepStorage:WaitForChild("Shared"):WaitForChild("MarketItemData", 0.1) and require(RepStorage.Shared.MarketItemData)
+        
+        if merchantData and merchantData.Items and type(merchantData.Items) == "table" and MarketItemData and ItemUtility then
+            for _, itemID in ipairs(merchantData.Items) do
+                local marketData = nil
+                for _, data in ipairs(MarketItemData) do
+                    if data.Id == itemID then marketData = data; break end
+                end
+
+                if marketData and not marketData.SkinCrate and marketData.Price and marketData.Currency then
+                    local itemDetail = nil
+                    pcall(function() itemDetail = ItemUtility:GetItemDataFromItemType(marketData.Type, marketData.Identifier) end)
+                    
+                    local name = (itemDetail and itemDetail.Data and itemDetail.Data.Name) or marketData.Identifier or "Unknown Item"
+                    
+                    table.insert(itemDetails, {
+                        Name = name,
+                        ID = itemID,
+                        Price = marketData.Price,
+                        Currency = marketData.Currency,
+                    })
+                end
+            end
+        end
+        return itemDetails
+    end
+
+    -- FUNGSI LOGIC PEMBELIAN ITEM MERCHANT
+    local function BuyMerchantItem(itemID, itemName)
+        if not RF_PurchaseMarketItem then
+            WindUI:Notify({ Title = "Purchase Failed", Content = "Remote Purchase Market Item tidak ditemukan.", Duration = 4, Icon = "x", })
+            return false
+        end
+        
+        local success, result = pcall(function()
+            return RF_PurchaseMarketItem:InvokeServer(itemID)
+        end)
+
+        if success then
+            WindUI:Notify({ Title = "Purchase Attempted!", Content = "Mencoba membeli: " .. itemName, Duration = 1.5, Icon = "check", })
+            return true
+        else
+            WindUI:Notify({ Title = "Purchase Failed", Content = "Gagal: " .. (result or "Unknown Error"), Duration = 2, Icon = "x", })
+            return false
+        end
+    end
+    
+    -- FUNGSI UNTUK MENGHAPUS TOMBOL LAMA
+    local function ClearOldMerchantButtons()
+        for _, btn in ipairs(MerchantButtons) do
+            if btn and type(btn) == "table" and btn.Destroy then
+                pcall(function()
+                    btn:Destroy()
                 end)
             end
         end
-    })
-    v1069:AddToggle({
-        Title = "Bypass Radar",
-        Default = false,
-        Callback = function(pu1077)
-            pcall(function()
-                vu5.Functions.UpdateRadar:InvokeServer(pu1077)
-            end)
-        end
-    })
-    v1069:AddSubSection("Hide Identifier")
-    local vu1078 = game:GetService("Players").LocalPlayer
-    local vu1079 = false
-    local vu1080 = nil
-    local vu1081 = nil
-    local vu1082 = nil
-    local vu1083 = nil
-    local vu1084 = nil
-    local vu1085 = nil
-    local vu1086 = nil
-    local function vu1088()
-        local v1087 = (vu1078.Character or vu1078.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart", 5)
-        if not v1087 then
-            return nil
-        end
-        repeat
-            task.wait()
-        until v1087:FindFirstChild("Overhead")
-        return v1087:WaitForChild("Overhead", 5)
+        MerchantButtons = {}
     end
-    local function vu1095()
-        local v1089 = vu1088()
-        if v1089 then
-            local v1090 = v1089:FindFirstChild("TitleContainer")
-            if v1090 then
-                v1090 = v1089.TitleContainer:FindFirstChild("Label")
-            end
-            local v1091 = v1089:FindFirstChild("Content")
-            if v1091 then
-                v1091 = v1089.Content:FindFirstChild("Header")
-            end
-            local v1092 = v1089:FindFirstChild("LevelContainer")
-            if v1092 then
-                v1092 = v1089.LevelContainer:FindFirstChild("Label")
-            end
-            local v1093
-            if v1090 then
-                v1093 = v1090:FindFirstChildOfClass("UIGradient")
-            else
-                v1093 = v1090
-            end
-            if v1090 and (v1091 and v1092) then
-                local v1094 = v1093 or Instance.new("UIGradient", v1090)
-                _G.hideident = {
-                    overhead = v1089,
-                    titleLabel = v1090,
-                    gradient = v1094,
-                    header = v1091,
-                    levelLabel = v1092
-                }
-                vu1082 = v1090.Text
-                vu1083 = v1091.Text
-                vu1084 = v1092.Text
-                vu1085 = v1094.Color
-                vu1086 = v1094.Rotation
-                vu1080 = vu1080 or vu1083
-                vu1081 = vu1081 or vu1084
-            else
-                warn("[HideIdent] Missing UI components in Overhead.")
+
+    -- FUNGSI UNTUK MEMBUAT STRING STOCK LIST
+    local function CreateStockListString(itemDetails)
+        local list = {"--- CURRENT STOCK ---"}
+        if #itemDetails == 0 then
+            table.insert(list, "Stok Item unik kosong saat ini.")
+            return table.concat(list, "\n")
+        end
+
+        for _, item in ipairs(itemDetails) do
+            local formattedPrice = FormatNumber(item.Price)
+            local currency = item.Currency or "Coins"
+            table.insert(list, string.format(" • %s: %s %s", item.Name, formattedPrice, currency))
+        end
+        
+        return table.concat(list, "\n")
+    end
+
+    -- FUNGSI UNTUK MENGGAMBAR ULANG TOMBOL DINAMIS
+    local function RedrawMerchantButtons(itemDetails)
+        ClearOldMerchantButtons()
+        
+        if #itemDetails > 0 then
+            for _, item in ipairs(itemDetails) do
+                local formattedPrice = FormatNumber(item.Price)
+                local currency = item.Currency or "Coins"
+                
+                local newButton = shop:Button({
+                    Title = string.format("BUY: %s", item.Name),
+                    Desc = string.format("Price: %s %s", formattedPrice, currency),
+                    Icon = "shopping-cart",
+                    Callback = function()
+                        BuyMerchantItem(item.ID, item.Name)
+                    end
+                })
+                table.insert(MerchantButtons, newButton)
             end
         else
-            warn("[HideIdent] Overhead not found.")
+            local noStockIndicator = shop:Paragraph({
+                Title = "No Buyable Items",
+                Desc = "Tidak ada tombol yang tersedia.",
+                Icon = "info",
+            })
+            table.insert(MerchantButtons, noStockIndicator)
+        end
+    end
+
+    -- 💡 FUNGSI AUTO BUY DINAMIS (Current Stock)
+    local function RunAutoBuyStockLoop()
+        if autoBuyThread then task.cancel(autoBuyThread) end
+        
+        autoBuyThread = task.spawn(function()
+            while autoBuyStockState do
+                if MerchantReplion then
+                    local currentDetails = GetMerchantStockDetails(MerchantReplion.Data)
+                    for _, item in ipairs(currentDetails) do
+                        BuyMerchantItem(item.ID, item.Name)
+                        task.wait(0.5)
+                    end
+                end
+                task.wait(3)
+            end
+        end)
+    end
+
+    -- 💡 FUNGSI AUTO BUY STATIS (Selected Item)
+    local function RunAutoBuySelectedLoop(itemID, itemName)
+        if autoBuyThread then task.cancel(autoBuyThread) end
+
+        autoBuyThread = task.spawn(function()
+            while autoBuySelectedState do
+                BuyMerchantItem(itemID, itemName)
+                task.wait(1)
+            end
+        end)
+    end
+
+
+    local function RunMerchantSyncLoop(mainDisplay)
+        if UpdateThread then task.cancel(UpdateThread) end
+
+        local initialDetails = GetMerchantStockDetails(MerchantReplion.Data)
+        RedrawMerchantButtons(initialDetails)
+        
+        local stockUpdateConnection = MerchantReplion:OnChange("Items", function(newItems)
+            local currentDetails = GetMerchantStockDetails(MerchantReplion.Data)
+            RedrawMerchantButtons(currentDetails)
+            
+            local timeString = getNextRefreshTimeString()
+            local stockListString = CreateStockListString(currentDetails)
+            mainDisplay:SetTitle(timeString .. "\n" .. stockListString)
+        end)
+        
+        local isRunning = true
+        
+        UpdateThread = task.spawn(function()
+            while isRunning do
+                local timeString = getNextRefreshTimeString()
+                local currentDetails = GetMerchantStockDetails(MerchantReplion.Data)
+                local stockListString = CreateStockListString(currentDetails)
+                
+                mainDisplay:SetTitle(timeString .. "\n" .. stockListString)
+                
+                task.wait(1)
+            end
+            if stockUpdateConnection then stockUpdateConnection:Disconnect() end
+            ClearOldMerchantButtons()
+        end)
+        
+        return function()
+            isRunning = false
+            if UpdateThread then task.cancel(UpdateThread) UpdateThread = nil end
+            if stockUpdateConnection then stockUpdateConnection:Disconnect() end
+            ClearOldMerchantButtons()
+        end
+    end
+    
+    local function ToggleMerchantSync(state, mainDisplay)
+        if state then
+            task.spawn(function()
+                if not GetReplions() then
+                    WindUI:Notify({ Title = "Sync Gagal", Content = "Gagal memuat Replion Merchant.", Duration = 4, Icon = "x", })
+                    mainDisplay:SetTitle("Sync Gagal: Merchant Replion missing/timeout.")
+                    mainDisplay:SetDesc("Toggle OFF dan coba lagi.")
+                    return
+                end
+
+                WindUI:Notify({ Title = "Sync ON!", Content = "Memulai live update stok dan tombol beli.", Duration = 2, Icon = "check", })
+                mainDisplay:SetDesc("Waktu refresh dihitung akurat dari server.")
+                UpdateCleanupFunction = RunMerchantSyncLoop(mainDisplay)
+            end)
+            
+            return true
+        else
+            WindUI:Notify({ Title = "Sync OFF!", Duration = 3, Icon = "x", })
+            
+            if UpdateCleanupFunction then
+                UpdateCleanupFunction()
+                UpdateCleanupFunction = nil
+            end
+            
+            mainDisplay:SetTitle("Merchant Live Data OFF.")
+            mainDisplay:SetDesc("Toggle ON untuk melihat status live.")
+            ClearOldMerchantButtons()
+            
+            return false
+        end
+    end
+
+    -- ** START WIDGETS **
+
+    local WeatherList = { "Storm", "Cloudy", "Snow", "Wind", "Radiant", "Shark Hunt" }
+    local AutoWeatherState = false
+    local AutoWeatherThread = nil
+    -- UBAH INI MENJADI TABEL UNTUK MENYIMPAN MULTI-SELEKSI
+    local SelectedWeatherTypes = { WeatherList[1] }
+    
+    local function RunAutoBuyWeatherLoop(weatherTypes)
+    
+    -- AGGRESSIVE CHECK/FALLBACK UNTUK REMOTE
+    local PurchaseRemote = RF_PurchaseWeatherEvent
+    if not PurchaseRemote then
+        PurchaseRemote = GetRemote(RPath, "RF/PurchaseWeatherEvent", 1)
+        
+        if not PurchaseRemote then
+            WindUI:Notify({ Title = "Weather Buy Error", Content = "Remote RF/PurchaseWeatherEvent tidak ditemukan setelah coba agresif!", Duration = 5, Icon = "x" })
+            AutoWeatherState = false
             return
         end
     end
-    local function vu1097()
-        local v1096 = _G.hideident
-        if v1096 and (v1096.overhead and v1096.titleLabel) then
-            v1096.overhead.TitleContainer.Visible = true
-            v1096.titleLabel.Text = "discord.gg/chloex"
-            v1096.gradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 85, 255)),
-                ColorSequenceKeypoint.new(0.333, Color3.fromRGB(145, 186, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(136, 243, 255))
-            })
-            v1096.gradient.Rotation = 0
-            v1096.header.Text = vu1080 ~= "" and vu1080 or "Chloe Rawr"
-            v1096.levelLabel.Text = vu1081 ~= "" and vu1081 or ".gg/chloex"
-        end
-    end
-    vu1095()
-    vu1078.CharacterAdded:Connect(function()
-        task.wait(2)
-        vu1095()
-        if vu1079 then
-            task.spawn(function()
-                while vu1079 do
-                    vu1097()
-                    task.wait(1)
-                end
-            end)
-        end
-    end)
-    v1069:AddInput({
-        Title = "Name Changer",
-        Placeholder = "Enter header text...",
-        Default = vu1083 or "",
-        Callback = function(p1098)
-            vu1080 = p1098
-            SaveConfig()
-        end
-    })
-    v1069:AddInput({
-        Title = "Lvl Changer",
-        Placeholder = "Enter level text...",
-        Default = vu1084 or "",
-        Callback = function(p1099)
-            vu1081 = p1099
-            SaveConfig()
-        end
-    })
-    v1069:AddToggle({
-        Title = "Start Hide Identifier",
-        Default = false,
-        Callback = function(p1100)
-            vu1079 = p1100
-            if p1100 then
-                task.spawn(function()
-                    while vu1079 do
-                        local v1101, v1102 = pcall(vu1097)
-                        if not v1101 then
-                            warn("[HideIdent] Error:", v1102)
-                        end
-                        task.wait(1)
-                    end
+
+    if AutoWeatherThread then task.cancel(AutoWeatherThread) end
+
+    print("[DEBUG WEATHER] Starting MULTI-BUY loop for: " .. table.concat(weatherTypes, ", "))
+    
+    AutoWeatherThread = task.spawn(function()
+        local successfulBuyTime = 10 -- Catatan: Nilai ini kemungkinan harus 900 detik (15 menit) untuk cooldown game yang sebenarnya.
+        local attempts = 0
+        
+        while AutoWeatherState and #weatherTypes > 0 do
+            local totalSuccessfulBuysInCycle = 0
+            local weatherBought = {}
+
+            -- === FASE 1: INSTANTLY TRY ALL SELECTED WEATHERS (Satu Cycle Penuh) ===
+            for i, weatherToBuy in ipairs(weatherTypes) do
+                
+                attempts = attempts + 1
+                
+                -- Notifikasi mencoba membeli (delay sangat singkat: 0.05 detik)
+                task.wait(0.05)
+                
+                local success_buy, err_msg = pcall(function()
+                    return PurchaseRemote:InvokeServer(weatherToBuy)
                 end)
-            else
-                local v1103 = _G.hideident
-                if not (v1103 and v1103.overhead) then
-                    return
+
+                if success_buy then
+                    -- Pembelian sukses, catat dan segera coba item berikutnya di daftar
+                    totalSuccessfulBuysInCycle = totalSuccessfulBuysInCycle + 1
+                    table.insert(weatherBought, weatherToBuy)
+                    -- Tambahkan notifikasi sukses (opsional, untuk feedback cepat)
                 end
-                v1103.overhead.TitleContainer.Visible = false
-                v1103.titleLabel.Text = vu1082
-                v1103.header.Text = vu1083
-                v1103.levelLabel.Text = vu1084
-                v1103.gradient.Color = vu1085
-                v1103.gradient.Rotation = vu1086
+            end
+            
+            -- === FASE 2: CHECK RESULT AND WAIT ===
+            if totalSuccessfulBuysInCycle > 0 then
+                -- Setidaknya satu cuaca berhasil dibeli. Tunggu cooldown 15 menit.
+                local boughtList = table.concat(weatherBought, ", ")
+                
+                attempts = 0 -- Reset attempts
+                task.wait(successfulBuyTime) -- TUNGGU COOLDOWN LAMA DI SINI
+            else
+                task.wait(5)
+            end
+        end
+        AutoWeatherThread = nil
+        local toggle = shop:GetElementByTitle("Enable Auto Buy Weather")
+        if toggle and toggle.Set then toggle:Set(false) end
+    end)
+end
+    
+    -- 3. UI UNTUK AUTO BUY WEATHER
+    local weathershop = shop:Section({ Title = "Auto Buy Weather", TextSize = 20, })
+    
+    local WeatherDropdown = Reg("weahterd", weathershop:Dropdown({
+        Title = "Select Weather Type",
+        Values = WeatherList,
+        Value = SelectedWeatherTypes, -- Menggunakan tabel
+        Multi = true, -- UBAH MENJADI MULTI SELECTION
+        AllowNone = false,
+        Callback = function(selected)
+            SelectedWeatherTypes = selected or {} -- Ambil daftar yang dipilih
+            if #SelectedWeatherTypes == 0 then
+                -- Jika tidak ada yang dipilih, kembalikan ke nilai default pertama
+                SelectedWeatherTypes = { WeatherList[1] }
+            end
+            if AutoWeatherState then
+                -- Jika sedang aktif, restart loop dengan weather baru
+                RunAutoBuyWeatherLoop(SelectedWeatherTypes)
+            end
+        end
+    }))
+    
+    local ToggleAutoBuy = Reg("shopweath",weathershop:Toggle({
+        Title = "Enable Auto Buy Weather",
+        Value = false,
+        Callback = function(state)
+            AutoWeatherState = state
+            if state then
+                if #SelectedWeatherTypes == 0 then
+                    -- NOTIFIKASI ERROR: Belum memilih Weather
+                    WindUI:Notify({ Title = "Error", Content = "Pilih minimal satu jenis Weather terlebih dahulu.", Duration = 3, Icon = "x" })
+                    AutoWeatherState = false
+                    return false
+                end
+                RunAutoBuyWeatherLoop(SelectedWeatherTypes)
+                
+            else
+                if AutoWeatherThread then task.cancel(AutoWeatherThread) end
+                -- NOTIFIKASI WARNING: Auto Buy Dimatikan
+                WindUI:Notify({ Title = "Auto Weather", Content = "Auto Buy dimatikan.", Duration = 3, Icon = "x" })
+            end
+        end
+    }))
+    shop:Divider()
+    
+    -- Rods, Bobbers, Boats
+    local prod = shop:Section({ Title = "Purchase Rods", TextSize = 20, })
+    shop:Divider()
+    local rodOptions = getDropdownOptions("Rods")
+    local droprod = prod:Dropdown({ Title = "Select Rod", Values = rodOptions, Value = false, Callback = function(value) selectedRodName = value end })
+    local butrod = prod:Button({ Title = "Purchase Selected Rod", Icon = "mouse-pointer-click", Callback = function() handlePurchase("Rods", selectedRodName) end })
+
+    local pbait = shop:Section({ Title = "Purchase Bobbers", TextSize = 20, })
+    shop:Divider()
+    local bobberOptions = getDropdownOptions("Bobbers")
+    local dbait = pbait:Dropdown({ Title = "Select Bobber", Values = bobberOptions, Value = false, Callback = function(value) selectedBobberName = value end })
+    local butbait = pbait:Button({ Title = "Purchase Selected Bobber", Icon = "mouse-pointer-click", Callback = function() handlePurchase("Bobbers", selectedBobberName) end })
+
+    local pboat = shop:Section({ Title = "Purchase Boats", TextSize = 20, })
+    shop:Divider()
+    local boatOptions = getDropdownOptions("Boats")
+    local dboat = pboat:Dropdown({ Title = "Select Boat", Values = boatOptions, Value = false, Callback = function(value) selectedBoatName = value end })
+    local butboat = pboat:Button({ Title = "Purchase Selected Boat", Icon = "mouse-pointer-click", Callback = function() handlePurchase("Boats", selectedBoatName) end })
+
+    local ptele = shop:Section({ Title = "Shop Teleports", TextSize = 20, })
+    shop:Divider()
+    local buttele = ptele:Button({ Title = "Skin Crate Shop", Icon = "mouse-pointer-click", Callback = function() TeleportToLookAt(Vector3.new(79.038, 17.284, 2869.537), Vector3.new(-0.893, -0.000, 0.450)) end })
+    local bututil = ptele:Button({ Title = "Utility Shop", Icon = "mouse-pointer-click", Callback = function() TeleportToLookAt(Vector3.new(-41.260, 20.460, 2877.561), Vector3.new(-0.893, -0.000, 0.450)) end })
+
+    local merchant = shop:Section({
+        Title = "Traveling Merchant",
+        TextSize = 20,
+    })
+    shop:Divider()
+
+    -- 1. Display Waktu & Stok (Paragraph)
+    MainDisplayElement = merchant:Paragraph({
+        Title = "Merchant Live Data OFF.",
+        Desc = "Toggle ON untuk melihat status live.",
+        Icon = "clock"
+    })
+
+    -- ** DI SINI TOMBOL BUY DINAMIS BERDASARKAN LIVE STOCK MUNCUL **
+
+    local tlive = merchant:Toggle({
+        Title = "Live Stock & Buy Actions",
+        Icon = "rotate-ccw",
+        Value = true,
+        Callback = function(state)
+            return ToggleMerchantSync(state, MainDisplayElement)
+        end,
+    })
+
+
+    local tcurst = merchant:Toggle({
+        Title = "Auto Buy Current Stock",
+        Value = false,
+        Callback = function(state)
+            autoBuyStockState = state
+            if state then
+                RunAutoBuyStockLoop()
+                if autoBuySelectedState then
+                    autoBuySelectedState = false
+                    shop:GetElementByTitle("Auto Buy Item Terpilih"):Set(false)
+                end
+            else
+                if autoBuyThread then task.cancel(autoBuyThread) autoBuyThread = nil end
             end
         end
     })
-    v1069:AddSubSection("Classic Event")
-    v1069:AddToggle({
-        Title = "Auto Claim Event",
-        Default = false,
-        Callback = function(p1104)
-            vu7.autoSmartClaim = p1104
-            if p1104 then
-                task.spawn(function()
-                    local v1105 = game:GetService("Players").LocalPlayer.PlayerGui.EventUI.Frame.Body.Main.Track.Frame
-                    while vu7.autoSmartClaim do
-                        local v1106 = true
-                        for v1107 = 1, 15 do
-                            local vu1108 = v1107
-                            local v1109 = v1105[tostring(vu1108)]
-                            if v1109 then
-                                local v1110 = v1109.Inside
-                                local v1111 = v1110.Claimed.Visible
-                                local v1112 = v1110.Claim.Visible
-                                local _ = v1110.Cost.Visible
-                                if not v1111 then
-                                    v1106 = false
-                                    if v1112 then
-                                        pcall(function()
-                                            vu5.Events.REEvReward:FireServer(vu1108)
-                                        end)
-                                        task.wait(0.3)
-                                        break
+    
+
+    --local merchantStaticOptions = GetStaticMerchantOptions()
+    --local StaticDropdown = merchant:Dropdown({
+      --  Title = "Pilih Item Merchant",
+        --Values = merchantStaticOptions,
+      --  Value = false,
+        --Multi = true,
+        --AllowNone = true,
+        --Callback = function(value)
+          --  selectedStaticItemName = value
+           -- if autoBuySelectedState then
+             --   autoBuySelectedState = false
+              --  shop:GetElementByTitle("Auto Buy Item Terpilih"):Set(false)
+            --end
+        --end
+    --})
+
+   -- local butmerc = merchant:Button({
+     --   Title = "Beli Sekali Item Terpilih",
+       -- Icon = "mouse-pointer-click",
+       -- Callback = function()
+         --   local itemID, itemName = GetStaticMerchantItemID(selectedStaticItemName)
+           -- if itemID then
+            --    BuyMerchantItem(itemID, itemName)
+            --else
+              --  WindUI:Notify({ Title = "Error", Content = "Item tidak valid.", Duration = 3, Icon = "x" })
+            --end
+        --end
+    --})
+
+--    local ToggleSelectedBuy = merchant:Toggle({
+  --      Title = "Auto Buy Item Terpilih",
+    --    Value = false,
+        --Callback = function(state)
+         --   autoBuySelectedState = state
+           -- if state then
+             --   local itemID, itemName = GetStaticMerchantItemID(selectedStaticItemName)
+               -- if itemID then
+                 --   RunAutoBuySelectedLoop(itemID, itemName)
+                   -- if autoBuyStockState then
+                     ---   autoBuyStockState = false
+                       -- shop:GetElementByTitle("Auto Buy Current Stock"):Set(false)
+                    --end
+                --else
+                 --   WindUI:Notify({ Title = "Error", Content = "Pilih item valid di dropdown.", Duration = 3, Icon = "x" })
+                  --  return false
+                --end
+           -- else
+             --   if autoBuyThread then task.cancel(autoBuyThread) autoBuyThread = nil end
+           -- end
+       -- end
+    --})
+
+    local telemerc = merchant:Button({ Title = "Teleport To Merchant Shop", Icon = "mouse-pointer-click", Callback = function() TeleportToLookAt(Vector3.new(-127.747, 2.718, 2759.031), Vector3.new(-0.920, 0.000, -0.392)) end })
+    
+    
+end
+
+-- =================================================================
+-- 8. TAB PREMIUM (KAITUN FINAL V11: GUI FIXED - ALL INFO VISIBLE)
+-- =================================================================
+do
+    local premium = Window:Tab({
+        Title = "Premium",
+        Icon = "star",
+        Locked = false,
+    })
+
+    -- =================================================================
+    -- [CONFIG] REMOTES & VARIABLES
+    -- =================================================================
+    local RPath = {"Packages", "_Index", "sleitnick_net@0.2.0", "net"}
+    local RepStorage = game:GetService("ReplicatedStorage")
+    local ItemUtility = require(RepStorage.Shared.ItemUtility)
+
+    local function GetRemote(remotePath, name, timeout)
+        local currentInstance = RepStorage
+        for _, childName in ipairs(remotePath) do
+            currentInstance = currentInstance:WaitForChild(childName, timeout or 0.5)
+            if not currentInstance then return nil end
+        end
+        return currentInstance:FindFirstChild(name)
+    end
+
+    -- Remote Definitions
+    local RE_EquipToolFromHotbar = GetRemote(RPath, "RE/EquipToolFromHotbar")
+    local RE_EquipItem = GetRemote(RPath, "RE/EquipItem") -- Rod (UUID)
+    local RE_EquipBait = GetRemote(RPath, "RE/EquipBait") -- Bait (ID Number)
+    local RE_UnequipItem = GetRemote(RPath, "RE/UnequipItem")
+    
+    local RF_PurchaseFishingRod = GetRemote(RPath, "RF/PurchaseFishingRod")
+    local RF_PurchaseBait = GetRemote(RPath, "RF/PurchaseBait")
+    local RF_SellAllItems = GetRemote(RPath, "RF/SellAllItems")
+    
+    local RF_ChargeFishingRod = GetRemote(RPath, "RF/ChargeFishingRod")
+    local RF_RequestFishingMinigameStarted = GetRemote(RPath, "RF/RequestFishingMinigameStarted")
+    local RE_FishingCompleted = GetRemote(RPath, "RE/FishingCompleted")
+    local RF_CancelFishingInputs = GetRemote(RPath, "RF/CancelFishingInputs")
+    local RE_ObtainedNewFishNotification = GetRemote(RPath, "RE/ObtainedNewFishNotification") 
+
+    local RF_PlaceLeverItem = GetRemote(RPath, "RE/PlaceLeverItem")
+    local RE_SpawnTotem = GetRemote(RPath, "RE/SpawnTotem")
+    local RF_CreateTranscendedStone = GetRemote(RPath, "RF/CreateTranscendedStone")
+    local RF_ConsumePotion = GetRemote(RPath, "RF/ConsumePotion")
+    local RF_UpdateAutoFishingState = GetRemote(RPath, "RF/UpdateAutoFishingState")
+    
+    -- [LOCATIONS]
+    local ENCHANT_ROOM_POS = Vector3.new(3255.670, -1301.530, 1371.790)
+    local ENCHANT_ROOM_LOOK = Vector3.new(-0.000, -0.000, -1.000)
+    local TREASURE_ROOM_POS = Vector3.new(-3598.440, -281.274, -1645.855)
+    local TREASURE_ROOM_LOOK = Vector3.new(-0.065, 0.000, -0.998)
+    local SISYPHUS_POS = Vector3.new(-3743.745, -135.074, -1007.554)
+    local SISYPHUS_LOOK = Vector3.new(0.310, 0.000, 0.951)
+    local ANCIENT_JUNGLE_POS = Vector3.new(1535.639, 3.159, -193.352)
+    local ANCIENT_JUNGLE_LOOK = Vector3.new(0.505, -0.000, 0.863)
+    local SACRED_TEMPLE_POS = Vector3.new(1461.815, -22.125, -670.234)
+    local SACRED_TEMPLE_LOOK = Vector3.new(-0.990, -0.000, 0.143)
+    local SECOND_ALTAR_POS = Vector3.new(1479.587, 128.295, -604.224)
+    local SECOND_ALTAR_LOOK = Vector3.new(-0.298, 0.000, -0.955)
+
+    -- [VARIABLES]
+    local KAITUN_ACTIVE = false
+    local KAITUN_THREAD = nil
+    local KAITUN_AUTOSELL_THREAD = nil
+    local KAITUN_EQUIP_THREAD = nil
+    local KAITUN_OVERLAY = nil
+    local KAITUN_CATCH_CONN = nil
+    
+    local AUTO_LEVER_ACTIVE = false
+    local AUTO_LEVER_THREAD = nil
+    local LEVER_INSTANT_DELAY = 1.7
+    local LEVER_STATUS_PARAGRAPH
+    local AUTO_TOTEM_ACTIVE = false
+    local AUTO_TOTEM_THREAD = nil
+    local selectedTotemName = "Luck Totem"
+    local currentTotemExpiry = 0
+    local TOTEM_STATUS_PARAGRAPH
+    local TOTEM_DATA = {["Luck Totem"]={Id=1,Duration=3601}, ["Mutation Totem"]={Id=2,Duration=3601}, ["Shiny Totem"]={Id=3,Duration=3601}}
+    local TOTEM_NAMES = {"Luck Totem", "Mutation Totem", "Shiny Totem"}
+
+    local AUTO_POTION_ACTIVE = false
+    local AUTO_POTION_THREAD = nil
+    local selectedPotions = {}
+    local potionTimers = {}
+    local POTION_DATA = {["Luck I Potion"]={Id=1,Duration=900},["Luck II Potion"]={Id=6,Duration=900},["Mutation I Potion"]={Id=4,Duration=900}}
+    local POTION_NAMES_LIST = {"Luck I Potion", "Luck II Potion", "Mutation I Potion"}
+    local POTION_STATUS_PARAGRAPH
+
+    -- [DATA QUEST ARTIFACT]
+    local ArtifactData = {
+        ["Hourglass Diamond Artifact"] = {
+            ItemName = "Hourglass Diamond Artifact", LeverName = "Hourglass Diamond Lever", ChildReference = 6, CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(255, 248, 49),
+            FishingPos = {Pos = Vector3.new(1490.144, 3.312, -843.171), Look = Vector3.new(0.115, 0.000, 0.993)},
+        },
+        ["Diamond Artifact"] = {
+            ItemName = "Diamond Artifact", LeverName = "Diamond Lever", ChildReference = "TempleLever", CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(219, 38, 255),
+            FishingPos = {Pos = Vector3.new(1844.159, 2.530, -288.755), Look = Vector3.new(0.981, 0.000, -0.193)},
+        },
+        ["Arrow Artifact"] = {
+            ItemName = "Arrow Artifact", LeverName = "Arrow Lever", ChildReference = 5, CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(255, 47, 47),
+            FishingPos = {Pos = Vector3.new(874.365, 2.530, -358.484), Look = Vector3.new(-0.990, 0.000, 0.144)},
+        },
+        ["Crescent Artifact"] = {
+            ItemName = "Crescent Artifact", LeverName = "Crescent Lever", ChildReference = 4, CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(112, 255, 69),
+            FishingPos = {Pos = Vector3.new(1401.070, 6.489, 116.738), Look = Vector3.new(-0.500, -0.000, 0.866)},
+        },
+    }
+    local ArtifactOrder = {"Hourglass Diamond Artifact", "Diamond Artifact", "Arrow Artifact", "Crescent Artifact"}
+
+    -- [DATA SHOP HARDCODE LENGKAP]
+    local ShopItems = {
+        ["Rods"] = {
+            {Name="Luck Rod",ID=79,Price=325},{Name="Carbon Rod",ID=76,Price=750},{Name="Grass Rod",ID=85,Price=1500},{Name="Demascus Rod",ID=77,Price=3000},
+            {Name="Ice Rod",ID=78,Price=5000},{Name="Lucky Rod",ID=4,Price=15000},{Name="Midnight Rod",ID=80,Price=50000},{Name="Steampunk Rod",ID=6,Price=215000},
+            {Name="Chrome Rod",ID=7,Price=437000},{Name="Flourescent Rod",ID=255,Price=715000},{Name="Astral Rod",ID=5,Price=1000000},
+            {Name="Ares Rod",ID=126,Price=3000000},{Name="Angler Rod",ID=168,Price=8000000}, {Name="Hazmat Rod",ID=256,Price=1380000},{Name="Angler Rod",ID=168,Price=8000000},{Name = "Bamboo Rod", ID = 258, Price = 12000000}
+        },
+        ["Bobbers"] = {
+            {Name="Starter Bait", ID=1, Price=0},
+            {Name="Luck Bait", ID=2, Price=1000},
+            {Name="Midnight Bait", ID=3, Price=3000},
+            {Name="Royal Bait", ID=4, Price=425000},
+            {Name="Chroma Bait", ID=6, Price=290000}, 
+            {Name="Dark Matter Bait", ID=8, Price=630000}, 
+            {Name="Topwater Bait", ID=10, Price=100},
+            {Name="Corrupt Bait", ID=15, Price=1148484},   
+            {Name="Aether Bait", ID=16, Price=3700000},
+            {Name="Nature Bait", ID=17, Price=83500},
+            {Name="Floral Bait", ID=20, Price=4000000},
+            {Name="Singularity Bait", ID=18, Price=8200000},
+        }
+    }
+    
+    local ROD_DELAYS = {
+        [79]=4.6, [76]=4.35, [85]=4.2, [77]=4.35, [78]=3.85, [4]=3.5, [80]=2.7,
+        [6]=2.3, [7]=2.2, [255]=2.2,[256]=1.9, [5]=1.85, [126]=1.7, [168]=1.6, [169]=1.2, [257]=1
+    }
+    local DEFAULT_ROD_DELAY = 3.85
+    local CURRENT_KAITUN_DELAY = DEFAULT_ROD_DELAY
+
+    -- =================================================================
+    -- [HELPERS]
+    -- =================================================================
+    local function GetPlayerDataReplion()
+        local ReplionModule = game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Replion", 5)
+        if not ReplionModule then return nil end
+        return require(ReplionModule).Client:WaitReplion("Data", 5)
+    end
+
+    local function TeleportToLookAt(position, lookVector)
+        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.CFrame = CFrame.new(position, position + lookVector) * CFrame.new(0,0.5,0) end
+    end
+
+    local function ForceResetAndTeleport(targetPos, targetLook)
+        local plr = game.Players.LocalPlayer
+        pcall(function() RF_UpdateAutoFishingState:InvokeServer(false) end)
+        pcall(function() RF_CancelFishingInputs:InvokeServer() end)
+        if plr.Character and plr.Character:FindFirstChild("Humanoid") then plr.Character.Humanoid.Health = 0 end
+        plr.CharacterAdded:Wait()
+        local newChar = plr.Character or plr.CharacterAdded:Wait()
+        local hrp = newChar:WaitForChild("HumanoidRootPart", 10)
+        task.wait(1)
+        if hrp and targetPos then TeleportToLookAt(targetPos, targetLook or Vector3.new(0,0,-1)) end
+        task.wait(0.5)
+        pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+    end
+
+    local function GetRodPriceByID(id)
+        for _, item in ipairs(ShopItems["Rods"]) do if item.ID == tonumber(id) then return item.Price end end
+        return 0
+    end
+    
+    local function GetBaitInfo(id)
+        id = tonumber(id)
+        for _, item in ipairs(ShopItems["Bobbers"]) do 
+            if item.ID == id then 
+                return item.Name, item.Price 
+            end 
+        end
+        return "Unknown Bait (ID:"..id..")", 0
+    end
+
+    -- =================================================================
+    -- [LOGIC] GEAR SELECTION (ROD & BAIT - FIX ID DETECTION)
+    -- =================================================================
+    local function EquipBestGear()
+        local replion = GetPlayerDataReplion()
+        if not replion then return DEFAULT_ROD_DELAY end
+        local s, d = pcall(function() return replion:GetExpect("Inventory") end)
+        if not s or not d then return DEFAULT_ROD_DELAY end
+
+        -- 1. BEST ROD (UUID)
+        local bestRodUUID, bestRodPrice, bestRodId = nil, -1, nil
+        if d["Fishing Rods"] then
+            for _, r in ipairs(d["Fishing Rods"]) do
+                local p = GetRodPriceByID(r.Id)
+                if tonumber(r.Id) == 169 then p = 99999999 end
+                if tonumber(r.Id) == 257 then p = 999999999 end
+                
+                if p > bestRodPrice then bestRodPrice = p; bestRodUUID = r.UUID; bestRodId = tonumber(r.Id) end
+            end
+        end
+
+        -- 2. BEST BAIT (ID NUMBER)
+        local bestBaitId, bestBaitPrice = nil, -1
+        local baitList = d["Bait"] or d["Baits"]
+        if baitList then
+            for _, b in ipairs(baitList) do
+                local bName, bPrice = GetBaitInfo(b.Id) 
+                
+                if bPrice >= bestBaitPrice then 
+                    bestBaitPrice = bPrice
+                    bestBaitId = tonumber(b.Id) 
+                end
+            end
+        end
+
+        -- 3. EQUIP ACTIONS
+        if bestRodUUID then 
+            pcall(function() RE_EquipItem:FireServer(bestRodUUID, "Fishing Rods") end) 
+        end
+        
+        if bestBaitId then 
+            pcall(function() RE_EquipBait:FireServer(bestBaitId) end) 
+        end
+        
+        pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+
+        -- 4. DELAY
+        CURRENT_KAITUN_DELAY = (bestRodId and ROD_DELAYS[bestRodId]) and ROD_DELAYS[bestRodId] or DEFAULT_ROD_DELAY
+        return CURRENT_KAITUN_DELAY
+    end
+
+    local function GetCurrentBestGear()
+        local replion = GetPlayerDataReplion()
+        if not replion then return "Loading...", "Loading...", 0 end
+        local s, d = pcall(function() return replion:GetExpect("Inventory") end)
+        
+        local bR, hRP = "None", -1
+        if d["Fishing Rods"] then
+            for _, r in ipairs(d["Fishing Rods"]) do
+                local p = GetRodPriceByID(r.Id)
+                if tonumber(r.Id) == 169 then p = 99999999 end
+                if tonumber(r.Id) == 257 then p = 999999999 end
+                if p > hRP then 
+                    hRP = p
+                    local data = ItemUtility:GetItemData(r.Id)
+                    bR = data and data.Data.Name or "Unknown"
+                end
+            end
+        end
+
+        local bB, hBP = "None", -1
+        local bList = d["Bait"] or d["Baits"]
+        if bList then
+            for _, b in ipairs(bList) do
+                local bName, bPrice = GetBaitInfo(b.Id)
+                
+                if bPrice >= hBP then 
+                    hBP = bPrice
+                    bB = bName
+                end
+            end
+        end
+        return bR, bB, hRP
+    end
+
+    -- =================================================================
+    -- [LOGIC] BAIT BUYING STRATEGY (UPDATED: MIDNIGHT LIMIT & SMART CHECK)
+    -- =================================================================
+    local function ManageBaitPurchases(currentCoins, nextRodTargetPrice)
+        if not RF_PurchaseBait then return end
+        
+        local replion = GetPlayerDataReplion()
+        local inv = replion and replion:GetExpect("Inventory")
+        local baitList = inv and (inv["Bait"] or inv["Baits"]) or {}
+
+        -- 1. Cek Bait Terbaik yang Dimiliki Saat Ini
+        local highestOwnedBaitPrice = 0
+        local hasLuckBait = false     -- ID 2
+        local hasMidnightBait = false -- ID 3
+
+        for _, b in ipairs(baitList) do
+            local _, price = GetBaitInfo(b.Id)
+            if price > highestOwnedBaitPrice then
+                highestOwnedBaitPrice = price
+            end
+            
+            if tonumber(b.Id) == 2 then hasLuckBait = true end
+            if tonumber(b.Id) == 3 then hasMidnightBait = true end
+        end
+
+        -- 2. STOP BUYING Jika sudah punya bait di atas Midnight (Price > 3000)
+        -- Ini mencegah downgrade equip atau buang duit kalau lu udah punya Corrupt/Floral
+        if highestOwnedBaitPrice > 3000 then
+            return 
+        end
+
+        -- 3. LOGIC FARMING BARENGAN (Prioritas Bait Murah untuk Multiplier)
+        
+        -- Target 1: Luck Bait (Harga 1000)
+        if not hasLuckBait and not hasMidnightBait then
+            if currentCoins >= 1000 then
+                pcall(function() RF_PurchaseBait:InvokeServer(2) end)
+                WindUI:Notify({ Title = "Kaitun Strategy", Content = "Membeli Luck Bait (Multiplier Boost)", Duration = 2, Icon = "shopping-cart" })
+            end
+            return -- Fokus beli ini dulu sebelum lanjut
+        end
+
+        -- Target 2: Midnight Bait (Harga 3000)
+        if not hasMidnightBait then
+            -- Langsung beli jika uang cukup (tidak peduli target rod, karena bait ini murah & penting)
+            if currentCoins >= 3000 then
+                pcall(function() RF_PurchaseBait:InvokeServer(3) end)
+                WindUI:Notify({ Title = "Membeli Midnight Bait", Duration = 2, Icon = "shopping-cart" })
+            end
+            return
+        end
+    end
+
+    -- =================================================================
+    -- [QUEST HELPERS]
+    -- =================================================================
+    local function GetGhostfinProgressSafe()
+        local data = { Header = "Loading...", Q1={Text="...",Done=false}, Q2={Text="...",Done=false}, Q3={Text="...",Done=false}, Q4={Text="...",Done=false}, AllDone=false, BoardFound=false }
+        local board = workspace:FindFirstChild("!!! MENU RINGS") and workspace["!!! MENU RINGS"]:FindFirstChild("Deep Sea Tracker") and workspace["!!! MENU RINGS"]["Deep Sea Tracker"]:FindFirstChild("Board")
+        if board then
+            data.BoardFound = true 
+            pcall(function()
+                local c = board.Gui.Content
+                data.Header = c.Header.ContentText ~= "" and c.Header.ContentText or c.Header.Text
+                local function proc(lbl) local t = lbl.ContentText~="" and lbl.ContentText or lbl.Text return {Text=t, Done=string.find(t, "100%%")~=nil} end
+                data.Q1 = proc(c.Label1); data.Q2 = proc(c.Label2); data.Q3 = proc(c.Label3); data.Q4 = proc(c.Label4)
+                if data.Q1.Done and data.Q2.Done and data.Q3.Done and data.Q4.Done then data.AllDone = true end
+            end)
+        end
+        return data
+    end
+
+    local function GetElementProgressSafe()
+        local data = { Header = "Loading...", Q1={Text="...",Done=false}, Q2={Text="...",Done=false}, Q3={Text="...",Done=false}, Q4={Text="...",Done=false}, AllDone=false, BoardFound=false }
+        local board = workspace:FindFirstChild("!!! MENU RINGS") and workspace["!!! MENU RINGS"]:FindFirstChild("Element Tracker") and workspace["!!! MENU RINGS"]["Element Tracker"]:FindFirstChild("Board")
+        if board then
+            data.BoardFound = true
+            pcall(function()
+                local c = board.Gui.Content
+                data.Header = c.Header.ContentText ~= "" and c.Header.ContentText or c.Header.Text
+                local function proc(lbl) local t = lbl.ContentText~="" and lbl.ContentText or lbl.Text return {Text=t, Done=string.find(t, "100%%")~=nil} end
+                data.Q1 = proc(c.Label1); data.Q2 = proc(c.Label2); data.Q3 = proc(c.Label3); data.Q4 = proc(c.Label4)
+                if data.Q1.Done and data.Q2.Done and data.Q3.Done and data.Q4.Done then data.AllDone = true end
+            end)
+        end
+        return data
+    end
+
+    local function IsLeverUnlocked(artifactName)
+        local JUNGLE = workspace:FindFirstChild("JUNGLE INTERACTIONS")
+        if not JUNGLE then return false end
+        local data = ArtifactData[artifactName]
+        if not data then return false end
+        local folder = nil
+        if type(data.ChildReference) == "string" then folder = JUNGLE:FindFirstChild(data.ChildReference) end
+        if not folder and type(data.ChildReference) == "number" then local c = JUNGLE:GetChildren() folder = c[data.ChildReference] end
+        if not folder then return false end
+        local crystal = folder:FindFirstChild(data.CrystalPathSuffix)
+        if not crystal or not crystal:IsA("BasePart") then return false end
+        local cC, tC = crystal.Color, data.UnlockColor
+        return (math.abs(cC.R*255 - tC.R*255) < 1.1 and math.abs(cC.G*255 - tC.G*255) < 1.1 and math.abs(cC.B*255 - tC.B*255) < 1.1)
+    end
+
+    local function GetLowestWeightSecrets(limit)
+        local secrets = {}
+        local r = GetPlayerDataReplion() if not r then return {} end
+        local s, d = pcall(function() return r:GetExpect("Inventory") end)
+        if s and d.Items then
+            for _, item in ipairs(d.Items) do
+                local r = item.Metadata and item.Metadata.Rarity or "Unknown"
+                if r:upper() == "SECRET" and item.Metadata and item.Metadata.Weight then
+                    if not (item.IsFavorite or item.Favorited or item.Locked) then
+                        table.insert(secrets, {UUID = item.UUID, Weight = item.Metadata.Weight})
+                    end
+                end
+            end
+        end
+        table.sort(secrets, function(a, b) return a.Weight < b.Weight end)
+        local result = {}
+        for i = 1, math.min(limit, #secrets) do table.insert(result, secrets[i].UUID) end
+        return result
+    end
+
+    -- =================================================================
+    -- [UI] KAITUN OVERLAY (FIX Z-INDEX)
+    -- =================================================================
+    local function CreateKaitunUI()
+        local old = game.CoreGui:FindFirstChild("CatrazHubKaitunStats")
+        if old then old:Destroy() end
+        local sg = Instance.new("ScreenGui")
+        sg.Name = "CatrazHubKaitunStats"
+        sg.Parent = game.CoreGui
+        sg.IgnoreGuiInset = true
+        sg.DisplayOrder = -50 
+        
+        local mf = Instance.new("Frame")
+        mf.Size = UDim2.new(1,0,1,0)
+        mf.BackgroundColor3 = Color3.new(0,0,0)
+        mf.BackgroundTransparency = 0.35
+        mf.Parent = sg
+
+        local function txt(t,y,c,s)
+            local l = Instance.new("TextLabel")
+            l.Size = UDim2.new(1,0,0.05,0)
+            l.Position = UDim2.new(0,0,y,0)
+            l.BackgroundTransparency = 1
+            l.Text = t
+            l.TextColor3 = c or Color3.new(1,1,1)
+            l.Font = Enum.Font.GothamBold
+            l.TextSize = s or 24
+            l.TextStrokeTransparency = 0.5
+            l.Parent = mf
+            return l
+        end
+        
+        txt("CATRAZHUB KAITUN MODE", 0.2, Color3.fromRGB(255,0,255), 35)
+        local lQuest = txt("", 0.65, Color3.fromRGB(255,100,100))
+        lQuest.TextScaled = true; lQuest.Size = UDim2.new(0.8,0,0.08,0); lQuest.Position = UDim2.new(0.1,0,0.65,0)
+
+        return {Gui=sg, Labels={Coins=lCoins, LastCatch=lLC, Gear=lGear, Status=lStat, Quest=lQuest}}
+    end
+
+    local function RunQuestInstantFish(dynamicDelay)
+        if not (RE_EquipToolFromHotbar and RF_ChargeFishingRod and RF_RequestFishingMinigameStarted) then return end
+        local ts = os.time() + os.clock()
+        pcall(function() RF_ChargeFishingRod:InvokeServer(ts) end)
+        pcall(function() RF_RequestFishingMinigameStarted:InvokeServer(-139.6, 0.99) end)
+        task.wait(dynamicDelay)
+        pcall(function() RE_FishingCompleted:FireServer() end)
+        task.wait(0.3)
+        pcall(function() RF_CancelFishingInputs:InvokeServer() end)
+    end
+
+    -- =================================================================
+    -- [MAIN] KAITUN LOOP
+    -- =================================================================
+    local function RunKaitunLogic()
+        if KAITUN_THREAD then task.cancel(KAITUN_THREAD) end
+        if KAITUN_AUTOSELL_THREAD then task.cancel(KAITUN_AUTOSELL_THREAD) end
+        if KAITUN_EQUIP_THREAD then task.cancel(KAITUN_EQUIP_THREAD) end
+        if KAITUN_CATCH_CONN then KAITUN_CATCH_CONN:Disconnect() end
+
+        local uiData = CreateKaitunUI()
+        KAITUN_OVERLAY = uiData.Gui
+
+        -- Catch Listener
+        if RE_ObtainedNewFishNotification then
+            KAITUN_CATCH_CONN = RE_ObtainedNewFishNotification.OnClientEvent:Connect(function(id, meta)
+                local name = "Unknown"
+                if ItemUtility then 
+                    local d = ItemUtility:GetItemData(id) 
+                    if d then name = d.Data.Name end
+                end
+                uiData.Labels.LastCatch.Text = string.format("Last Catch: %s (%.1fkg)", name, meta.Weight or 0)
+            end)
+        end
+
+        -- Auto Sell
+        KAITUN_AUTOSELL_THREAD = task.spawn(function()
+            while KAITUN_ACTIVE do pcall(function() RF_SellAllItems:InvokeServer() end) task.wait(30) end
+        end)
+
+        -- Auto Equip
+        KAITUN_EQUIP_THREAD = task.spawn(function()
+            local lc = 0
+            CURRENT_KAITUN_DELAY = EquipBestGear()
+            while KAITUN_ACTIVE do
+                pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+                if lc % 20 == 0 then EquipBestGear() end -- Re-check gear every 2s
+                lc = lc + 1
+                task.wait(0.1)
+            end
+        end)
+
+        -- Main Progression
+        KAITUN_THREAD = task.spawn(function()
+            -- [CONFIG HARGA]
+            local luckPrice = 325       -- Step 1 (NEW)
+            local midPrice = 50000      -- Step 2
+            local steamPrice = 215000   -- Step 3
+            local astralPrice = 1000000 -- Step 4
+            
+            local currentTarget = "None"
+            
+            while KAITUN_ACTIVE do
+                local r = GetPlayerDataReplion()
+                local coins = 0
+                if r then 
+                    coins = r:Get("Coins") or 0 
+                    if coins == 0 then
+                         local s, c = pcall(function() return require(game:GetService("ReplicatedStorage").Modules.CurrencyUtility.Currency) end)
+                         if s and c then coins = r:Get(c["Coins"].Path) or 0 end
+                    end
+                end
+
+                local bRod, bBait, bRodPrice = GetCurrentBestGear()
+                uiData.Labels.Coins.Text = string.format("Coins: %s", coins)
+                uiData.Labels.Gear.Text = string.format("Rod: %s | Bait: %s", bRod, bBait)
+
+                -- [LOGIKA STEP BARU]
+                local step = 0
+                local targetPrice = 0
+                
+                -- Step 1: Luck Rod
+                if bRodPrice < luckPrice then 
+                    step = 1; targetPrice = luckPrice
+                
+                -- Step 2: Midnight Rod
+                elseif bRodPrice < midPrice then 
+                    step = 2; targetPrice = midPrice
+                
+                -- Step 3: Steampunk Rod
+                elseif bRodPrice < steamPrice then 
+                    step = 3; targetPrice = steamPrice
+                
+                -- Step 4: Astral Rod
+                elseif bRodPrice < astralPrice then 
+                    step = 4; targetPrice = astralPrice
+                
+                -- Step 5: Ghostfin Quest
+                elseif bRodPrice < 99999999 then 
+                    step = 5 
+                
+                -- Step 6: Element Quest
+                else 
+                    step = 6 
+                end 
+
+                -- Bait Strategy (Prioritas Bait tetap jalan)
+                ManageBaitPurchases(coins, targetPrice)
+
+                -- [EKSEKUSI STEP]
+                if step <= 4 then
+                    -- Buying Rods Phase (Luck -> Midnight -> Steampunk -> Astral)
+                    local tName = "Unknown"
+                    local tId = 0
+
+                    if step == 1 then
+                        tName = "Luck Rod"; tId = 79
+                    elseif step == 2 then
+                        tName = "Midnight Rod"; tId = 80
+                    elseif step == 3 then
+                        tName = "Steampunk Rod"; tId = 6
+                    elseif step == 4 then
+                        tName = "Astral Rod"; tId = 5
+                    end
+                    
+                    if coins >= targetPrice then
+                        uiData.Labels.Status.Text = "Buying " .. tName
+                        ForceResetAndTeleport(nil,nil)
+                        pcall(function() RF_PurchaseFishingRod:InvokeServer(tId) end)
+                        task.wait(1.5)
+                        EquipBestGear()
+                    else
+                        uiData.Labels.Status.Text = string.format("Farming for %s (%d/%d)", tName, coins, targetPrice)
+                        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        
+                        -- Logic Farming: Jika uang masih dikit (untuk Luck Rod), farm di tempat aman (Docks) atau Enchant Room
+                        -- Disini kita set ke Enchant Room default karena aman
+                        if hrp and (hrp.Position - ENCHANT_ROOM_POS).Magnitude > 10 then
+                            TeleportToLookAt(ENCHANT_ROOM_POS, ENCHANT_ROOM_LOOK)
+                            task.wait(0.5)
+                        end
+                        RunQuestInstantFish(CURRENT_KAITUN_DELAY)
+                    end
+
+                elseif step == 5 then
+                    -- Ghostfin Phase (Sama seperti sebelumnya)
+                    uiData.Labels.Status.Text = "Auto Quest: Ghostfin Rod"
+                    local p = GetGhostfinProgressSafe()
+                    
+                    if not p.BoardFound then
+                        uiData.Labels.Quest.Text = "Loading Board..."
+                        TeleportToLookAt(SECOND_ALTAR_POS, SECOND_ALTAR_LOOK)
+                        task.wait(2)
+                    else
+                        if p.AllDone then
+                            uiData.Labels.Quest.Text = "Completed! Buying Ghostfin..."
+                            ForceResetAndTeleport(nil,nil)
+                            pcall(function() RF_PurchaseFishingRod:InvokeServer(169) end)
+                            task.wait(1.5)
+                            EquipBestGear()
+                        else
+                            local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            uiData.Labels.Quest.Text = not p.Q1.Done and p.Q1.Text or p.Q2.Text
+                            
+                            if not p.Q1.Done then
+                                if (hrp.Position - TREASURE_ROOM_POS).Magnitude > 15 then TeleportToLookAt(TREASURE_ROOM_POS, TREASURE_ROOM_LOOK) task.wait(0.5) end
+                                RunQuestInstantFish(CURRENT_KAITUN_DELAY)
+                            else
+                                if (hrp.Position - SISYPHUS_POS).Magnitude > 15 then TeleportToLookAt(SISYPHUS_POS, SISYPHUS_LOOK) task.wait(0.5) end
+                                RunQuestInstantFish(CURRENT_KAITUN_DELAY)
+                            end
+                        end
+                    end
+                    
+                elseif step == 6 then
+                    -- === ELEMENT QUEST (Sama seperti sebelumnya) ===
+                    uiData.Labels.Status.Text = "Auto Quest: Element Rod"
+                    local p = GetElementProgressSafe()
+
+                    if not p.BoardFound then
+                        uiData.Labels.Quest.Text = "Mencari Papan Element..."
+                        TeleportToLookAt(SECOND_ALTAR_POS, SECOND_ALTAR_LOOK)
+                        task.wait(2)
+                    else
+                        local currentTaskText = "Quest Complete!"
+                        
+                        if not p.Q2.Done then currentTaskText = "Current: " .. p.Q2.Text
+                        elseif not p.Q3.Done then
+                            local missingLever = nil
+                            for _, n in ipairs(ArtifactOrder) do 
+                                if not IsLeverUnlocked(n) then missingLever = n break end 
+                            end
+                            
+                            if missingLever then
+                                if HasArtifactItem(missingLever) then 
+                                    currentTaskText = "Current: MEMASANG " .. ArtifactData[missingLever].LeverName
+                                else 
+                                    currentTaskText = "Current: MENCARI " .. ArtifactData[missingLever].ItemName 
+                                end
+                            else 
+                                currentTaskText = "Current: " .. p.Q3.Text 
+                            end
+                        elseif not p.Q4.Done then currentTaskText = "Current: Sacrifice Secret Fish" end
+                        
+                        uiData.Labels.Quest.Text = currentTaskText
+
+                        if p.AllDone then
+                            uiData.Labels.Status.Text = "Element Selesai! Membeli..."
+                            -- Logic beli Element Rod (ID 257) - Manual function karena di shop ga ada tombol direct
+                            pcall(function() RF_PurchaseFishingRod:InvokeServer(257) end) 
+                            task.wait(1.5)
+                            EquipBestGear()
+                        else
+                            local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            
+                            -- [SUB-QUEST 1] Catch Fish in Jungle
+                            if not p.Q2.Done then
+                                if (hrp.Position - ANCIENT_JUNGLE_POS).Magnitude > 15 then 
+                                    TeleportToLookAt(ANCIENT_JUNGLE_POS, ANCIENT_JUNGLE_LOOK) 
+                                    task.wait(0.5) 
+                                end
+                                RunQuestInstantFish(CURRENT_KAITUN_DELAY)
+
+                            -- [SUB-QUEST 2] Unlock Levers
+                            elseif not p.Q3.Done then
+                                local missingLever = nil
+                                for _, n in ipairs(ArtifactOrder) do 
+                                    if not IsLeverUnlocked(n) then missingLever = n break end 
+                                end
+
+                                if missingLever then
+                                    local artData = ArtifactData[missingLever]
+                                    if HasArtifactItem(missingLever) then
+                                        uiData.Labels.Status.Text = "MEMASANG: " .. missingLever
+                                        TeleportToLookAt(artData.FishingPos.Pos, artData.FishingPos.Look)
+                                        if hrp then hrp.Anchored = true end
+                                        task.wait(0.5)
+                                        pcall(function() RF_PlaceLeverItem:FireServer(missingLever) end)
+                                        task.wait(2.0)
+                                        if hrp then hrp.Anchored = false end
+                                    else
+                                        uiData.Labels.Status.Text = "FARMING: " .. missingLever
+                                        if (hrp.Position - artData.FishingPos.Pos).Magnitude > 10 then
+                                            TeleportToLookAt(artData.FishingPos.Pos, artData.FishingPos.Look)
+                                            task.wait(0.5)
+                                        else
+                                            RunQuestInstantFish(CURRENT_KAITUN_DELAY)
+                                            task.wait(0.1) 
+                                        end
                                     end
+                                else
+                                    -- Bug visual fix
+                                    if (hrp.Position - SACRED_TEMPLE_POS).Magnitude > 15 then 
+                                        TeleportToLookAt(SACRED_TEMPLE_POS, SACRED_TEMPLE_LOOK) 
+                                        task.wait(0.5) 
+                                    end
+                                    RunQuestInstantFish(CURRENT_KAITUN_DELAY)
+                                end
+
+                            -- [SUB-QUEST 3] Sacrifice Secret Fish
+                            elseif not p.Q4.Done then
+                                local trash = GetLowestWeightSecrets(1)
+                                if #trash > 0 then
+                                    TeleportToLookAt(SECOND_ALTAR_POS, SECOND_ALTAR_LOOK)
+                                    local r = GetPlayerDataReplion()
+                                    if r then
+                                        local e = r:GetExpect("EquippedItems")
+                                        for _, u in ipairs(e) do pcall(function() RE_UnequipItem:FireServer(u) end) end
+                                    end
+                                    task.wait(0.5)
+                                    pcall(function() RE_EquipItem:FireServer(trash[1], "Fish") end)
+                                    task.wait(0.5)
+                                    pcall(function() RE_EquipToolFromHotbar:FireServer(2) end)
+                                    task.wait(0.5)
+                                    pcall(function() RF_CreateTranscendedStone:InvokeServer() end)
+                                    task.wait(2)
+                                else
+                                    uiData.Labels.Status.Text = "Farming Secret Fish..."
+                                    TeleportToLookAt(SECOND_ALTAR_POS, SECOND_ALTAR_LOOK) 
+                                    RunQuestInstantFish(CURRENT_KAITUN_DELAY)
                                 end
                             end
                         end
-                        if v1106 then
-                            vu7.autoSmartClaim = false
-                        end
+                    end
+
+                elseif step == 7 then
+                    uiData.Labels.Status.Text = "KAITUN COMPLETED!"
+                    uiData.Labels.Quest.Text = "All Rods Unlocked."
+                    task.wait(5)
+                end
+                
+                task.wait(0.1)
+            end
+        end)
+    end
+
+    -- =================================================================
+    -- [UI CONTROLS]
+    -- =================================================================
+    local kaitun = premium:Section({ Title = "Kaitun Mode", TextSize = 20})
+    local tkaitun = Reg("kaitunt",kaitun:Toggle({
+        Title = "Start Auto Kaitun (Full AFK)",
+        Desc = "Auto Farm -> Buy Rods -> Auto Buy Bait -> Auto Quests.",
+        Value = false,
+        Callback = function(state)
+            KAITUN_ACTIVE = state
+            if state then
+                WindUI:Notify({ Title = "Kaitun Started",Duration = 3, Icon = "play" })
+                RunKaitunLogic()
+            else
+                if KAITUN_THREAD then task.cancel(KAITUN_THREAD) end
+                if KAITUN_AUTOSELL_THREAD then task.cancel(KAITUN_AUTOSELL_THREAD) end
+                if KAITUN_EQUIP_THREAD then task.cancel(KAITUN_EQUIP_THREAD) end
+                if KAITUN_OVERLAY then KAITUN_OVERLAY:Destroy() end
+                pcall(function() RE_EquipToolFromHotbar:FireServer(0) end)
+                WindUI:Notify({ Title = "Kaitun Stopped", Duration = 2, Icon = "square" })
+            end
+        end
+    }))
+
+premium:Divider()
+
+    -- =================================================================
+    -- AUTO LEVER (STANDALONE)
+    -- =================================================================
+    local temple = premium:Section({ Title = "Auto Temple Lever", TextSize = 20 })
+    LEVER_STATUS_PARAGRAPH = temple:Paragraph({ Title = "Status Lever", Content = "Checking...", Icon = "wand-2" })
+    local templeslid = temple:Slider({ Title = "Lever Instant Delay", Desc = "Delay farming.", Step = 0.1, Value = { Min = 0.5, Max = 4.0, Default = 1.7 }, Callback = function(value) LEVER_INSTANT_DELAY = tonumber(value) or 1.7 end })
+    
+    local AUTO_LEVER_EQUIP_THREAD = nil
+    local LEVER_FARMING_MODE = false
+    
+    local function RunAutoLeverLoop()
+        -- Bersihkan thread lama jika ada
+        if AUTO_LEVER_THREAD then task.cancel(AUTO_LEVER_THREAD) end
+        if AUTO_LEVER_EQUIP_THREAD then task.cancel(AUTO_LEVER_EQUIP_THREAD) end
+
+        -- [THREAD 1] BACKGROUND EQUIPPER (Jaga Rod tetep di tangan)
+        AUTO_LEVER_EQUIP_THREAD = task.spawn(function()
+            while AUTO_LEVER_ACTIVE do
+                -- Hanya equip rod jika kita sedang dalam mode FARMING (bukan pasang lever)
+                if LEVER_FARMING_MODE then
+                    pcall(function() 
+                        -- Equip Slot 1 (Biasanya Rod)
+                        RE_EquipToolFromHotbar:FireServer(1) 
+                    end)
+                end
+                task.wait(0.5) -- Cek setiap 0.5 detik
+            end
+        end)
+
+        -- [THREAD 2] MAIN LOGIC LOOP
+        AUTO_LEVER_THREAD = task.spawn(function()
+            local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+            while AUTO_LEVER_ACTIVE do
+                local allUnlocked = true
+                local artifactToProcess = nil
+                local statusStr = ""
+                
+                -- Cek status semua lever
+                for _, artifactName in ipairs(ArtifactOrder) do
+                    local isUnlocked = IsLeverUnlocked(artifactName)
+                    local statusIcon = isUnlocked and "UNLOCKED ✅" or "LOCKED 🔒"
+                    statusStr = statusStr .. ArtifactData[artifactName].LeverName .. ": " .. statusIcon .. "\n"
+                    
+                    if not isUnlocked and not artifactToProcess then
+                        artifactToProcess = artifactName
+                    end
+                    
+                    if not isUnlocked then allUnlocked = false end
+                end
+                
+                LEVER_STATUS_PARAGRAPH:SetDesc(statusStr)
+
+                if allUnlocked then
+                    LEVER_STATUS_PARAGRAPH:SetTitle("ALL LEVERS UNLOCKED ✅")
+                    WindUI:Notify({ Title = "Selesai", Content = "Semua Lever terbuka!", Duration = 5, Icon = "check" })
+                    break
+                elseif artifactToProcess then
+                    local artData = ArtifactData[artifactToProcess]
+                    
+                    -- Cek apakah item ada di backpack (Menggunakan fungsi FIX ID dari global)
+                    if HasArtifactItem(artifactToProcess) then
+                        -- === MODE PASANG (HOLD ARTIFACT) ===
+                        LEVER_FARMING_MODE = false -- [PENTING] Matikan auto equip rod biar ga ganggu
+                        
+                        LEVER_STATUS_PARAGRAPH:SetTitle("MEMASANG: " .. artifactToProcess)
+                        
+                        -- 1. Teleport ke titik pasang
+                        TeleportToLookAt(artData.FishingPos.Pos, artData.FishingPos.Look)
+                        
+                        -- 2. Anchor biar ga jatuh
+                        if hrp then hrp.Anchored = true end
                         task.wait(0.5)
+                        
+                        -- 3. Unequip Rod dulu biar aman, lalu Equip Artifact (Otomatis oleh game biasanya, tapi kita bantu unequip)
+                        pcall(function() RE_UnequipItem:FireServer("all") end)
+                        task.wait(0.2)
+
+                        -- 4. Pasang
+                        pcall(function() RF_PlaceLeverItem:FireServer(artifactToProcess) end)
+                        task.wait(2.0) -- Tunggu server merespon
+                        
+                        -- 5. Unanchor
+                        if hrp then hrp.Anchored = false end
+                    else
+                        -- === MODE FARMING (HOLD ROD) ===
+                        LEVER_FARMING_MODE = true -- [PENTING] Nyalakan auto equip rod
+                        
+                        LEVER_STATUS_PARAGRAPH:SetTitle("FARMING: " .. artifactToProcess)
+                        
+                        -- Cek jarak, kalau jauh teleport dulu
+                        if hrp and (hrp.Position - artData.FishingPos.Pos).Magnitude > 10 then
+                            TeleportToLookAt(artData.FishingPos.Pos, artData.FishingPos.Look)
+                            task.wait(0.5)
+                        else
+                            RunQuestInstantFish(LEVER_INSTANT_DELAY)
+                            task.wait(0.1) -- Loop cepat buat cek inventory lagi
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+            
+            -- Cleanup saat stop
+            AUTO_LEVER_ACTIVE = false
+            LEVER_FARMING_MODE = false
+            if AUTO_LEVER_EQUIP_THREAD then task.cancel(AUTO_LEVER_EQUIP_THREAD) end
+            premium:GetElementByTitle("Enable Auto Lever"):Set(false)
+        end)
+    end
+
+    local enablelever = temple:Toggle({
+        Title = "Enable Auto Lever",
+        Value = false,
+        Callback = function(state)
+            AUTO_LEVER_ACTIVE = state
+            if state then 
+                RunAutoLeverLoop() 
+            else 
+                if AUTO_LEVER_THREAD then task.cancel(AUTO_LEVER_THREAD) end
+                if AUTO_LEVER_EQUIP_THREAD then task.cancel(AUTO_LEVER_EQUIP_THREAD) end -- Matikan thread equip
+                LEVER_FARMING_MODE = false
+            end
+        end
+    })
+
+    premium:Divider()
+
+    -- =================================================================
+    -- AUTO TOTEM (V3 ENGINE + ANTI-FALL STATE ENFORCER)
+    -- =================================================================
+    local totem = premium:Section({ Title = "Auto Spawn Totem", TextSize = 20})
+    local TOTEM_STATUS_PARAGRAPH = totem:Paragraph({ Title = "Status", Content = "Waiting...", Icon = "clock" })
+    
+    local TOTEM_DATA = {
+        ["Luck Totem"]={Id=1,Duration=3601}, 
+        ["Mutation Totem"]={Id=2,Duration=3601}, 
+        ["Shiny Totem"]={Id=3,Duration=3601}
+    }
+    local TOTEM_NAMES = {"Luck Totem", "Mutation Totem", "Shiny Totem"}
+    local selectedTotemName = "Luck Totem"
+    local currentTotemExpiry = 0
+    local AUTO_TOTEM_ACTIVE = false
+    local AUTO_TOTEM_THREAD = nil
+
+    local RunService = game:GetService("RunService")
+
+    -- [URUTAN SPAWN: 100 STUDS GAP]
+    local REF_CENTER = Vector3.new(93.932, 9.532, 2684.134)
+    local REF_SPOTS = {
+        -- TENGAH (Y ~ 9.5)
+        Vector3.new(45.0468979, 9.51625347, 2730.19067),   -- 1
+        Vector3.new(145.644608, 9.51625347, 2721.90747),   -- 2
+        Vector3.new(84.6406631, 10.2174253, 2636.05786),   -- 3
+
+        -- ATAS (Y ~ 109.5)
+        Vector3.new(45.0468979, 110.516253, 2730.19067),   -- 4
+        Vector3.new(145.644608, 110.516253, 2721.90747),   -- 5
+        Vector3.new(84.6406631, 111.217425, 2636.05786),   -- 6
+
+        -- BAWAH (Y ~ -90.5)
+        Vector3.new(45.0468979, -92.483747, 2730.19067),   -- 7
+        Vector3.new(145.644608, -92.483747, 2721.90747),   -- 8
+        Vector3.new(84.6406631, -93.782575, 2636.05786),   -- 9
+    }
+
+    local AUTO_9_TOTEM_ACTIVE = false
+    local AUTO_9_TOTEM_THREAD = nil
+    local stateConnection = nil -- Untuk loop pemaksa state
+    
+    -- =================================================================
+    -- FLY ENGINE V3 (PHYSICS + STATE MANAGEMENT)
+    -- =================================================================
+    local function GetFlyPart()
+        local char = game.Players.LocalPlayer.Character
+        if not char then return nil end
+        return char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart")
+    end
+
+    -- [[ FITUR BARU: ANTI-FALL STATE MANAGER ]]
+    -- Ini memaksa karakter untuk TIDAK PERNAH masuk mode Falling/Freefall
+    local function MaintainAntiFallState(enable)
+        local char = game.Players.LocalPlayer.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+        if not hum then return end
+
+        if enable then
+            -- 1. Matikan SEMUA State yang berhubungan dengan Fisika Jatuh
+            -- Ini nyontek dari Fly GUI V3 lu biar server ga bingung
+            hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Flying, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false) -- INI BIANG KEROKNYA
+            hum:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Landed, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+
+            -- 2. Paksa State jadi SWIMMING (Paling stabil di udara)
+            -- Kita loop ini biar gak di-reset sama game engine
+            if not stateConnection then
+                stateConnection = RunService.Heartbeat:Connect(function()
+                    if hum and AUTO_9_TOTEM_ACTIVE then
+                        hum:ChangeState(Enum.HumanoidStateType.Swimming)
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
                     end
                 end)
             end
+        else
+            -- Matikan Loop
+            if stateConnection then stateConnection:Disconnect(); stateConnection = nil end
+            
+            -- Balikin State Normal
+            hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Landed, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+            hum:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            
+            hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
         end
-    })
-    v1069:AddSubSection("Boost Player")
-    v1069:AddToggle({
-        Title = "Disable VFX",
-        Default = false,
-        Callback = function(p1113)
-            local v1114 = vu4.VFX
-            if p1113 then
-                v1114._oldHandle = v1114._oldHandle or v1114.Handle
-                v1114._oldRenderAtPoint = v1114._oldRenderAtPoint or v1114.RenderAtPoint
-                v1114._oldRenderInstance = v1114._oldRenderInstance or v1114.RenderInstance
-                function v1114.Handle()
+    end
+
+    local function EnableV3Physics()
+        local char = game.Players.LocalPlayer.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+        local mainPart = GetFlyPart()
+        
+        if not mainPart or not hum then return end
+
+        -- Matikan Animasi (Biar kaku)
+        if char:FindFirstChild("Animate") then char.Animate.Disabled = true end
+        hum.PlatformStand = true 
+        
+        -- AKTIFKAN ANTI-FALL (PENTING!)
+        MaintainAntiFallState(true)
+
+        -- Setup BodyVelocity & Gyro (Fly Engine)
+        local bg = mainPart:FindFirstChild("FlyGuiGyro") or Instance.new("BodyGyro", mainPart)
+        bg.Name = "FlyGuiGyro"
+        bg.P = 9e4 
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.CFrame = mainPart.CFrame
+
+        local bv = mainPart:FindFirstChild("FlyGuiVelocity") or Instance.new("BodyVelocity", mainPart)
+        bv.Name = "FlyGuiVelocity"
+        bv.velocity = Vector3.new(0, 0.1, 0) -- Idle Velocity
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
+        -- NoClip Loop
+        task.spawn(function()
+            while AUTO_9_TOTEM_ACTIVE and char do
+                for _, v in ipairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
                 end
-                function v1114.RenderAtPoint()
+                task.wait(0.1)
+            end
+        end)
+    end
+
+    local function DisableV3Physics()
+        local char = game.Players.LocalPlayer.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+        local mainPart = GetFlyPart() -- Biasanya HumanoidRootPart
+
+        if mainPart then
+            -- 1. Hapus BodyMover
+            if mainPart:FindFirstChild("FlyGuiGyro") then mainPart.FlyGuiGyro:Destroy() end
+            if mainPart:FindFirstChild("FlyGuiVelocity") then mainPart.FlyGuiVelocity:Destroy() end
+            
+            -- 2. [FIX UTAMA] Hentikan Total Momentum (Linear & Putaran)
+            mainPart.Velocity = Vector3.zero
+            mainPart.RotVelocity = Vector3.zero
+            mainPart.AssemblyLinearVelocity = Vector3.zero 
+            mainPart.AssemblyAngularVelocity = Vector3.zero
+
+            -- 3. [FIX UTAMA] Tegakkan Karakter (Reset Rotasi X dan Z)
+            -- Kita ambil rotasi Y (hadap kiri/kanan) saja, reset kemiringan
+            local x, y, z = mainPart.CFrame:ToEulerAnglesYXZ()
+            mainPart.CFrame = CFrame.new(mainPart.Position) * CFrame.fromEulerAnglesYXZ(0, y, 0)
+            
+            -- 4. [FIX UTAMA] Angkat sedikit biar tidak nyangkut di lantai (Anti-Fling)
+            -- Cek Raycast ke bawah, kalau dekat tanah, angkat dikit
+            local ray = Ray.new(mainPart.Position, Vector3.new(0, -5, 0))
+            local hit, pos = workspace:FindPartOnRay(ray, char)
+            if hit then
+                mainPart.CFrame = mainPart.CFrame + Vector3.new(0, 3, 0)
+            end
+        end
+
+        if hum then 
+            -- 5. Matikan PlatformStand (Agar kaki bisa napak lagi)
+            hum.PlatformStand = false 
+            
+            -- 6. Paksa State "GettingUp" (Ini obat paling ampuh buat char licin/mabuk)
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+        
+        -- Matikan pemaksa state anti-jatuh
+        MaintainAntiFallState(false) 
+        
+        -- Nyalakan animasi kembali
+        if char and char:FindFirstChild("Animate") then char.Animate.Disabled = false end
+        
+        -- 7. Restore Collision (Satu-satu biar aman)
+        if char then
+            for _, v in ipairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = true end
+            end
+        end
+    end
+
+    -- FUNGSI GERAK PHYSICS
+    local function FlyPhysicsTo(targetPos)
+        local mainPart = GetFlyPart()
+        if not mainPart then return end
+        
+        local bv = mainPart:FindFirstChild("FlyGuiVelocity")
+        local bg = mainPart:FindFirstChild("FlyGuiGyro")
+        if not bv or not bg then EnableV3Physics(); bv = mainPart.FlyGuiVelocity; bg = mainPart.FlyGuiGyro end
+
+        local SPEED = 80 
+        
+        while AUTO_9_TOTEM_ACTIVE do
+            local currentPos = mainPart.Position
+            local diff = targetPos - currentPos
+            local dist = diff.Magnitude
+            
+            bg.CFrame = CFrame.lookAt(currentPos, targetPos)
+
+            if dist < 1.0 then 
+                bv.velocity = Vector3.new(0, 0.1, 0)
+                break
+            else
+                bv.velocity = diff.Unit * SPEED
+            end
+            RunService.Heartbeat:Wait()
+        end
+    end
+
+    -- =================================================================
+    -- HELPER
+    -- =================================================================
+    local function GetTotemUUID(name)
+        local r = GetPlayerDataReplion() if not r then return nil end
+        local s, d = pcall(function() return r:GetExpect("Inventory") end)
+        if s and d.Totems then 
+            for _, i in ipairs(d.Totems) do 
+                if tonumber(i.Id) == TOTEM_DATA[name].Id and (i.Count or 1) >= 1 then return i.UUID end 
+            end 
+        end
+    end
+
+    -- Pastikan 2 baris ini ada di bagian atas Tab Premium (di bawah deklarasi Remote lainnya)
+    local RF_EquipOxygenTank = GetRemote(RPath, "RF/EquipOxygenTank")
+    local RF_UnequipOxygenTank = GetRemote(RPath, "RF/UnequipOxygenTank")
+
+    -- =================================================================
+    -- LOGIC 9 TOTEM (UPDATED: ANTI-DROWN / INFINITE OXYGEN)
+    -- =================================================================
+    local function Run9TotemLoop()
+        if AUTO_9_TOTEM_THREAD then task.cancel(AUTO_9_TOTEM_THREAD) end
+        
+        AUTO_9_TOTEM_THREAD = task.spawn(function()
+            local uuid = GetTotemUUID(selectedTotemName)
+            if not uuid then 
+                WindUI:Notify({ Title = "No Stock", Content = "Isi inventory dulu!", Duration = 3, Icon = "x" })
+                local t = totem:GetElementByTitle("Spawn 9 Totem Formation")
+                if t then t:Set(false) end
+                return 
+            end
+
+            local char = game.Players.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChild("Humanoid")
+            if not hrp then return end
+            
+            local myStartPos = hrp.Position 
+
+            WindUI:Notify({ Title = "Started", Content = "V3 Engine + Oxygen Protection!", Duration = 3, Icon = "zap" })
+            
+            -- [FIX ANTI-DROWN] Pasang Oxygen Tank (ID 105) sebelum terbang
+            if RF_EquipOxygenTank then
+                pcall(function() RF_EquipOxygenTank:InvokeServer(105) end)
+            end
+            
+            -- [OPTIONAL] Isi darah penuh dulu biar aman (Health Hack simple)
+            if hum then hum.Health = hum.MaxHealth end
+
+            EnableV3Physics()
+
+            for i, refSpot in ipairs(REF_SPOTS) do
+                if not AUTO_9_TOTEM_ACTIVE then break end
+                
+                local relativePos = refSpot - REF_CENTER
+                local targetPos = myStartPos + relativePos
+                
+                TOTEM_STATUS_PARAGRAPH:SetDesc(string.format("Flying to #%d...", i))
+                FlyPhysicsTo(targetPos) 
+                
+                -- [[ STABILISASI ]]
+                task.wait(0.6) 
+
+                uuid = GetTotemUUID(selectedTotemName)
+                if uuid then
+                    TOTEM_STATUS_PARAGRAPH:SetDesc(string.format("Spawning #%d...", i))
+                    pcall(function() RE_SpawnTotem:FireServer(uuid) end)
+                    
+                    task.spawn(function() 
+                        for k=1,5 do RE_EquipToolFromHotbar:FireServer(1); task.wait(0.1) end 
+                    end)
+                else
+                    break
                 end
-                function v1114.RenderInstance()
+                
+                task.wait(1.5) 
+            end
+
+            if AUTO_9_TOTEM_ACTIVE then
+                TOTEM_STATUS_PARAGRAPH:SetDesc("Returning...")
+                FlyPhysicsTo(myStartPos)
+                task.wait(0.5)
+                WindUI:Notify({ Title = "Selesai", Content = "Landing...", Duration = 3, Icon = "check" })
+            end
+            
+            -- [CLEANUP] Lepas Oxygen Tank setelah selesai
+            if RF_UnequipOxygenTank then
+                pcall(function() RF_UnequipOxygenTank:InvokeServer() end)
+            end
+
+            DisableV3Physics() 
+            AUTO_9_TOTEM_ACTIVE = false
+            local t = totem:GetElementByTitle("Spawn 9 Totem Formation")
+            if t then t:Set(false) end
+        end)
+    end
+
+    -- =================================================================
+    -- UI & SINGLE TOGGLE
+    -- =================================================================
+    local function RunAutoTotemLoop()
+        if AUTO_TOTEM_THREAD then task.cancel(AUTO_TOTEM_THREAD) end
+        AUTO_TOTEM_THREAD = task.spawn(function()
+            while AUTO_TOTEM_ACTIVE do
+                local timeLeft = currentTotemExpiry - os.time()
+                if timeLeft > 0 then
+                    local m = math.floor((timeLeft % 3600) / 60); local s = math.floor(timeLeft % 60)
+                    TOTEM_STATUS_PARAGRAPH:SetDesc(string.format("Next Spawn: %02d:%02d", m, s))
+                else
+                    TOTEM_STATUS_PARAGRAPH:SetDesc("Spawning Single...")
+                    local uuid = GetTotemUUID(selectedTotemName)
+                    if uuid then
+                        pcall(function() RE_SpawnTotem:FireServer(uuid) end)
+                        currentTotemExpiry = os.time() + TOTEM_DATA[selectedTotemName].Duration
+                        task.spawn(function() for i=1,3 do task.wait(0.2) pcall(function() RE_EquipToolFromHotbar:FireServer(1) end) end end)
+                    end
                 end
-            elseif v1114._oldHandle then
-                v1114.Handle = v1114._oldHandle
-                v1114.RenderAtPoint = v1114._oldRenderAtPoint
-                v1114.RenderInstance = v1114._oldRenderInstance
+                task.wait(1)
+            end
+        end)
+    end
+
+    local choosetot = totem:Dropdown({ Title = "Pilih Jenis Totem", Values = TOTEM_NAMES, Value = selectedTotemName, Multi = false, Callback = function(n) selectedTotemName = n; currentTotemExpiry = 0 end })
+
+    local togtot = totem:Toggle({ Title = "Enable Auto Totem (Single)", Desc = "Mode Normal", Value = false, Flag = "toggletotem", Callback = function(s) AUTO_TOTEM_ACTIVE = s; if s then RunAutoTotemLoop() else if AUTO_TOTEM_THREAD then task.cancel(AUTO_TOTEM_THREAD) end end end })
+
+    local tog9tot = totem:Toggle({
+        Title = "Auto Spawn 9 Totem",
+        Value = false,
+        Flag = "toggle9totem",
+        Callback = function(s)
+            AUTO_9_TOTEM_ACTIVE = s
+            if s then
+                Run9TotemLoop()
+            else
+                if AUTO_9_TOTEM_THREAD then task.cancel(AUTO_9_TOTEM_THREAD) end
+                DisableV3Physics()
+                WindUI:Notify({ Title = "Stopped", Content = "Berhenti.", Duration = 2, Icon = "x" })
             end
         end
     })
-    v1069:AddToggle({
-        Title = "Disable Cutscene",
-        Default = true,
-        Callback = function(p1115)
-            local v1116 = require(vu1.RS.Controllers.CutsceneController)
-            if p1115 then
-                if not v1116._origPlay then
-                    v1116._origPlay = v1116.Play
-                    v1116._origStop = v1116.Stop
-                end
-                function v1116.Play()
-                end
-                function v1116.Stop()
-                end
-                local v1117 = vu4.Net["RE/ReplicateCutscene"]
-                if v1117 then
-                    v1117.OnClientEvent:Connect(function()
-                    end)
-                end
-                local v1118 = vu4.Net["RE/StopCutscene"]
-                if v1118 then
-                    v1118.OnClientEvent:Connect(function()
-                    end)
-                end
-                local v1119 = not vu1.RS.Controllers.CutsceneController:FindFirstChild("Cutscenes") and vu1.RS.Controllers:FindFirstChild("CutsceneController")
-                if v1119 then
-                    v1119 = vu1.RS.Controllers.CutsceneController.Cutscenes
-                end
-                if v1119 then
-                    local v1120, v1121, v1122 = ipairs(v1119:GetChildren())
-                    while true do
-                        local v1123
-                        v1122, v1123 = v1120(v1121, v1122)
-                        if v1122 == nil then
-                            break
-                        end
-                        if v1123:IsA("ModuleScript") then
-                            v1123.Disabled = true
+
+    premium:Divider()
+    local potion = premium:Section({ Title = "Auto Consume Potions", TextSize = 20})
+    POTION_STATUS_PARAGRAPH = potion:Paragraph({ Title = "Potion Status", Content = "Status: OFF", Icon = "timer" })
+
+    local function GetPotionUUID(name)
+        local r = GetPlayerDataReplion() if not r then return nil end
+        local s, d = pcall(function() return r:GetExpect("Inventory") end)
+        if s and d.Potions then for _, i in ipairs(d.Potions) do if tonumber(i.Id) == POTION_DATA[name].Id and (i.Count or 1) >= 1 then return i.UUID end end end
+    end
+
+    local function RunAutoPotionLoop()
+        if AUTO_POTION_THREAD then task.cancel(AUTO_POTION_THREAD) end
+        AUTO_POTION_THREAD = task.spawn(function()
+            while AUTO_POTION_ACTIVE do
+                local cur = os.time()
+                for _, name in ipairs(selectedPotions) do
+                    local exp = potionTimers[name] or 0
+                    if cur >= exp then
+                        local uuid = GetPotionUUID(name)
+                        if uuid then
+                            pcall(function() RF_ConsumePotion:InvokeServer(uuid, 1) end)
+                            potionTimers[name] = cur + POTION_DATA[name].Duration + 2
                         end
                     end
                 end
-            else
-                if v1116._origPlay then
-                    v1116.Play = v1116._origPlay
-                    v1116.Stop = v1116._origStop
+                -- Update UI
+                if POTION_STATUS_PARAGRAPH then
+                    local txt = ""
+                    for _, n in ipairs(selectedPotions) do
+                        local lf = (potionTimers[n] or 0) - cur
+                        if lf > 0 then txt = txt .. string.format("🟢 %s: %ds\n", n, lf) else txt = txt .. string.format("🟡 %s: Checking...\n", n) end
+                    end
+                    POTION_STATUS_PARAGRAPH:SetDesc(txt~="" and txt or "No Potion Selected")
                 end
-                warn("[CELESTIAL] Cutscene restored")
+                task.wait(1)
+            end
+        end)
+    end
+
+    local choosepot = potion:Dropdown({ Title = "Select Potions", Values = POTION_NAMES_LIST, Multi = true, AllowNone = true, Callback = function(v) selectedPotions = v or {} end })
+    local togpot = potion:Toggle({ Title = "Enable Auto Potion", Value = false, Callback = function(s) AUTO_POTION_ACTIVE = s if s then RunAutoPotionLoop() else if AUTO_POTION_THREAD then task.cancel(AUTO_POTION_THREAD) end end end })
+end
+
+do
+    local quest = Window:Tab({
+        Title = "Quests",
+        Icon = "scroll",
+        Locked = false,
+    })
+
+    -- =================================================================
+    -- CONFIG & VARIABLES
+    -- =================================================================
+    local ID_GHOSTFIN_ROD = 169
+    
+    local GHOSTFIN_QUEST_ACTIVE = false
+    local GHOSTFIN_MAIN_THREAD = nil
+    
+    local ELEMENT_QUEST_ACTIVE = false
+    local ELEMENT_MAIN_THREAD = nil
+
+    -- [THREAD] AUTO EQUIP (Background)
+    local QUEST_AUTO_EQUIP_THREAD = nil 
+
+    -- Controller & Remotes
+    local RPath = {"Packages", "_Index", "sleitnick_net@0.2.0", "net"}
+    
+    local function GetRemote(remotePath, name, timeout)
+        local currentInstance = game:GetService("ReplicatedStorage")
+        for _, childName in ipairs(remotePath) do
+            currentInstance = currentInstance:WaitForChild(childName, timeout or 0.5)
+            if not currentInstance then return nil end
+        end
+        return currentInstance:FindFirstChild(name)
+    end
+
+    local RE_EquipToolFromHotbar = GetRemote(RPath, "RE/EquipToolFromHotbar")
+    local RF_ChargeFishingRod = GetRemote(RPath, "RF/ChargeFishingRod")
+    local RF_RequestFishingMinigameStarted = GetRemote(RPath, "RF/RequestFishingMinigameStarted")
+    local RE_FishingCompleted = GetRemote(RPath, "RE/FishingCompleted")
+    local RF_CancelFishingInputs = GetRemote(RPath, "RF/CancelFishingInputs")
+    local RF_UpdateAutoFishingState = GetRemote(RPath, "RF/UpdateAutoFishingState")
+    
+    -- Remotes Tambahan
+    local RF_CreateTranscendedStone = GetRemote(RPath, "RF/CreateTranscendedStone")
+    local RF_PlaceLeverItem = GetRemote(RPath, "RE/PlaceLeverItem")
+    local RE_EquipItem = GetRemote(RPath, "RE/EquipItem")
+    local RE_UnequipItem = GetRemote(RPath, "RE/UnequipItem")
+
+    -- Lokasi Penting
+    local TREASURE_ROOM_POS = Vector3.new(-3598.440, -281.274, -1645.855)
+    local TREASURE_ROOM_LOOK = Vector3.new(-0.065, 0.000, -0.998)
+    local SISYPHUS_POS = Vector3.new(-3743.745, -135.074, -1007.554)
+    local SISYPHUS_LOOK = Vector3.new(0.310, 0.000, 0.951)
+    local ANCIENT_JUNGLE_POS = Vector3.new(1535.639, 3.159, -193.352)
+    local ANCIENT_JUNGLE_LOOK = Vector3.new(0.505, -0.000, 0.863)
+    local SACRED_TEMPLE_POS = Vector3.new(1461.815, -22.125, -670.234)
+    local SACRED_TEMPLE_LOOK = Vector3.new(-0.990, -0.000, 0.143)
+    local SECOND_ALTAR_POS = Vector3.new(1479.587, 128.295, -604.224)
+    local SECOND_ALTAR_LOOK = Vector3.new(-0.298, 0.000, -0.955)
+
+    -- Data Artifact
+    local ArtifactData = {
+        ["Hourglass Diamond Artifact"] = {
+            ItemName = "Hourglass Diamond Artifact", LeverName = "Hourglass Diamond Lever", ChildReference = 6, CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(255, 248, 49),
+            FishingPos = {Pos = Vector3.new(1490.144, 3.312, -843.171), Look = Vector3.new(0.115, 0.000, 0.993)},
+        },
+        ["Diamond Artifact"] = {
+            ItemName = "Diamond Artifact", LeverName = "Diamond Lever", ChildReference = "TempleLever", CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(219, 38, 255),
+            FishingPos = {Pos = Vector3.new(1844.159, 2.530, -288.755), Look = Vector3.new(0.981, 0.000, -0.193)},
+        },
+        ["Arrow Artifact"] = {
+            ItemName = "Arrow Artifact", LeverName = "Arrow Lever", ChildReference = 5, CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(255, 47, 47),
+            FishingPos = {Pos = Vector3.new(874.365, 2.530, -358.484), Look = Vector3.new(-0.990, 0.000, 0.144)},
+        },
+        ["Crescent Artifact"] = {
+            ItemName = "Crescent Artifact", LeverName = "Crescent Lever", ChildReference = 4, CrystalPathSuffix = "Crystal",
+            UnlockColor = Color3.fromRGB(112, 255, 69),
+            FishingPos = {Pos = Vector3.new(1401.070, 6.489, 116.738), Look = Vector3.new(-0.500, -0.000, 0.866)},
+        },
+    }
+    local ArtifactOrder = {"Hourglass Diamond Artifact", "Diamond Artifact", "Arrow Artifact", "Crescent Artifact"}
+
+    -- =================================================================
+    -- [DATA] PRICES FOR LOGIC
+    -- =================================================================
+    local SPECIAL_ROD_IDS = {[169] = {Name = "Ghostfin Rod", Price = 99999999}, [257] = {Name = "Element Rod", Price = 999999999}}
+    local ShopItems = {
+        ["Rods"] = {
+            {Name="Luck Rod",ID=79,Price=325},{Name="Carbon Rod",ID=76,Price=750},{Name="Grass Rod",ID=85,Price=1500},{Name="Demascus Rod",ID=77,Price=3000},
+            {Name="Ice Rod",ID=78,Price=5000},{Name="Lucky Rod",ID=4,Price=15000},{Name="Midnight Rod",ID=80,Price=50000},{Name="Steampunk Rod",ID=6,Price=215000},
+            {Name="Chrome Rod",ID=7,Price=437000},{Name="Flourescent Rod",ID=255,Price=715000},{Name="Astral Rod",ID=5,Price=1000000},
+            {Name="Ares Rod",ID=126,Price=3000000},{Name="Angler Rod",ID=168,Price=8000000},{Name = "Bamboo Rod", ID = 258, Price = 12000000}
+        }
+    }
+    
+    local ROD_DELAYS = {
+    -- [Starter / Cheap Rods]
+    [79]  = 4.6, -- Luck Rod
+    [76]  = 4.35, -- Carbon Rod
+    [85]  = 4.2, -- Grass Rod
+    [77]  = 4.35, -- Demascus Rod
+    [78]  = 3.85, -- Ice Rod
+    
+    -- [Mid Tier Rods]
+    [4]   = 3.5, -- Lucky Rod
+    [80]  = 2.7, -- Midnight Rod
+    
+    -- [High Tier Rods]
+    [6]   = 2.3, -- Steampunk Rod
+    [7]   = 2.2, -- Chrome Rod
+    [255] = 2.2, -- Flourescent Rod
+    [5]   = 1.85, -- Astral Rod
+    
+    -- [God Tier Rods]
+    [126] = 1.7, -- Ares Rod
+    [168] = 1.6, -- Angler Rod
+    
+    -- [Quest / Special Rods]
+    [169] = 1.2, -- Ghostfin Rod
+    [257] = 1, -- Element Rod
+}
+
+local DEFAULT_ROD_DELAY = 3.85
+
+    local function GetRodPriceByID(id)
+        id = tonumber(id)
+        if SPECIAL_ROD_IDS[id] then return SPECIAL_ROD_IDS[id].Price, SPECIAL_ROD_IDS[id].Name end
+        for _, item in ipairs(ShopItems["Rods"]) do if item.ID == id then return item.Price, item.Name end end
+        return 0, "Unknown Rod"
+    end
+
+    -- =================================================================
+    -- [CORE] EQUIP BEST ROD ONLY & GET PRECISE DELAY
+    -- =================================================================
+    local function EquipBestRod()
+        local replion = require(game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Replion")).Client:WaitReplion("Data", 5)
+        if not replion then return DEFAULT_ROD_DELAY end 
+        
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData then return DEFAULT_ROD_DELAY end
+
+        -- 1. Find Best Rod (Highest Price logic is still good for selection)
+        local bestRodUUID, bestRodPrice = nil, -1
+        local bestRodId = nil -- Kita simpan ID-nya untuk cek delay
+
+        if inventoryData["Fishing Rods"] then
+            for _, rod in ipairs(inventoryData["Fishing Rods"]) do
+                local price = GetRodPriceByID(rod.Id)
+                if price > bestRodPrice then 
+                    bestRodPrice = price
+                    bestRodUUID = rod.UUID 
+                    bestRodId = tonumber(rod.Id) -- Simpan ID
+                end
             end
         end
-    })
-    v1069:AddToggle({
-        Title = "Disable Obtained Fish",
-        Default = false,
-        Callback = function(p1124)
-            local v1125 = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Small Notification")
-            if v1125 and v1125:FindFirstChild("Display") then
-                v1125.Display.Visible = not p1124
+
+        -- 2. Equip Best Rod
+        if bestRodUUID then 
+            pcall(function() RE_EquipItem:FireServer(bestRodUUID, "Fishing Rods") end) 
+        end
+        
+        -- 3. Hold Tool
+        pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+
+        -- 4. Calculate Delay (NEW PRECISE LOGIC)
+        if bestRodId and ROD_DELAYS[bestRodId] then
+            return ROD_DELAYS[bestRodId]
+        else
+            return DEFAULT_ROD_DELAY
+        end
+    end
+
+    -- =================================================================
+    -- [CORE] INSTANT FISH (DYNAMIC DELAY)
+    -- =================================================================
+    local function RunQuestInstantFish(dynamicDelay)
+        if not (RE_EquipToolFromHotbar and RF_ChargeFishingRod and RF_RequestFishingMinigameStarted and RE_FishingCompleted and RF_CancelFishingInputs) then return end
+        
+        -- 1. Charge Rod
+        local timestamp = os.time() + os.clock()
+        pcall(function() RF_ChargeFishingRod:InvokeServer(timestamp) end)
+        
+        -- 2. Cast Rod
+        pcall(function() RF_RequestFishingMinigameStarted:InvokeServer(-139.630452165, 0.99647927980797) end)
+        
+        -- 3. Wait Smart Delay
+        task.wait(dynamicDelay)
+        
+        -- 4. Complete & Reset
+        pcall(function() RE_FishingCompleted:FireServer() end)
+        task.wait(0.3)
+        pcall(function() RF_CancelFishingInputs:InvokeServer() end)
+    end
+
+    -- [THREAD] AUTO EQUIP BACKGROUND (Rod Only)
+    local function StartQuestAutoEquip()
+        if QUEST_AUTO_EQUIP_THREAD then task.cancel(QUEST_AUTO_EQUIP_THREAD) end
+        QUEST_AUTO_EQUIP_THREAD = task.spawn(function()
+            local tick = 0
+            while GHOSTFIN_QUEST_ACTIVE or ELEMENT_QUEST_ACTIVE do
+                -- Equip Rod Slot 1 setiap 0.5 detik
+                pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+                
+                -- Setiap 5 detik, paksa re-check & equip best rod (jaga-jaga ganti item)
+                if tick % 10 == 0 then
+                    EquipBestRod() 
+                end
+                
+                tick = tick + 1
+                task.wait(0.5)
+            end
+        end)
+    end
+
+    local function StopQuestAutoEquip()
+        if QUEST_AUTO_EQUIP_THREAD then task.cancel(QUEST_AUTO_EQUIP_THREAD) QUEST_AUTO_EQUIP_THREAD = nil end
+        pcall(function() RE_EquipToolFromHotbar:FireServer(0) end) 
+    end
+
+    -- =================================================================
+    -- QUEST LOGIC HELPERS
+    -- =================================================================
+    local function HasGhostfinRod()
+        local replion = require(game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Replion")).Client:WaitReplion("Data", 5)
+        if not replion then return false end
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData["Fishing Rods"] then return false end
+        for _, rod in ipairs(inventoryData["Fishing Rods"]) do
+            if tonumber(rod.Id) == ID_GHOSTFIN_ROD then return true end
+        end
+        return false
+    end
+
+    local function GetLowestWeightSecrets(limit)
+        local secrets = {}
+        local replion = require(game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Replion")).Client:WaitReplion("Data", 5)
+        if not replion then return {} end
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if success and inventoryData and inventoryData.Items then
+            for _, item in ipairs(inventoryData.Items) do
+                local rarity = item.Metadata and item.Metadata.Rarity or "Unknown"
+                if rarity:upper() == "SECRET" and item.Metadata and item.Metadata.Weight then
+                    if not (item.IsFavorite or item.Favorited or item.Locked) then
+                        table.insert(secrets, {UUID = item.UUID, Weight = item.Metadata.Weight})
+                    end
+                end
             end
         end
-    })
-    v1069:AddToggle({
-        Title = "Disable Notification",
-        Content = "Disable All Notification! Fish/Admin Annoucement/Event Spawned!",
-        Default = false,
-        Callback = function(p1126)
-            vu7.disableNotifs = p1126
-            if p1126 then
-                vu160()
+        table.sort(secrets, function(a, b) return a.Weight < b.Weight end)
+        local result = {}
+        for i = 1, math.min(limit, #secrets) do table.insert(result, secrets[i].UUID) end
+        return result
+    end
+
+    -- Lever Helpers
+    local function IsLeverUnlocked(artifactName)
+        local JUNGLE_INTERACTIONS = workspace:FindFirstChild("JUNGLE INTERACTIONS")
+        if not JUNGLE_INTERACTIONS then return false end
+        local data = ArtifactData[artifactName]
+        if not data then return false end
+        
+        local leverFolder = nil
+        if type(data.ChildReference) == "string" then leverFolder = JUNGLE_INTERACTIONS:FindFirstChild(data.ChildReference) end
+        if not leverFolder and type(data.ChildReference) == "number" then local c = JUNGLE_INTERACTIONS:GetChildren() leverFolder = c[data.ChildReference] end
+        if not leverFolder then return false end
+        
+        local crystal = leverFolder:FindFirstChild(data.CrystalPathSuffix)
+        if not crystal or not crystal:IsA("BasePart") then return false end
+        
+        local cC, tC = crystal.Color, data.UnlockColor
+        return (math.abs(cC.R*255 - tC.R*255) < 1.1 and math.abs(cC.G*255 - tC.G*255) < 1.1 and math.abs(cC.B*255 - tC.B*255) < 1.1)
+    end
+
+
+    -- =================================================================
+    -- QUEST 1: GHOSTFIN
+    -- =================================================================
+    local ghostfin = quest:Section({ Title = "Ghostfin Rod Quest", TextSize = 20 })
+    local GhostfinStatus = ghostfin:Paragraph({ Title = "Quest Status: Idle", Content = "Waiting...", Icon = "activity" })
+
+    -- Fungsi Baca Data Aman
+    local function GetGhostfinProgressSafe()
+        local data = { Header = "Loading...", Q1={Text="...",Done=false}, Q2={Text="...",Done=false}, Q3={Text="...",Done=false}, Q4={Text="...",Done=false}, AllDone=false, BoardFound=false }
+        local board = workspace:FindFirstChild("!!! MENU RINGS") and workspace["!!! MENU RINGS"]:FindFirstChild("Deep Sea Tracker") and workspace["!!! MENU RINGS"]["Deep Sea Tracker"]:FindFirstChild("Board")
+        if board then
+            data.BoardFound = true 
+            pcall(function()
+                local c = board.Gui.Content
+                data.Header = c.Header.ContentText ~= "" and c.Header.ContentText or c.Header.Text
+                local function proc(lbl) local t = lbl.ContentText~="" and lbl.ContentText or lbl.Text return {Text=t, Done=string.find(t, "100%%")~=nil} end
+                data.Q1 = proc(c.Label1); data.Q2 = proc(c.Label2); data.Q3 = proc(c.Label3); data.Q4 = proc(c.Label4)
+                if data.Q1.Done and data.Q2.Done and data.Q3.Done and data.Q4.Done then data.AllDone = true end
+            end)
+        end
+        return data
+    end
+
+    local function RunGhostfinLoop()
+        if GHOSTFIN_MAIN_THREAD then task.cancel(GHOSTFIN_MAIN_THREAD) end
+        StartQuestAutoEquip() -- Nyalakan Auto Equip Background
+
+        GHOSTFIN_MAIN_THREAD = task.spawn(function()
+            local currentTarget = "None"
+            
+            while GHOSTFIN_QUEST_ACTIVE do
+                local p = GetGhostfinProgressSafe()
+                
+                -- Teleport ke Altar jika board tidak ketemu
+                if not p.BoardFound then
+                    GhostfinStatus:SetTitle("Status: Loading Board Data...")
+                    GhostfinStatus:SetDesc("Mendekat ke Altar untuk membaca Quest...")
+                    local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp and (hrp.Position - SECOND_ALTAR_POS).Magnitude > 20 then
+                        local tCFrame = CFrame.new(SECOND_ALTAR_POS, SECOND_ALTAR_POS + SECOND_ALTAR_LOOK)
+                        hrp.CFrame = tCFrame
+                        task.wait(2) 
+                    end
+                    task.wait(1)
+                    continue 
+                end
+
+                GhostfinStatus:SetTitle(p.Header)
+                GhostfinStatus:SetDesc(string.format("1. %s [%s]\n2. %s [%s]\n3. %s [%s]\n4. %s [%s]", p.Q1.Text, p.Q1.Done and "✅" or "❌", p.Q2.Text, p.Q2.Done and "✅" or "❌", p.Q3.Text, p.Q3.Done and "✅" or "❌", p.Q4.Text, p.Q4.Done and "✅" or "❌"))
+
+                if p.AllDone then 
+                    WindUI:Notify({ Title = "Selesai!", Content = "Ghostfin Quest Complete.", Duration = 5, Icon = "trophy" }) 
+                    break 
+                end
+
+                local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then task.wait(1) continue end
+                
+                -- Auto Equip & Hitung Delay Cerdas
+                local smartDelay = EquipBestRod() -- Returns 2.0 or 3.0 based on rod price
+
+                -- LOGIC FARMING
+                if not p.Q1.Done then
+                    if currentTarget ~= "Treasure" then
+                        local tCFrame = CFrame.new(TREASURE_ROOM_POS, TREASURE_ROOM_POS + TREASURE_ROOM_LOOK)
+                        hrp.CFrame = tCFrame
+                        currentTarget = "Treasure"
+                        task.wait(1.5)
+                    elseif (hrp.Position - TREASURE_ROOM_POS).Magnitude > 15 then
+                        local tCFrame = CFrame.new(TREASURE_ROOM_POS, TREASURE_ROOM_POS + TREASURE_ROOM_LOOK)
+                        hrp.CFrame = tCFrame
+                        task.wait(0.5)
+                    else
+                        RunQuestInstantFish(smartDelay) -- Pakai delay dari best rod
+                    end
+
+                elseif not p.Q2.Done or not p.Q3.Done or not p.Q4.Done then
+                    if currentTarget ~= "Sisyphus" then
+                        local tCFrame = CFrame.new(SISYPHUS_POS, SISYPHUS_POS + SISYPHUS_LOOK)
+                        hrp.CFrame = tCFrame
+                        currentTarget = "Sisyphus"
+                        task.wait(1.5)
+                    elseif (hrp.Position - SISYPHUS_POS).Magnitude > 15 then
+                        local tCFrame = CFrame.new(SISYPHUS_POS, SISYPHUS_POS + SISYPHUS_LOOK)
+                        hrp.CFrame = tCFrame
+                        task.wait(0.5)
+                    else
+                        RunQuestInstantFish(smartDelay) -- Pakai delay dari best rod
+                    end
+                end
+                
+                task.wait(0.1)
+            end
+            
+            GHOSTFIN_QUEST_ACTIVE = false
+            StopQuestAutoEquip()
+            local toggle = ghostfin:GetElementByTitle("Auto Quest Ghostfin")
+            if toggle and toggle.Set then toggle:Set(false) end
+        end)
+    end
+
+    local tghostfin = ghostfin:Toggle({
+        Title = "Auto Quest Ghostfin",
+        Value = false,
+        Callback = function(state)
+            GHOSTFIN_QUEST_ACTIVE = state
+            if state then
+                WindUI:Notify({ Title = "Ghostfin Quest", Content = "Started (Auto Best Rod & Smart Delay).", Duration = 3, Icon = "play" })
+                RunGhostfinLoop()
             else
-                vu161()
+                StopQuestAutoEquip()
+                if GHOSTFIN_MAIN_THREAD then task.cancel(GHOSTFIN_MAIN_THREAD) end
+                WindUI:Notify({ Title = "Ghostfin Quest", Content = "Stopped.", Duration = 3, Icon = "square" })
             end
         end
     })
-    v1069:AddToggle({
-        Title = "Delete Fishing Effects",
-        Content = "This Feature irivisible! delete any effect on rod",
-        Default = false,
-        Callback = function(p1127)
-            vu7.DelEffects = p1127
-            if p1127 then
-                task.spawn(function()
-                    while vu7.DelEffects do
-                        local v1128 = workspace:FindFirstChild("CosmeticFolder")
-                        if v1128 then
-                            v1128:Destroy()
+
+    -- =================================================================
+    -- SECTION 2: ELEMENT ROD QUEST
+    -- =================================================================
+    quest:Divider()
+    local element = quest:Section({ Title = "Element Rod Quest", TextSize = 20 })
+    local ElementStatus = element:Paragraph({ Title = "Quest Status: Idle", Content = "Waiting...", Icon = "activity" })
+
+    local function GetElementProgressSafe()
+        local data = { Header = "Loading...", Q1={Text="...",Done=false}, Q2={Text="...",Done=false}, Q3={Text="...",Done=false}, Q4={Text="...",Done=false}, AllDone=false, BoardFound=false }
+        local board = workspace:FindFirstChild("!!! MENU RINGS") and workspace["!!! MENU RINGS"]:FindFirstChild("Element Tracker") and workspace["!!! MENU RINGS"]["Element Tracker"]:FindFirstChild("Board")
+        if board then
+            data.BoardFound = true
+            pcall(function()
+                local c = board.Gui.Content
+                data.Header = c.Header.ContentText ~= "" and c.Header.ContentText or c.Header.Text
+                local function proc(lbl) local t = lbl.ContentText~="" and lbl.ContentText or lbl.Text return {Text=t, Done=string.find(t, "100%%")~=nil} end
+                data.Q1 = proc(c.Label1); data.Q2 = proc(c.Label2); data.Q3 = proc(c.Label3); data.Q4 = proc(c.Label4)
+                if data.Q1.Done and data.Q2.Done and data.Q3.Done and data.Q4.Done then data.AllDone = true end
+            end)
+        end
+        return data
+    end
+    
+
+    local function RunElementLoop()
+        if ELEMENT_MAIN_THREAD then task.cancel(ELEMENT_MAIN_THREAD) end
+        
+        if not HasGhostfinRod() then
+            WindUI:Notify({ Title = "Gagal", Content = "Butuh Ghostfin Rod (ID 169) di Inventory.", Duration = 5, Icon = "x" })
+            quest:GetElementByTitle("Auto Quest Element"):Set(false)
+            return
+        end
+
+        StartQuestAutoEquip()
+
+        ELEMENT_MAIN_THREAD = task.spawn(function()
+            local currentTarget = "None"
+
+            while ELEMENT_QUEST_ACTIVE do
+                local p = GetElementProgressSafe()
+                
+                if not p.BoardFound then
+                    ElementStatus:SetTitle("Status: Loading Board Data...")
+                    ElementStatus:SetDesc("Mendekat ke Altar untuk membaca Quest Element...")
+                    local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp and (hrp.Position - SECOND_ALTAR_POS).Magnitude > 20 then
+                        local tCFrame = CFrame.new(SECOND_ALTAR_POS, SECOND_ALTAR_POS + SECOND_ALTAR_LOOK)
+                        hrp.CFrame = tCFrame
+                        task.wait(2)
+                    end
+                    task.wait(1)
+                    continue
+                end
+
+                ElementStatus:SetTitle(p.Header)
+                ElementStatus:SetDesc(string.format("1. %s [%s]\n2. %s [%s]\n3. %s [%s]\n4. %s [%s]", p.Q1.Text, p.Q1.Done and "✅" or "❌", p.Q2.Text, p.Q2.Done and "✅" or "❌", p.Q3.Text, p.Q3.Done and "✅" or "❌", p.Q4.Text, p.Q4.Done and "✅" or "❌"))
+
+                if p.AllDone then WindUI:Notify({ Title = "Selesai!", Content = "Element Quest Complete.", Duration = 5, Icon = "trophy" }) break end
+
+                local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then task.wait(1) continue end
+
+                -- Hitung Delay Cerdas
+                local smartDelay = EquipBestRod()
+
+                if not p.Q2.Done then
+                    -- Quest Catch Fish in Ancient Jungle
+                    if currentTarget ~= "Jungle" then
+                        local tCFrame = CFrame.new(ANCIENT_JUNGLE_POS, ANCIENT_JUNGLE_POS + ANCIENT_JUNGLE_LOOK)
+                        hrp.CFrame = tCFrame
+                        currentTarget = "Jungle"
+                        task.wait(1.5)
+                    elseif (hrp.Position - ANCIENT_JUNGLE_POS).Magnitude > 15 then
+                        local tCFrame = CFrame.new(ANCIENT_JUNGLE_POS, ANCIENT_JUNGLE_POS + ANCIENT_JUNGLE_LOOK)
+                        hrp.CFrame = tCFrame
+                        task.wait(0.5)
+                    else
+                        RunQuestInstantFish(smartDelay)
+                    end
+
+                elseif not p.Q3.Done then
+                                -- Quest Levers
+                                local allLeversOpen = true
+                                local missingLever = nil
+                                
+                                -- Cek status lever
+                                for _, artName in ipairs(ArtifactOrder) do
+                                    if not IsLeverUnlocked(artName) then
+                                        allLeversOpen = false
+                                        missingLever = artName
+                                        break
+                                    end
+                                end
+
+                                if not allLeversOpen and missingLever then
+                                    local artData = ArtifactData[missingLever]
+                                    
+                                    -- [FIX] Panggil Helper ID Baru di sini
+                                    local hasIt = HasArtifactItem(missingLever) 
+                                    
+                                    if hasIt then
+                                        -- === PUNYA ITEM (PASANG) ===
+                                        if currentTarget ~= "PlaceLever" then
+                                            local tCFrame = CFrame.new(artData.FishingPos.Pos, artData.FishingPos.Pos + artData.FishingPos.Look)
+                                            hrp.CFrame = tCFrame
+                                            currentTarget = "PlaceLever"
+                                            
+                                            WindUI:Notify({ Title = "Puzzle", Content = "Memasang " .. missingLever, Duration = 3 })
+                                            
+                                            -- [Tips] Tambah Anchor sebentar biar ga jatuh pas animasi
+                                            if hrp then hrp.Anchored = true end
+                                            task.wait(1.5)
+                                        end
+                                        
+                                        pcall(function() RF_PlaceLeverItem:FireServer(missingLever) end)
+                                        task.wait(2.0) -- Tunggu server merespon
+                                        
+                                        if hrp then hrp.Anchored = false end -- Lepas Anchor
+                                    else
+                                        -- === GAK PUNYA ITEM (MANCING) ===
+                                        if currentTarget ~= missingLever then
+                                            local tCFrame = CFrame.new(artData.FishingPos.Pos, artData.FishingPos.Pos + artData.FishingPos.Look)
+                                            hrp.CFrame = tCFrame
+                                            currentTarget = missingLever
+                                            WindUI:Notify({ Title = "Puzzle", Content = "Farming " .. missingLever, Duration = 3 })
+                                            task.wait(1.5)
+                                        elseif (hrp.Position - artData.FishingPos.Pos).Magnitude > 10 then
+                                            -- Cek kalau kejauhan/jatuh
+                                            local tCFrame = CFrame.new(artData.FishingPos.Pos, artData.FishingPos.Pos + artData.FishingPos.Look)
+                                            hrp.CFrame = tCFrame
+                                            task.wait(0.5)
+                                        else
+                                            -- Mancing
+                                            RunQuestInstantFish(smartDelay)
+                                            -- [PENTING] Jeda dikit biar loop berikutnya sempet baca inventory baru
+                                            task.wait(0.1) 
+                                        end
+                                    end
+                                else
+                                    -- Semua lever terbuka tapi quest belum done (Bug Visual/Delay)
+                                    -- Refresh di Temple
+                                    if currentTarget ~= "TempleWait" then
+                                        if (hrp.Position - SACRED_TEMPLE_POS).Magnitude > 15 then 
+                                            TeleportToLookAt(SACRED_TEMPLE_POS, SACRED_TEMPLE_LOOK) 
+                                            task.wait(0.5) 
+                                        end
+                                        currentTarget = "TempleWait"
+                                    end
+                                    RunQuestInstantFish(smartDelay)
+                                end
+
+                elseif not p.Q4.Done then
+                    -- Quest Create Stone (Sacrifice Secrets)
+                    if currentTarget ~= "Altar" then
+                        local tCFrame = CFrame.new(SECOND_ALTAR_POS, SECOND_ALTAR_POS + SECOND_ALTAR_LOOK)
+                        hrp.CFrame = tCFrame
+                        currentTarget = "Altar"
+                        task.wait(1.5)
+                    end
+                    
+                    local trashSecrets = GetLowestWeightSecrets(3)
+                    if #trashSecrets == 0 then
+                        WindUI:Notify({ Title = "Bahan Kurang", Content = "Tidak ada ikan SECRET di tas.", Duration = 5, Icon = "alert-triangle" })
+                        task.wait(5)
+                    else
+                        pcall(function() if RE_UnequipItem then RE_UnequipItem:FireServer("all") end end)
+                        task.wait(0.5)
+                        for i, fishUUID in ipairs(trashSecrets) do
+                            if not ELEMENT_QUEST_ACTIVE then break end
+                            pcall(function() RE_EquipItem:FireServer(fishUUID, "Fish") end)
+                            task.wait(0.3)
+                            pcall(function() RE_EquipToolFromHotbar:FireServer(2) end)
+                            task.wait(0.5)
+                            pcall(function() RF_CreateTranscendedStone:InvokeServer() end)
+                            task.wait(1.5)
                         end
+                        pcall(function() RE_EquipToolFromHotbar:FireServer(0) end)
+                        task.wait(2)
+                    end
+                end
+                task.wait(0.1)
+            end
+            
+            ELEMENT_QUEST_ACTIVE = false
+            StopQuestAutoEquip()
+            local toggle = element:GetElementByTitle("Auto Quest Element")
+            if toggle and toggle.Set then toggle:Set(false) end
+        end)
+    end
+
+    local telement = element:Toggle({
+        Title = "Auto Quest Element",
+        Value = false,
+        Callback = function(state)
+            ELEMENT_QUEST_ACTIVE = state
+            if state then
+                WindUI:Notify({ Title = "Element Quest", Content = "Started (Auto Best Rod & Smart Delay).", Duration = 3, Icon = "play" })
+                RunElementLoop()
+            else
+                if ELEMENT_MAIN_THREAD then task.cancel(ELEMENT_MAIN_THREAD) end
+                StopQuestAutoEquip()
+                WindUI:Notify({ Title = "Element Quest", Content = "Stopped.", Duration = 3, Icon = "square" })
+            end
+        end
+    })
+end
+
+-- =================================================================
+-- VARIABLES & CORE HELPERS FOR EVENTS TAB (UPDATED)
+-- =================================================================
+
+local lastPositionBeforeEvent = nil
+local autoJoinEventActive = false
+local LOCHNESS_POS = Vector3.new(6063.347, -585.925, 4713.696)
+local LOCHNESS_LOOK = Vector3.new(-0.376, -0.000, -0.927)
+
+-- *** AUTO UNLOCK RUIN DOOR ***
+local AUTO_UNLOCK_STATE = false
+local AUTO_UNLOCK_THREAD = nil
+local AUTO_UNLOCK_ATTEMPT_THREAD = nil -- NEW THREAD FOR AGGRESSIVE UNLOCK
+local RUIN_COMPLETE_DELAY = 1.5
+local RUIN_DOOR_PATH = workspace["RUIN INTERACTIONS"] and workspace["RUIN INTERACTIONS"].Door
+local ITEM_FISH_NAMES = {"Freshwater Piranha", "Goliath Tiger", "Sacred Guardian Squid", "Crocodile"}
+local SACRED_TEMPLE_POS = FishingAreas["Sacred Temple"].Pos
+local SACRED_TEMPLE_LOOK = FishingAreas["Sacred Temple"].Look
+local RUIN_DOOR_REMOTE = GetRemote(RPath, "RE/PlacePressureItem")
+local RUIN_DOOR_STATUS_PARAGRAPH
+local RUIN_AUTO_UNLOCK_TOGGLE
+local RF_UpdateAutoFishingState = GetRemote(RPath, "RF/UpdateAutoFishingState")
+local RE_EquipToolFromHotbar = GetRemote(RPath, "RE/EquipToolFromHotbar")
+local RF_ChargeFishingRod = GetRemote(RPath, "RF/ChargeFishingRod")
+local RF_RequestFishingMinigameStarted = GetRemote(RPath, "RF/RequestFishingMinigameStarted")
+local RE_FishingCompleted = GetRemote(RPath, "RE/FishingCompleted")
+local RF_CancelFishingInputs = GetRemote(RPath, "RF/CancelFishingInputs")
+
+
+local function GetEventGUI()
+	local success, gui = pcall(function()
+		local menuRings = workspace:WaitForChild("!!! MENU RINGS", 5)
+		local eventTracker = menuRings:WaitForChild("Event Tracker", 5)
+		local contentItems = eventTracker.Main.Gui.Content.Items
+
+		local countdown = contentItems.Countdown:WaitForChild("Label")	
+		local statsContainer = contentItems:WaitForChild("Stats")	
+		local timer = statsContainer.Timer:WaitForChild("Label")	
+		
+		local quantity = statsContainer:WaitForChild("Quantity")	
+		local odds = statsContainer:WaitForChild("Odds")
+
+		return {
+			Countdown = countdown,
+			Timer = timer,
+			Quantity = quantity,
+			Odds = odds,
+		}
+	end)
+	
+	if success and gui then
+		return gui
+	end
+	return nil
+end
+
+-- Fungsi Anda yang sudah diperbaiki (dan kini selalu mengupdate UI)
+local function GetRuinDoorStatus()
+	local ruinDoor = RUIN_DOOR_PATH -- Pathing ke model pintu
+	local status = "LOCKED 🔒"
+	
+	if ruinDoor and ruinDoor:FindFirstChild("RuinDoor") then
+		local LDoor = ruinDoor.RuinDoor:FindFirstChild("LDoor")
+		
+		if LDoor then
+			local currentX = nil
+			
+			if LDoor:IsA("BasePart") then
+				currentX = LDoor.Position.X
+			elseif LDoor:IsA("Model") then
+				-- Menggunakan GetPivot() untuk model
+				local success, pivot = pcall(function() return LDoor:GetPivot() end)
+                if success and pivot then
+                    currentX = pivot.Position.X
+                end
+			end
+			
+			if currentX ~= nil then
+				-- Gunakan ambang batas 6075 atau yang Anda temukan
+				if currentX > 6075 then
+					status = "UNLOCKED ✅"
+				end
+			end
+		end
+	end
+	
+    -- PENTING: Update elemen UI di sini
+	RUIN_DOOR_STATUS_PARAGRAPH:SetTitle("Ruin Door Status: " .. status)
+	return status
+end
+
+
+
+local function IsItemAvailable(itemName)
+	local replion = GetPlayerDataReplion()
+	if not replion then return false end
+	local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+	if not success or not inventoryData or not inventoryData.Items then return false end
+
+	for _, item in ipairs(inventoryData.Items) do
+		if item.Identifier == itemName then
+			return true
+		end
+		
+		local name, _ = GetFishNameAndRarity(item)
+		if name == itemName and (item.Count or 1) >= 1 then
+			return true
+		end
+	end
+	return false
+end
+
+local function GetMissingItem()
+	for _, name in ipairs(ITEM_FISH_NAMES) do
+		if not IsItemAvailable(name) then
+			return name
+		end
+	end
+	return nil
+end
+
+local function runInstantFish()
+	if not (RE_EquipToolFromHotbar and RF_ChargeFishingRod and RF_RequestFishingMinigameStarted and RE_FishingCompleted and RF_CancelFishingInputs) then
+		return false
+	end
+	
+	pcall(function() RE_EquipToolFromHotbar:FireServer(1) end)
+	
+	local timestamp = os.time() + os.clock()
+	pcall(function() RF_ChargeFishingRod:InvokeServer(timestamp) end)
+	pcall(function() RF_RequestFishingMinigameStarted:InvokeServer(-139.630452165, 0.99647927980797) end)
+	
+	task.wait(RUIN_COMPLETE_DELAY)
+
+	pcall(function() RE_FishingCompleted:FireServer() end)
+	task.wait(0.3)
+	pcall(function() RF_CancelFishingInputs:FireServer() end)
+	
+	return true
+end
+
+local function RunRuinDoorUnlockAttemptLoop()
+	if AUTO_UNLOCK_ATTEMPT_THREAD then task.cancel(AUTO_UNLOCK_ATTEMPT_THREAD) end
+
+	if not RUIN_DOOR_REMOTE then
+		WindUI:Notify({ Title = "Error Remote", Content = "Remote Ruin Door (RE/PlacePressureItem) tidak ditemukan.", Duration = 4, Icon = "x" })
+		return
+	end
+	
+	AUTO_UNLOCK_ATTEMPT_THREAD = task.spawn(function()
+		local RUIN_DOOR_POS = FishingAreas["Ancient Ruin"].Pos
+		local RUIN_DOOR_LOOK = FishingAreas["Ancient Ruin"].Look
+		
+		TeleportToLookAt(RUIN_DOOR_POS, RUIN_DOOR_LOOK)
+		task.wait(1.5)
+		
+		WindUI:Notify({ Title = "Unlock Attempt ON", Content = "Mulai agresif kirim remote PlacePressureItem...", Duration = 3, Icon = "zap" })
+
+		while AUTO_UNLOCK_STATE and GetRuinDoorStatus() == "LOCKED 🔒" do
+			for i, name in ipairs(ITEM_FISH_NAMES) do
+				task.wait(2.1)
+				pcall(function() RUIN_DOOR_REMOTE:FireServer(name) end)
+			end
+			
+			task.wait(5)
+		end
+	end)
+end
+
+local function RunAutoUnlockLoop()
+	if AUTO_UNLOCK_THREAD then task.cancel(AUTO_UNLOCK_THREAD) end
+	if AUTO_UNLOCK_ATTEMPT_THREAD then task.cancel(AUTO_UNLOCK_ATTEMPT_THREAD) end
+	
+	pcall(function()
+		local toggleLegit = Window:GetElementByTitle("Auto Fish (Legit)")
+		local toggleNormal = Window:GetElementByTitle("Normal Instant Fish")
+		local toggleBlatant = Window:GetElementByTitle("Instant Fishing (Blatant)")
+		
+		if toggleLegit and toggleLegit.Value then toggleLegit:Set(false) end
+		if toggleNormal and toggleNormal.Value then toggleNormal:Set(false) end
+		if toggleBlatant and toggleBlatant.Value then toggleBlatant:Set(false) end
+		if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(false) end
+	end)
+
+	AUTO_UNLOCK_THREAD = task.spawn(function()
+		local isFarming = false
+		local lastPositionBeforeEvent_Ruin = nil
+		
+		RunRuinDoorUnlockAttemptLoop()
+		
+		while AUTO_UNLOCK_STATE do
+			local doorStatus = GetRuinDoorStatus()
+			RUIN_DOOR_STATUS_PARAGRAPH:SetTitle("Ruin Door Status: " .. doorStatus)
+
+			if doorStatus == "LOCKED 🔒" then
+				local missingItem = GetMissingItem()
+
+				if missingItem then
+					
+					if not isFarming then
+						local hrp = GetHRP()
+						if hrp and lastPositionBeforeEvent_Ruin == nil then
+							lastPositionBeforeEvent_Ruin = {Pos = hrp.Position, Look = hrp.CFrame.LookVector}
+							WindUI:Notify({ Title = "Posisi Disimpan", Content = "Posisi sebelum Ruin Door farm disimpan.", Duration = 2, Icon = "save" })
+						end
+						TeleportToLookAt(SACRED_TEMPLE_POS, SACRED_TEMPLE_LOOK)
+						task.wait(1.5)
+						isFarming = true
+						WindUI:Notify({ Title = "Ruin Door: Farming", Content = "Mencari " .. missingItem .. ". Fishing ON (Delay: "..RUIN_COMPLETE_DELAY.."s).", Duration = 4, Icon = "fish" })
+					end
+					
+					RUIN_DOOR_STATUS_PARAGRAPH:SetDesc("Mencari item: " .. missingItem .. ". Fishing...")
+					runInstantFish()
+					task.wait(RUIN_COMPLETE_DELAY + 0.5)
+					
+				else
+					RUIN_DOOR_STATUS_PARAGRAPH:SetDesc("Semua item ada! Loop Unlock Agresif berjalan...")
+					isFarming = false
+					
+					task.wait(1)
+				end
+				
+			elseif doorStatus == "UNLOCKED ✅" then
+				RUIN_DOOR_STATUS_PARAGRAPH:SetDesc("Pintu sudah tidak terkunci. Auto Unlock berhenti.")
+				
+				if lastPositionBeforeEvent_Ruin then
+					TeleportToLookAt(lastPositionBeforeEvent_Ruin.Pos, lastPositionBeforeEvent_Ruin.Look)
+					lastPositionBeforeEvent_Ruin = nil
+					WindUI:Notify({ Title = "Kembali ke Posisi Awal", Content = "Door UNLOCKED, melanjutkan farm.", Duration = 4, Icon = "repeat" })
+				end
+				break
+				
+			else
+				RUIN_DOOR_STATUS_PARAGRAPH:SetDesc("Status Pintu tidak terdeteksi. Memeriksa ulang...")
+				task.wait(5)
+			end
+		end
+		
+		pcall(function()
+			if RE_EquipToolFromHotbar then RE_EquipToolFromHotbar:FireServer(0) end
+		end)
+		
+		AUTO_UNLOCK_STATE = false
+		if AUTO_UNLOCK_ATTEMPT_THREAD then task.cancel(AUTO_UNLOCK_ATTEMPT_THREAD) AUTO_UNLOCK_ATTEMPT_THREAD = nil end
+		if RUIN_AUTO_UNLOCK_TOGGLE and RUIN_AUTO_UNLOCK_TOGGLE.Set then RUIN_AUTO_UNLOCK_TOGGLE:Set(false) end
+		WindUI:Notify({ Title = "Auto Unlock OFF", Content = "Proses Ruin Door dihentikan.", Duration = 3, Icon = "x" })
+	end)
+end
+
+do
+	local Event = Window:Tab({
+		Title = "Events",
+		Icon = "calendar",
+		Locked = false,
+	})
+
+	local EventSyncThread = nil
+    local loknes = Event:Section({
+        Title = "Ancient Lochness Event",
+        TextSize = 20,
+    })
+	local CountdownParagraph = loknes:Paragraph({
+		Title = "Event Countdown: Waiting...",
+		Content = "Status: Mencoba sinkronisasi event...",
+		Icon = "clock"
+	})
+	local StatsParagraph = loknes:Paragraph({
+		Title = "Event Stats: N/A",
+		Content = "Timer: N/A\nCaught: N/A\nChance: N/A",
+		Icon = "trending-up"
+	})
+	
+	local LochnessToggle
+	
+	local function UpdateEventStats()
+		local gui = GetEventGUI()
+		
+		if not gui then
+			CountdownParagraph:SetTitle("Event Countdown: GUI Not Found ❌")
+			CountdownParagraph:SetDesc("Pastikan 'Event Tracker' sudah dimuat di workspace.")
+			StatsParagraph:SetTitle("Event Stats: N/A")
+			StatsParagraph:SetDesc("Timer: N/A\nCaught: N/A\nChance: N/A")
+			return false
+		end
+		
+		local countdownText = gui.Countdown and (gui.Countdown.ContentText or gui.Countdown.Text) or "N/A"
+		local timerText = gui.Timer and (gui.Timer.ContentText or gui.Timer.Text) or "N/A"
+		local quantityText = gui.Quantity and (gui.Quantity.ContentText or gui.Quantity.Text) or "N/A"
+		local oddsText = gui.Odds and (gui.Odds.ContentText or gui.Odds.Text) or "N/A"
+
+		CountdownParagraph:SetTitle("Ancient Lochness Start In:")
+		CountdownParagraph:SetDesc(countdownText)
+
+		StatsParagraph:SetTitle("Ancient Lochness Stats")
+		StatsParagraph:SetDesc(string.format("- Timer: %s\n- Caught: %s\n- Chance: %s",
+			timerText, quantityText, oddsText))
+
+		local isEventActive = timerText:find("M") and timerText:find("S") and not timerText:match("^0M 0S")
+		
+		return isEventActive
+	end
+
+	local function RunEventSyncLoop()
+	if EventSyncThread then task.cancel(EventSyncThread) end
+
+	EventSyncThread = task.spawn(function()
+		local isTeleportedToEvent = false
+		
+		while true do
+			local isEventActive = UpdateEventStats()
+			
+			if autoJoinEventActive then
+				if isEventActive and not isTeleportedToEvent then
+					if lastPositionBeforeEvent == nil then
+						local hrp = GetHRP()
+						if hrp then
+							lastPositionBeforeEvent = {Pos = hrp.Position, Look = hrp.CFrame.LookVector}
+							WindUI:Notify({ Title = "Posisi Disimpan", Content = "Posisi sebelum Event disimpan.", Duration = 2, Icon = "save" })
+						end
+					end
+					
+					TeleportToLookAt(LOCHNESS_POS, LOCHNESS_LOOK)
+					isTeleportedToEvent = true
+					WindUI:Notify({ Title = "Auto Join ON", Content = "Teleport ke Ancient Lochness.", Duration = 4, Icon = "zap" })
+
+				elseif isTeleportedToEvent and not isEventActive and lastPositionBeforeEvent ~= nil then
+                -- UPDATE: Tunggu 15 detik sebelum balik
+                WindUI:Notify({ Title = "Event Selesai", Content = "Menunggu 15 detik sebelum kembali...", Duration = 5, Icon = "clock" })
+                task.wait(15) 
+                
+                TeleportToLookAt(lastPositionBeforeEvent.Pos, lastPositionBeforeEvent.Look)
+                lastPositionBeforeEvent = nil
+                isTeleportedToEvent = false
+                WindUI:Notify({ Title = "Teleport Back", Content = "Kembali ke posisi semula.", Duration = 3, Icon = "repeat" })
+            end
+		end
+
+			task.wait(0.5)
+		end
+	end)
+end
+	
+	RunEventSyncLoop()
+	
+	local LochnessToggle = Reg("tloknes",loknes:Toggle({
+		Title = "Auto Join Ancient Lochness Event",
+		Desc = "Otomatis Teleport ke event saat aktif, dan kembali saat event berakhir.",
+		Value = false,
+		Callback = function(state)
+			autoJoinEventActive = state
+			if state then
+				WindUI:Notify({ Title = "Auto Join ON", Content = "Mulai memantau event Ancient Lochness.", Duration = 3, Icon = "check" })
+			else
+				WindUI:Notify({ Title = "Auto Join OFF", Content = "Pemantauan dihentikan.", Duration = 3, Icon = "x" })
+			end
+		end
+	}))
+
+	
+	RUIN_DOOR_STATUS_PARAGRAPH = loknes:Paragraph({
+		Title = "Ruin Door Status: N/A",
+		Content = "Status Locked/Unlocked. Tekan Toggle untuk memulai monitor."
+	})
+
+	local lochnessdelay = loknes:Input({
+		Title = "Ruin Door Instant Delay",
+		Desc = "Delay (dalam detik) untuk Normal Instant Fish saat farming item Ruin Door. Default: 1.5s.",
+		Value = tostring(RUIN_COMPLETE_DELAY),
+		Placeholder = "1.5",
+		Callback = function(input)
+			local newDelay = tonumber(input)
+			if newDelay and newDelay >= 0.5 then
+				RUIN_COMPLETE_DELAY = newDelay
+			else
+				WindUI:Notify({ Title = "Input Invalid", Content = "Minimal delay 0.5 detik.", Duration = 2, Icon = "alert-triangle" })
+			end
+		end
+	})
+
+	local RUIN_AUTO_UNLOCK_TOGGLE = loknes:Toggle({
+		Title = "Auto Unlock Ruin Door",
+		Desc = "Otomatis memfarm 4 item yang hilang menggunakan Normal Instant Fish, lalu unlock pintu.",
+		Value = false,
+		Callback = function(state)
+		AUTO_UNLOCK_STATE = state
+		if state then
+			if GetRuinDoorStatus() == "UNLOCKED ✅" then
+				WindUI:Notify({ Title = "Ruin Door", Content = "Pintu sudah terbuka. Auto Unlock tidak berjalan.", Duration = 4, Icon = "info" })
+					return false
+			end	
+			WindUI:Notify({ Title = "Auto Unlock ON", Content = "Mulai memantau Ruin Door dan Inventory.", Duration = 3, Icon = "check" })
+			RunAutoUnlockLoop()
+			else
+					if AUTO_UNLOCK_THREAD then task.cancel(AUTO_UNLOCK_THREAD) AUTO_UNLOCK_THREAD = nil end
+					if AUTO_UNLOCK_ATTEMPT_THREAD then task.cancel(AUTO_UNLOCK_ATTEMPT_THREAD) AUTO_UNLOCK_ATTEMPT_THREAD = nil end
+			WindUI:Notify({ Title = "Auto Unlock OFF", Content = "Proses Ruin Door dihentikan.", Duration = 3, Icon = "x" })
+		end
+end
+	})
+	-- =================================================================
+    -- 🕺 DISCO EVENT (AUTO STATUS UPDATE + BRUTE FORCE + LEGIT FISHING FIX)
+    -- =================================================================
+    Event:Divider()
+    local disco = Event:Section({ Title = "Disco Event", TextSize = 20,})
+
+    -- --- VARIABLES & CONFIGS ---
+    local DISCO_UNLOCK_STATE = false
+    local DISCO_UNLOCK_THREAD = nil
+    local DISCO_SPAM_THREAD = nil
+    local DISCO_EQUIP_THREAD = nil 
+    local DISCO_PILLARS = { "Brighteyes Guppy", "Builderman Guppy", "Guest Guppy", "Shedletsky Guppy" }
+    
+    -- [[ GATE LOCKED DATA ]]
+    local LOCKED_CFRAME = CFrame.new(-8804.5, -575.5, 168.625, 0, 0, 1, 0, 1, 0, -1, 0, 0)
+
+    -- POSISI
+    local IRON_CAVERN_POS_FIXED = Vector3.new(-8792.546, -588.000, 230.642)
+    local IRON_CAVERN_LOOK_FIXED = Vector3.new(0.718, 0.000, 0.696)
+    local DISCO_EVENT_POS = Vector3.new(-8641.672, -547.500, 160.322)
+    local DISCO_EVENT_LOOK = Vector3.new(0.984, -0.000, 0.176)
+
+    local FishingController = require(game:GetService("ReplicatedStorage"):WaitForChild("Controllers").FishingController)
+
+    -- REMOTE FIX
+    local RE_PlaceCavernTotemItem = nil
+    pcall(function()
+        RE_PlaceCavernTotemItem = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net:WaitForChild("RE/PlaceCavernTotemItem", 5)
+    end)
+
+    -- UI STATUS
+    local DISCO_STATUS_PARAGRAPH = disco:Paragraph({ 
+        Title = "Disco Gate Status: Checking...", 
+        Content = "Menunggu data...",
+        Icon = "door-open"
+    })
+
+    -- =================================================================
+    -- 🛠️ HELPER LEGIT FISHING KHUSUS DISCO (PORTED FROM FISHING TAB)
+    -- =================================================================
+    local Disco_LegitActive = false
+    local Disco_ClickThread = nil
+    local Disco_ClickSpeed = 0.05 -- Kecepatan klik legit
+
+    local function performDiscoClick()
+        if FishingController and Disco_LegitActive then
+            FishingController:RequestFishingMinigameClick()
+            task.wait(Disco_ClickSpeed)
+        end
+    end
+
+    -- Hook FishingRodStarted (Menangani Minigame Otomatis)
+    local oldRodStarted_Disco = FishingController.FishingRodStarted
+    FishingController.FishingRodStarted = function(self, ...)
+        oldRodStarted_Disco(self, ...) -- Jalankan fungsi asli biar game ga error
+        
+        if Disco_LegitActive then
+            if Disco_ClickThread then task.cancel(Disco_ClickThread) end
+            
+            Disco_ClickThread = task.spawn(function()
+                while Disco_LegitActive do
+                    performDiscoClick()
+                end
+            end)
+        end
+    end
+
+    -- Hook FishingStopped (Mematikan Thread Klik)
+    local oldRodStopped_Disco = FishingController.FishingStopped
+    FishingController.FishingStopped = function(self, ...)
+        oldRodStopped_Disco(self, ...) -- Jalankan fungsi asli
+        
+        if Disco_ClickThread then 
+            task.cancel(Disco_ClickThread) 
+            Disco_ClickThread = nil 
+        end
+    end
+
+    -- Fungsi Toggle State Legit Disco
+    local function SetDiscoLegitState(bool)
+        Disco_LegitActive = bool
+        if not bool and Disco_ClickThread then
+            task.cancel(Disco_ClickThread)
+            Disco_ClickThread = nil
+        end
+    end
+    -- =================================================================
+
+    -- [[ FUNGSI CEK GATE ]]
+    local function IsGateLocked()
+        local gateModel = workspace:FindFirstChild("ClassicEvent") 
+            and workspace.ClassicEvent:FindFirstChild("Finished") 
+            and workspace.ClassicEvent.Finished:FindFirstChild("Gate") 
+            and workspace.ClassicEvent.Finished.Gate:FindFirstChild("LeftGate")
+        
+        if not gateModel then return true end 
+
+        local currentLook = gateModel:GetPivot().LookVector
+        local lockedLook = LOCKED_CFRAME.LookVector
+        return currentLook:Dot(lockedLook) > 0.99
+    end
+
+    -- [[ MONITOR STATUS GATE ]]
+    task.spawn(function()
+        while true do
+            if not DISCO_UNLOCK_STATE and DISCO_STATUS_PARAGRAPH then
+                if IsGateLocked() then
+                    DISCO_STATUS_PARAGRAPH:SetTitle("Disco Gate: LOCKED 🔒")
+                    DISCO_STATUS_PARAGRAPH:SetDesc("Gate terkunci. aktifkan auto unlock.")
+                else
+                    DISCO_STATUS_PARAGRAPH:SetTitle("Disco Gate: UNLOCKED ✅")
+                    DISCO_STATUS_PARAGRAPH:SetDesc("Gate terbuka!")
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+
+    -- Helper Inventory
+    local function IsItemAvailable_Disco(itemName)
+        local replion = GetPlayerDataReplion()
+        if not replion then return false end
+        local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+        if not success or not inventoryData or not inventoryData.Items then return false end
+        for _, item in ipairs(inventoryData.Items) do
+            if item.Identifier == itemName then return true end
+            local name, _ = GetFishNameAndRarity(item)
+            if name == itemName and (item.Count or 1) >= 1 then return true end
+        end
+        return false
+    end
+
+    -- MAIN LOGIC LOOP
+    local function RunDiscoLoop()
+        if DISCO_UNLOCK_THREAD then task.cancel(DISCO_UNLOCK_THREAD) end
+        if DISCO_SPAM_THREAD then task.cancel(DISCO_SPAM_THREAD) end
+        if DISCO_EQUIP_THREAD then task.cancel(DISCO_EQUIP_THREAD) end
+        
+        -- Matikan Server Auto Fishing biar ga bentrok
+        if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(false) end
+
+        -- [THREAD 1] BACKGROUND SPAMMER (Unlock Gate)
+        DISCO_SPAM_THREAD = task.spawn(function()
+            while DISCO_UNLOCK_STATE do
+                if RE_PlaceCavernTotemItem then
+                    for _, pillar in ipairs(DISCO_PILLARS) do
+                        pcall(function() RE_PlaceCavernTotemItem:FireServer(pillar) end)
+                        task.wait(2.1)
+                        if not DISCO_UNLOCK_STATE then break end
+                    end
+                else
+                    task.wait(1)
+                end
+            end
+        end)
+
+        -- [THREAD 2] AUTO EQUIP ROD (Anti-Stuck)
+        DISCO_EQUIP_THREAD = task.spawn(function()
+            while DISCO_UNLOCK_STATE do
+                pcall(function() if RE_EquipToolFromHotbar then RE_EquipToolFromHotbar:FireServer(1) end end)
+                task.wait(0.1) -- Spam equip agar selalu pegang rod
+            end
+        end)
+
+        -- [THREAD 3] FARMING LOGIC (MAIN)
+        DISCO_UNLOCK_THREAD = task.spawn(function()
+            local isFarming = false
+            
+            -- Teleport ke Iron Cavern (Sekali di awal)
+            if IsGateLocked() then
+                TeleportToLookAt(IRON_CAVERN_POS_FIXED, IRON_CAVERN_LOOK_FIXED)
+                task.wait(1.0)
+                isFarming = true
+            end
+
+            while DISCO_UNLOCK_STATE do
+                -- 1. Cek Status Gate
+                if not IsGateLocked() then
+                    DISCO_STATUS_PARAGRAPH:SetTitle("Disco Gate: UNLOCKED ✅")
+                    DISCO_STATUS_PARAGRAPH:SetDesc("Event Selesai. Stop Farming.")
+                    WindUI:Notify({ Title = "Gate Terbuka!", Content = "Auto Unlock Selesai.", Duration = 5, Icon = "check" })
+                    break
+                else
+                    DISCO_STATUS_PARAGRAPH:SetTitle("Disco Gate: LOCKED 🔒")
+                end
+
+                -- 2. Cek Ikan apa yang kurang di tas
+                local missingItem = nil
+                for _, pillar in ipairs(DISCO_PILLARS) do
+                    if not IsItemAvailable_Disco(pillar) then
+                        missingItem = pillar
+                        break 
+                    end
+                end
+
+                -- 3. Logic Farming (Menggunakan Helper Legit Baru)
+                if missingItem then
+                    -- Cek posisi, balikin kalau kejauhan (jatuh/mati)
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp and (hrp.Position - IRON_CAVERN_POS_FIXED).Magnitude > 50 then
+                        TeleportToLookAt(IRON_CAVERN_POS_FIXED, IRON_CAVERN_LOOK_FIXED)
+                        task.wait(0.5)
+                    end
+
+                    DISCO_STATUS_PARAGRAPH:SetDesc("Farming: " .. missingItem)
+                    
+                    -- Aktifkan Legit Fishing State
+                    SetDiscoLegitState(true) 
+                    if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(true) end
+
+                else
+                    -- Item lengkap, matikan fishing, fokus spam remote (Thread 1)
+                    DISCO_STATUS_PARAGRAPH:SetDesc("Item Lengkap. Mencoba membuka gate...")
+                    SetDiscoLegitState(false)
+                    if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(false) end
+                end
+                
+                task.wait(0.5)
+            end
+
+            -- Cleanup saat loop berhenti
+            DISCO_UNLOCK_STATE = false
+            SetDiscoLegitState(false) -- Matikan clicker
+            if DISCO_SPAM_THREAD then task.cancel(DISCO_SPAM_THREAD) end
+            if DISCO_EQUIP_THREAD then task.cancel(DISCO_EQUIP_THREAD) end
+            if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(false) end
+            
+            Event:GetElementByTitle("Auto Unlock Disco Gate"):Set(false)
+            pcall(function() RE_EquipToolFromHotbar:FireServer(0) end)
+        end)
+    end
+
+    local tdisco = disco:Toggle({
+        Title = "Auto Unlock Disco Gate",
+        Value = false,
+        Callback = function(state)
+            DISCO_UNLOCK_STATE = state
+            if state then
+                if not RE_PlaceCavernTotemItem then
+                     RE_PlaceCavernTotemItem = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net:FindFirstChild("RE/PlaceCavernTotemItem")
+                end
+                
+                if not IsGateLocked() then
+                     WindUI:Notify({ Title = "Info", Content = "Gate sudah terbuka.", Duration = 3 })
+                     return false
+                end
+
+                RunDiscoLoop()
+                WindUI:Notify({ Title = "Disco Brute Force", Content = "Legit Farming + Spam Remote Started.", Duration = 3, Icon = "music" })
+            else
+                -- Matikan semua thread dan helper
+                if DISCO_UNLOCK_THREAD then task.cancel(DISCO_UNLOCK_THREAD) end
+                if DISCO_SPAM_THREAD then task.cancel(DISCO_SPAM_THREAD) end
+                if DISCO_EQUIP_THREAD then task.cancel(DISCO_EQUIP_THREAD) end
+                SetDiscoLegitState(false) -- PENTING: Matikan state klik
+                
+                if RF_UpdateAutoFishingState then RF_UpdateAutoFishingState:InvokeServer(false) end
+                WindUI:Notify({ Title = "Stopped", Duration = 2 })
+            end
+        end
+    })
+    
+
+    -- [LOGIKA BARU] AUTO JOIN DISCO + STATUS UI
+    local autoJoinDiscoState = false
+    local autoJoinDiscoThread = nil
+    local lastPositionBeforeDisco = nil
+    
+    -- Tambahkan Paragraph Status Baru
+    local DISCO_EVENT_STATUS_PARAGRAPH = disco:Paragraph({
+        Title = "Disco Event Status: OFF",
+        Content = "Aktifkan toggle untuk memantau status event...",
+        Icon = "activity"
+    })
+    
+    local function IsDiscoOpen()
+        -- Cek Model Locked di path yang kamu berikan
+        local lockedPath = workspace:FindFirstChild("ClassicEvent") 
+            and workspace.ClassicEvent:FindFirstChild("DiscoEvent") 
+            and workspace.ClassicEvent.DiscoEvent:FindFirstChild("Locked")
+            
+        if lockedPath then
+            -- Menggunakan GetPivot() agar kompatibel jika itu Model atau BasePart
+            local pivot = lockedPath:GetPivot()
+            
+            -- Data kamu:
+            -- Locked Open (Turun): Y = -642.64
+            -- Locked Closed (Naik): Y = -556.89
+            -- Kita pakai threshold -600. Jika Y lebih KECIL dari -600 (lebih dalam), berarti OPEN.
+            
+            if pivot.Position.Y < -600 then
+                return true -- OPEN / ACTIVE
+            else
+                return false -- CLOSED / INACTIVE
+            end
+        end
+        return false -- Default closed if not found
+    end
+
+    local function RunAutoJoinDiscoLoop()
+        if autoJoinDiscoThread then task.cancel(autoJoinDiscoThread) end
+        
+        autoJoinDiscoThread = task.spawn(function()
+            local isAtDisco = false
+            
+            -- Update status awal
+            DISCO_EVENT_STATUS_PARAGRAPH:SetTitle("Disco Event Status: MONITORING...")
+            
+            while autoJoinDiscoState do
+                local isOpen = IsDiscoOpen()
+                
+                -- UPDATE STATUS PANEL (REAL-TIME)
+                if isOpen then
+                    DISCO_EVENT_STATUS_PARAGRAPH:SetTitle("Disco Event: OPEN 🕺")
+                    DISCO_EVENT_STATUS_PARAGRAPH:SetDesc("Kolam disco terbuka! (Event Aktif)")
+                else
+                    DISCO_EVENT_STATUS_PARAGRAPH:SetTitle("Disco Event: CLOSED 💤")
+                    DISCO_EVENT_STATUS_PARAGRAPH:SetDesc("Event belum dimulai / sudah berakhir.")
+                end
+                
+                -- LOGIKA TELEPORT
+                if isOpen and not isAtDisco then
+                    -- Event Buka: Simpan posisi & Teleport
+                    local hrp = GetHRP()
+                    if hrp then
+                        lastPositionBeforeDisco = {Pos = hrp.Position, Look = hrp.CFrame.LookVector}
+                    end
+                    
+                    TeleportToLookAt(DISCO_EVENT_POS, DISCO_EVENT_LOOK)
+                    isAtDisco = true
+                    WindUI:Notify({ Title = "Disco Open!", Content = "Teleporting to Disco Event...", Duration = 4, Icon = "music" })
+                    
+                elseif not isOpen and isAtDisco then
+                    -- Event Tutup: Balik ke posisi awal
+                    if lastPositionBeforeDisco then
+                        TeleportToLookAt(lastPositionBeforeDisco.Pos, lastPositionBeforeDisco.Look)
+                        lastPositionBeforeDisco = nil
+                        WindUI:Notify({ Title = "Disco Selesai", Content = "Kembali ke posisi semula.", Duration = 4, Icon = "repeat" })
+                    end
+                    isAtDisco = false
+                end
+                
+                task.wait(1) -- Cek setiap 1 detik
+            end
+        end)
+    end
+
+    -- TOGGLE AUTO JOIN DISCO (Updated)
+    local joindisco = Reg("joindisc",disco:Toggle({
+        Title = "Auto Join Disco Event",
+        Desc = "Otomatis TP saat event aktif dan kembali ke tempat awal saat event berakhir",
+        Value = false,
+        Callback = function(state)
+            autoJoinDiscoState = state
+            if state then
+                WindUI:Notify({ Title = "Auto Join Disco ON", Content = "Memantau status Disco Gate...", Duration = 3, Icon = "check" })
+                RunAutoJoinDiscoLoop()
+            else
+                if autoJoinDiscoThread then task.cancel(autoJoinDiscoThread) end
+                
+                -- Reset Status Panel saat dimatikan
+                DISCO_EVENT_STATUS_PARAGRAPH:SetTitle("Disco Event Status: OFF")
+                DISCO_EVENT_STATUS_PARAGRAPH:SetDesc("Aktifkan toggle untuk memantau status event...")
+                
+                WindUI:Notify({ Title = "Auto Join Disco OFF", Duration = 3, Icon = "x" })
+            end
+        end
+    }))
+
+    local bdisco = disco:Button({
+        Title = "Teleport to Disco Event",
+        Icon = "map-pin",
+        Callback = function()
+            TeleportToLookAt(DISCO_EVENT_POS, DISCO_EVENT_LOOK)
+        end
+    })
+
+Event:Divider()
+
+    -- =================================================================
+    -- 🎁 AUTO CLAIM CLASSIC REWARDS (1-15)
+    -- =================================================================
+    
+    local autoClaimClassicState = false
+    local autoClaimClassicThread = nil
+    
+    -- Definisi Remote Claim
+    local RE_ClaimEventReward = nil
+    pcall(function()
+        RE_ClaimEventReward = game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages", 10)
+            :WaitForChild("_Index", 10)
+            :WaitForChild("sleitnick_net@0.2.0", 10)
+            :WaitForChild("net", 10)
+            :WaitForChild("RE/ClaimEventReward", 10)
+    end)
+    local sectionclassic = Event:Section({
+        Title = "Classic Event Rewards",
+        TextSize = 20,
+    })
+    local tclassic = sectionclassic:Toggle({
+        Title = "Auto Claim Classic Event Rewards",
+        Value = false,
+        Icon = "gift",
+        Callback = function(state)
+            autoClaimClassicState = state
+            
+            if state then
+                -- Cek remote dulu
+                if not RE_ClaimEventReward then
+                    RE_ClaimEventReward = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net:FindFirstChild("RE/ClaimEventReward")
+                end
+                
+                if not RE_ClaimEventReward then
+                    WindUI:Notify({ Title = "Error", Content = "Remote Claim Reward tidak ditemukan.", Duration = 3, Icon = "x" })
+                    return false
+                end
+
+                WindUI:Notify({ Title = "Auto Claim ON", Duration = 3, Icon = "gift" })
+
+                if autoClaimClassicThread then task.cancel(autoClaimClassicThread) end
+                
+                autoClaimClassicThread = task.spawn(function()
+                    while autoClaimClassicState do
+                        -- Loop 1 sampai 15
+                        for i = 1, 15 do
+                            if not autoClaimClassicState then break end
+                            
+                            pcall(function()
+                                RE_ClaimEventReward:FireServer(i)
+                            end)
+                            
+                            -- Jeda sangat singkat antar claim biar aman
+                            task.wait(0.1) 
+                        end
+                        
+                        -- Ulangi cek setiap 10 detik (jaga-jaga baru naik level)
                         task.wait(60)
                     end
                 end)
-            end
-        end
-    })
-    v1069:AddToggle({
-        Title = "Hide Rod On Hand",
-        Content = "This feature irivisible! and hide other player too.",
-        Default = false,
-        Callback = function(p1129)
-            vu7.IrRod = p1129
-            if p1129 then
-                task.spawn(function()
-                    while vu7.IrRod do
-                        local v1130, v1131, v1132 = ipairs(workspace.Characters:GetChildren())
-                        while true do
-                            local v1133
-                            v1132, v1133 = v1130(v1131, v1132)
-                            if v1132 == nil then
-                                break
-                            end
-                            local v1134 = v1133:FindFirstChild("!!!EQUIPPED_TOOL!!!")
-                            if v1134 then
-                                v1134:Destroy()
-                            end
-                        end
-                        task.wait(1)
-                    end
-                end)
-            end
-        end
-    })
-    _G.WebhookFlags = {
-        FishCaught = {
-            Enabled = false,
-            URL = "https://discord.com/api/webhooks/1432777124607164418/0aGoA5XSsDCpO82T0bR8UYt1vFDv74qXst6AJQLcl-RSN-ujAp4GmIV7QIzrM3yfoGVV"
-        },
-        Stats = {
-            Enabled = false,
-            URL = "",
-            Delay = 5
-        },
-        Disconnect = {
-            Enabled = false,
-            URL = "https://discord.com/api/webhooks/1428340333510398013/1L4UNrQmJXLgiNjO8PvZVc2TSxX60Xvg8BFpGyz8VANNL95DRfwKBPzyx9-mgZYLKw6_"
-        }
-    }
-    _G.WebhookURLs = _G.WebhookURLs or {}
-    local vu1135 = {}
-    function buildFishDatabase()
-        local v1136 = vu6.Items
-        if v1136 then
-            local v1137, v1138, v1139 = ipairs(v1136:GetChildren())
-            while true do
-                local v1140
-                v1139, v1140 = v1137(v1138, v1139)
-                if v1139 == nil then
-                    break
-                end
-                local v1141, v1142 = pcall(require, v1140)
-                if v1141 and (type(v1142) == "table" and (v1142.Data and v1142.Data.Type == "Fish")) then
-                    local v1143 = v1142.Data
-                    if v1143.Id and v1143.Name then
-                        vu1135[v1143.Id] = {
-                            Name = v1143.Name,
-                            Tier = v1143.Tier,
-                            Icon = v1143.Icon,
-                            SellPrice = v1142.SellPrice
-                        }
-                    end
-                end
-            end
-        end
-    end
-    function getThumbnailURL(p1144)
-        local v1145 = p1144:match("rbxassetid://(%d+)")
-        if not v1145 then
-            return nil
-        end
-        local vu1146 = string.format("https://thumbnails.roblox.com/v1/assets?assetIds=%s&type=Asset&size=420x420&format=Png", v1145)
-        local v1147, v1148 = pcall(function()
-            return vu1.HttpService:JSONDecode(game:HttpGet(vu1146))
-        end)
-        local v1149 = v1147 and (v1148 and (v1148.data and v1148.data[1]))
-        if v1149 then
-            v1149 = v1148.data[1].imageUrl
-        end
-        return v1149
-    end
-    function sendWebhook(pu1150, pu1151)
-        if _G.httpRequest and (pu1150 and pu1150 ~= "") then
-            if not (_G._WebhookLock and _G._WebhookLock[pu1150]) then
-                _G._WebhookLock = _G._WebhookLock or {}
-                _G._WebhookLock[pu1150] = true
-                task.delay(0.25, function()
-                    _G._WebhookLock[pu1150] = nil
-                end)
-                pcall(function()
-                    local v1152 = _G.httpRequest
-                    local v1153 = {
-                        Url = pu1150,
-                        Method = "POST",
-                        Headers = {
-                            ["Content-Type"] = "application/json"
-                        },
-                        Body = vu1.HttpService:JSONEncode(pu1151)
-                    }
-                    v1152(v1153)
-                end)
-            end
-        else
-            return
-        end
-    end
-    function sendNewFishWebhook(p1154)
-        if _G.WebhookFlags.FishCaught.Enabled then
-            local v1155 = _G.WebhookFlags.FishCaught.URL
-            if v1155 and v1155:match("discord.com/api/webhooks") then
-                local v1156 = vu1135[p1154.Id]
-                if v1156 then
-                    local v1157 = _G.TierFish and (_G.TierFish[v1156.Tier] or "Unknown") or "Unknown"
-                    if _G.WebhookRarities and (# _G.WebhookRarities > 0 and not table.find(_G.WebhookRarities, v1157)) then
-                        return
-                    elseif not _G.WebhookNames or (# _G.WebhookNames <= 0 or table.find(_G.WebhookNames, v1156.Name)) then
-                        local v1158 = p1154.Metadata and p1154.Metadata.Weight and (string.format("%.2f Kg", p1154.Metadata.Weight) or "N/A") or "N/A"
-                        local v1159 = p1154.Metadata and (p1154.Metadata.VariantId and tostring(p1154.Metadata.VariantId)) or "None"
-                        local v1160 = v1156.SellPrice and ("$" .. string.format("%d", v1156.SellPrice):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "") or "N/A") or "N/A"
-                        local v1161 = {
-                            content = DISCORD_ID2,
-                            embeds = {
-                                {
-                                    title = "Chloe X Webhook | Fish Caught",
-                                    url = "https://discord.gg/PaPvGUE8UC",
-                                    description = string.format("Congratulations!! **%s** You have obtained a new **%s** fish!", _G.WebhookCustomName ~= "" and _G.WebhookCustomName or game.Players.LocalPlayer.Name, v1157),
-                                    color = 52221,
-                                    fields = {
-                                        {
-                                            name = "\227\128\162Fish Name :",
-                                            value = "```\226\157\175 " .. v1156.Name .. "```"
-                                        },
-                                        {
-                                            name = "\227\128\162Fish Tier :",
-                                            value = "```\226\157\175 " .. v1157 .. "```"
-                                        },
-                                        {
-                                            name = "\227\128\162Weight :",
-                                            value = "```\226\157\175 " .. v1158 .. "```"
-                                        },
-                                        {
-                                            name = "\227\128\162Mutation :",
-                                            value = "```\226\157\175 " .. v1159 .. "```"
-                                        },
-                                        {
-                                            name = "\227\128\162Sell Price :",
-                                            value = "```\226\157\175 " .. v1160 .. "```"
-                                        }
-                                    },
-                                    image = {
-                                        url = getThumbnailURL(v1156.Icon) or "https://i.imgur.com/WltO8IG.png"
-                                    },
-                                    footer = {
-                                        text = "Chloe X Webhook",
-                                        icon_url = "https://i.imgur.com/WltO8IG.png"
-                                    },
-                                    timestamp = os.date("!%Y-%m-%dT%H:%M:%S.000Z")
-                                }
-                            },
-                            username = "Chloe X Notification!",
-                            avatar_url = "https://i.imgur.com/9afHGRy.jpeg"
-                        }
-                        sendWebhook(v1155, v1161)
-                    end
-                else
-                    return
-                end
             else
+                if autoClaimClassicThread then task.cancel(autoClaimClassicThread) autoClaimClassicThread = nil end
+                WindUI:Notify({ Title = "Auto Claim OFF", Duration = 2, Icon = "x" })
+            end
+        end
+    })
+end
+
+GetRuinDoorStatus()
+
+do
+local utility = Window:Tab({
+    Title = "Tools",
+    Icon = "box",
+    Locked = false,
+})
+
+-- =================================================================
+-- 🐟 FUNGSI SCAN BACKPACK
+-- =================================================================
+local backpack = utility:Section({ Title = "Backpack Scanner", TextSize = 20, })
+local FishScanDisplay = backpack:Paragraph({
+    Title = "Status: Scan untuk melihat detail item...",
+    Desc = "Klik tombol 'Scan Backpack' untuk mendapatkan daftar ikan di inventaris Anda.",
+    Icon = "clipboard-list"
+})
+
+local function RunBackpackScan()
+    local fishData = {}
+    local totalCount = 0
+
+    local replion = GetPlayerDataReplion()
+    if not replion or not ItemUtility or not TierUtility then
+        FishScanDisplay:SetTitle("Scan Gagal: Data Utility/Replion Missing.")
+        FishScanDisplay:SetDesc("Pastikan ItemUtility & TierUtility sudah di-require & Replion aktif.")
+        return
+    end
+
+    local success, inventoryData = pcall(function() return replion:GetExpect("Inventory") end)
+
+    if not success or not inventoryData or not inventoryData.Items then
+        FishScanDisplay:SetTitle("Scan Gagal: Gagal membaca Inventory.")
+        return
+    end
+
+    -- Mengumpulkan data ikan
+    for _, item in ipairs(inventoryData.Items) do
+        if item.Metadata and item.Metadata.Weight then
+            local name, rarity = GetFishNameAndRarity(item)
+            
+            local mutation = GetItemMutationString(item)
+            local count = item.Count or 1
+            local favoriteStatus = (item.IsFavorite or item.Favorited) and "⭐" or " "
+            
+            local key = name .. rarity .. mutation
+            
+            if not fishData[key] then
+                fishData[key] = { Count = 0, Rarity = rarity, Mutation = mutation, Favorite = favoriteStatus, Name = name }
+            end
+
+            fishData[key].Count = fishData[key].Count + count
+            totalCount = totalCount + count
+        end
+    end
+
+    -- Memformat hasil ke dalam string display
+    local details = {"\n**--- FISH DETAILS (" .. totalCount .. " items) ---**"}
+    
+    local sortedFish = {}
+    for _, data in pairs(fishData) do table.insert(sortedFish, data) end
+    
+    local rarityOrder = { ["COMMON"] = 1, ["UNCOMMON"] = 2, ["RARE"] = 3, ["EPIC"] = 4, ["LEGENDARY"] = 5, ["MYTHIC"] = 6, ["SECRET"] = 7, ["TROPHY"] = 8, ["COLLECTIBLE"] = 9, ["DEV"] = 10 }
+    table.sort(sortedFish, function(a, b)
+        local orderA = rarityOrder[a.Rarity:upper()] or 0
+        local orderB = rarityOrder[b.Rarity:upper()] or 0
+        return orderA > orderB
+    end)
+    
+    for _, item in ipairs(sortedFish) do
+        local mutationString = item.Mutation ~= "" and string.format(" [%s]", item.Mutation) or ""
+        
+        table.insert(details, string.format("%s %s%s (%s) x%d",
+            item.Favorite, item.Name, mutationString, item.Rarity, item.Count
+        ))
+    end
+    
+    FishScanDisplay:SetTitle(string.format("Scan Selesai! Total Ikan: %d", totalCount))
+    FishScanDisplay:SetDesc(table.concat(details, "\n"))
+    
+    WindUI:Notify({ Title = "Backpack Scanned!", Content = "Lihat detail di UI.", Duration = 3, Icon = "package" })
+end
+
+local scanow = backpack:Button({ Title = "Scan Backpack Now", Icon = "search", Callback = RunBackpackScan })
+
+
+utility:Divider()
+
+local misc = utility:Section({ Title = "Misc. Area", TextSize = 20})
+
+local RF_UpdateFishingRadar = GetRemote(RPath, "RF/UpdateFishingRadar")
+
+local tfishradar = misc:Toggle({
+    Title = "Enable Fishing Radar",
+    Desc = "ON/OFF Fishing Radar",
+    Value = false,
+    Icon = "compass",
+    Callback = function(state)
+        if not RF_UpdateFishingRadar then
+            WindUI:Notify({ Title = "Error", Content = "Remote 'RF/UpdateFishingRadar' tidak ditemukan.", Duration = 3, Icon = "x" })
+            return false
+        end
+
+        pcall(function()
+            RF_UpdateFishingRadar:InvokeServer(state)
+        end)
+
+        if state then
+            WindUI:Notify({ Title = "Fishing Radar ON", Content = "Fishing Radar diaktifkan.", Duration = 3, Icon = "check" })
+        else
+            WindUI:Notify({ Title = "Fishing Radar OFF", Content = "Fishing Radar dinonaktifkan.", Duration = 3, Icon = "x" })
+        end
+    end
+})
+
+-- 💧 FUNGSI BARU: EQUIP OXYGEN TANK
+local RF_EquipOxygenTank = GetRemote(RPath, "RF/EquipOxygenTank")
+local RF_UnequipOxygenTank = GetRemote(RPath, "RF/UnequipOxygenTank")
+
+local ttank = Reg("infox", misc:Toggle({
+    Title = "Equip Oxigen Tank",
+    Desc = "infinite oxygen",
+    Value = false,
+    Icon = "life-buoy",
+    Callback = function(state)
+        if state then
+            if not RF_EquipOxygenTank then
+                WindUI:Notify({ Title = "Error", Duration = 3, Icon = "x" })
+                return false
+            end
+            
+            pcall(function()
+                RF_EquipOxygenTank:InvokeServer(105) -- ID 105 untuk Oxygen Tank
+            end)
+            WindUI:Notify({ Title = "Oxygen Tank Equipped", Duration = 3, Icon = "check" })
+        else
+            if not RF_UnequipOxygenTank then
+                WindUI:Notify({ Title = "Error", Duration = 3, Icon = "x" })
+                return true -- Tetap kembalikan true agar toggle tidak stuck
+            end
+            
+            pcall(function()
+                RF_UnequipOxygenTank:InvokeServer()
+            end)
+            WindUI:Notify({ Title = "Oxygen Tank Unequipped", Content = "Oxygen Tank dilepas.", Duration = 3, Icon = "x" })
+        end
+    end
+}))
+
+local REObtainedNewFishNotification = GetRemote(RPath, "RE/ObtainedNewFishNotification")
+local RunService = game:GetService("RunService")
+
+local notif = Reg("togglenot",misc:Toggle({
+    Title = "Remove Fish Notification Pop-up",
+    Value = false,
+    Icon = "slash",
+    Callback = function(state)
+        local PlayerGui = game:GetService("Players").LocalPlayer.PlayerGui
+        local SmallNotification = PlayerGui:FindFirstChild("Small Notification")
+        
+        if not SmallNotification then
+            SmallNotification = PlayerGui:WaitForChild("Small Notification", 5)
+            if not SmallNotification then
+                WindUI:Notify({ Title = "Error", Duration = 3, Icon = "x" })
+                return false
+            end
+        end
+
+        if state then
+            -- ON: Menggunakan RenderStepped untuk pemblokiran per-frame
+            DisableNotificationConnection = RunService.RenderStepped:Connect(function()
+                -- Memastikan GUI selalu mati pada setiap frame render
+                SmallNotification.Enabled = false
+            end)
+            
+            WindUI:Notify({ Title = "Pop-up Diblokir",Duration = 3, Icon = "check" })
+        else
+            -- OFF: Putuskan koneksi RenderStepped
+            if DisableNotificationConnection then
+                DisableNotificationConnection:Disconnect()
+                DisableNotificationConnection = nil
+            end
+
+            -- Kembalikan GUI ke status normal (aktif)
+            SmallNotification.Enabled = true
+            
+            WindUI:Notify({ Title = "Pop-up Diaktifkan", Content = "Notifikasi kembali normal.", Duration = 3, Icon = "x" })
+        end
+    end
+}))
+
+
+local isNoAnimationActive = false
+local originalAnimator = nil
+local originalAnimateScript = nil
+
+local function DisableAnimations()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    
+    if not humanoid then return end
+
+    -- 1. Blokir script 'Animate' bawaan (yang memuat default anim)
+    local animateScript = character:FindFirstChild("Animate")
+    if animateScript and animateScript:IsA("LocalScript") and animateScript.Enabled then
+        originalAnimateScript = animateScript.Enabled
+        animateScript.Enabled = false
+    end
+
+    -- 2. Hapus Animator (menghalangi semua animasi dimainkan/dimuat)
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    if animator then
+        -- Simpan referensi objek Animator aslinya
+        originalAnimator = animator 
+        animator:Destroy()
+    end
+end
+
+local function EnableAnimations()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    
+    -- 1. Restore script 'Animate'
+    local animateScript = character:FindFirstChild("Animate")
+    if animateScript and originalAnimateScript ~= nil then
+        animateScript.Enabled = originalAnimateScript
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    -- 2. Restore/Tambahkan Animator
+    local existingAnimator = humanoid:FindFirstChildOfClass("Animator")
+    if not existingAnimator then
+        -- Jika Animator tidak ada, dan kita memiliki objek aslinya, restore
+        if originalAnimator and not originalAnimator.Parent then
+            originalAnimator.Parent = humanoid
+        else
+            -- Jika objek asli hilang, buat yang baru
+            Instance.new("Animator").Parent = humanoid
+        end
+    end
+    originalAnimator = nil -- Bersihkan referensi lama
+end
+
+local function OnCharacterAdded(newCharacter)
+    if isNoAnimationActive then
+        task.wait(0.2) -- Tunggu sebentar agar LoadCharacter selesai
+        DisableAnimations()
+    end
+end
+
+-- Hubungkan ke CharacterAdded agar tetap berfungsi saat respawn
+LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+
+local anim = Reg("Toggleanim",misc:Toggle({
+    Title = "No Animation",
+    Value = false,
+    Icon = "skull",
+    Callback = function(state)
+        isNoAnimationActive = state
+        if state then
+            DisableAnimations()
+            WindUI:Notify({ Title = "No Animation ON!", Duration = 3, Icon = "zap" })
+        else
+            EnableAnimations()
+            WindUI:Notify({ Title = "No Animation OFF!", Duration = 3, Icon = "x" })
+        end
+    end
+}))
+
+-- Tambahkan di bagian atas blok 'utility'
+local VFXControllerModule = require(game:GetService("ReplicatedStorage"):WaitForChild("Controllers").VFXController)
+local originalVFXHandle = VFXControllerModule.Handle
+local originalPlayVFX = VFXControllerModule.PlayVFX.Fire -- Asumsi PlayVFX adalah Signal/Event yang memiliki Fire
+
+-- Variabel global untuk status VFX
+local isVFXDisabled = false
+
+
+local tskin = Reg("toggleskin",misc:Toggle({
+    Title = "Remove Skin Effect",
+    Value = false,
+    Icon = "slash",
+    Callback = function(state)
+        isVFXDisabled = state
+
+        if state then
+            -- 1. Blokir fungsi Handle (dipanggil oleh Handle Remote dan PlayVFX Signal)
+            VFXControllerModule.Handle = function(...) 
+                -- Memastikan tidak ada kode efek yang berjalan 
+            end
+
+            -- 2. Blokir fungsi RenderAtPoint dan RenderInstance (untuk jaga-jaga)
+            VFXControllerModule.RenderAtPoint = function(...) end
+            VFXControllerModule.RenderInstance = function(...) end
+            
+            -- 3. Hapus semua efek yang sedang aktif (opsional, untuk membersihkan layar)
+            local cosmeticFolder = workspace:FindFirstChild("CosmeticFolder")
+            if cosmeticFolder then
+                pcall(function() cosmeticFolder:ClearAllChildren() end)
+            end
+
+            WindUI:Notify({ Title = "No Skin Effect ON", Duration = 3, Icon = "eye-off" })
+        else
+            -- 1. Kembalikan fungsi Handle asli
+            VFXControllerModule.Handle = originalVFXHandle
+        end
+    end
+}))
+
+local CutsceneController = nil
+    local OldPlayCutscene = nil
+    local isNoCutsceneActive = false
+
+    -- Mencoba require module CutsceneController dengan aman
+    pcall(function()
+        CutsceneController = require(game:GetService("ReplicatedStorage"):WaitForChild("Controllers"):WaitForChild("CutsceneController"))
+        if CutsceneController and CutsceneController.Play then
+            OldPlayCutscene = CutsceneController.Play
+            
+            -- Overwrite fungsi Play
+            CutsceneController.Play = function(self, ...)
+                if isNoCutsceneActive then
+                    -- Jika aktif, jangan jalankan apa-apa (Skip Cutscene)
+                    return 
+                end
+                -- Jika tidak aktif, jalankan fungsi asli
+                return OldPlayCutscene(self, ...)
+            end
+        end
+    end)
+
+    local tcutscen = Reg("tnocut",misc:Toggle({
+        Title = "No Cutscene",
+        Value = false,
+        Icon = "film", -- Icon film strip
+        Callback = function(state)
+            isNoCutsceneActive = state
+            
+            if not CutsceneController then
+                WindUI:Notify({ Title = "Gagal Hook", Content = "Module CutsceneController tidak ditemukan.", Duration = 3, Icon = "x" })
                 return
             end
-        else
-            return
+
+            if state then
+                WindUI:Notify({ Title = "No Cutscene ON", Content = "Animasi tangkapan dimatikan.", Duration = 3, Icon = "video-off" })
+            else
+                WindUI:Notify({ Title = "No Cutscene OFF", Content = "Animasi kembali normal.", Duration = 3, Icon = "video" })
+            end
         end
-    end
-    buildFishDatabase()
-    local v1162, v1163, v1164 = pairs(vu1135)
-    local v1165 = {}
-    while true do
-        local v1166
-        v1164, v1166 = v1162(v1163, v1164)
-        if v1164 == nil then
-            break
+    }))
+
+    local defaultMaxZoom = LocalPlayer.CameraMaxZoomDistance or 128
+    local zoomLoopConnection = nil
+
+    local tzoom = Reg("infzoom",misc:Toggle({
+        Title = "Infinite Zoom Out",
+        Value = false,
+        Icon = "maximize",
+        Callback = function(state)
+            if state then
+                -- 1. Simpan nilai asli dulu buat jaga-jaga
+                defaultMaxZoom = LocalPlayer.CameraMaxZoomDistance
+                
+                -- 2. Paksa nilai zoom jadi besar
+                LocalPlayer.CameraMaxZoomDistance = 100000
+                
+                -- 3. Pasang loop (RenderStepped) untuk memaksa nilai tetap besar
+                -- Ini berguna kalau game mencoba mengembalikan zoom ke normal
+                if zoomLoopConnection then zoomLoopConnection:Disconnect() end
+                zoomLoopConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                    LocalPlayer.CameraMaxZoomDistance = 100000
+                end)
+                
+                WindUI:Notify({ Title = "Zoom Unlocked", Content = "Sekarang bisa zoom out sejauh mungkin.", Duration = 3, Icon = "maximize" })
+            else
+                -- 1. Matikan loop pemaksa
+                if zoomLoopConnection then 
+                    zoomLoopConnection:Disconnect() 
+                    zoomLoopConnection = nil
+                end
+                
+                -- 2. Kembalikan ke nilai asli
+                LocalPlayer.CameraMaxZoomDistance = defaultMaxZoom
+                
+                WindUI:Notify({ Title = "Zoom Normal", Content = "Limit zoom dikembalikan.", Duration = 3, Icon = "minimize" })
+            end
         end
-        table.insert(v1165, v1166.Name)
+    }))
+
+    local t3d = Reg("t3drend",misc:Toggle({
+        Title = "Disable 3D Rendering",
+        Value = false,
+        Callback = function(state)
+            local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+            local Camera = workspace.CurrentCamera
+            local LocalPlayer = game.Players.LocalPlayer
+            
+            if state then
+                -- 1. Buat GUI Hitam di PlayerGui (Bukan CoreGui)
+                if not _G.BlackScreenGUI then
+                    _G.BlackScreenGUI = Instance.new("ScreenGui")
+                    _G.BlackScreenGUI.Name = "CatrazHub_BlackBackground"
+                    _G.BlackScreenGUI.IgnoreGuiInset = true
+                    -- [-999] = Taruh di paling belakang (di bawah UI Game), tapi nutupin world 3D
+                    _G.BlackScreenGUI.DisplayOrder = -999 
+                    _G.BlackScreenGUI.Parent = PlayerGui
+                    
+                    local Frame = Instance.new("Frame")
+                    Frame.Size = UDim2.new(1, 0, 1, 0)
+                    Frame.BackgroundColor3 = Color3.new(0, 0, 0) -- Hitam Pekat
+                    Frame.BorderSizePixel = 0
+                    Frame.Parent = _G.BlackScreenGUI
+                    
+                    local Label = Instance.new("TextLabel")
+                    Label.Size = UDim2.new(1, 0, 0.1, 0)
+                    Label.Position = UDim2.new(0, 0, 0.1, 0) -- Taruh agak atas biar ga ganggu inventory
+                    Label.BackgroundTransparency = 1
+                    Label.Text = "Saver Mode Active"
+                    Label.TextColor3 = Color3.fromRGB(60, 60, 60) -- Abu gelap sekali biar ga ganggu
+                    Label.TextSize = 16
+                    Label.Font = Enum.Font.GothamBold
+                    Label.Parent = Frame
+                end
+                
+                _G.BlackScreenGUI.Enabled = true
+
+                -- 2. SIMPAN POSISI KAMERA ASLI
+                _G.OldCamType = Camera.CameraType
+
+                -- 3. PINDAHKAN KAMERA KE VOID
+                Camera.CameraType = Enum.CameraType.Scriptable
+                Camera.CFrame = CFrame.new(0, 100000, 0) 
+                
+                WindUI:Notify({
+                    Title = "Saver Mode ON",
+                    Duration = 3,
+                    Icon = "battery-charging",
+                })
+            else
+                -- 1. KEMBALIKAN TIPE KAMERA
+                if _G.OldCamType then
+                    Camera.CameraType = _G.OldCamType
+                else
+                    Camera.CameraType = Enum.CameraType.Custom
+                end
+                
+                -- 2. KEMBALIKAN FOKUS KE KARAKTER
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    Camera.CameraSubject = LocalPlayer.Character.Humanoid
+                end
+
+                -- 3. MATIKAN LAYAR HITAM
+                if _G.BlackScreenGUI then
+                    _G.BlackScreenGUI.Enabled = false
+                end
+                
+                WindUI:Notify({
+                    Title = "Saver Mode OFF",
+                    Content = "Visual kembali normal.",
+                    Duration = 3,
+                    Icon = "eye",
+                })
+            end
+        end
+    }))
+
+    -- 2. FPS Ultra Boost (fungsi helper)
+    -- Tambahkan/Ganti di dekat helper global Anda
+local isBoostActive = false
+local originalLightingValues = {}
+
+local function ToggleFPSBoost(enabled)
+    isBoostActive = enabled
+    local Lighting = game:GetService("Lighting")
+    local Terrain = workspace:FindFirstChildOfClass("Terrain")
+
+    if enabled then
+        -- Simpan nilai asli sekali saja
+        if not next(originalLightingValues) then
+            originalLightingValues.GlobalShadows = Lighting.GlobalShadows
+            originalLightingValues.FogEnd = Lighting.FogEnd
+            originalLightingValues.Brightness = Lighting.Brightness
+            originalLightingValues.ClockTime = Lighting.ClockTime
+            originalLightingValues.Ambient = Lighting.Ambient
+            originalLightingValues.OutdoorAmbient = Lighting.OutdoorAmbient
+        end
+        
+        -- 1. VISUAL & EFEK (Hanya mematikan)
+        pcall(function()
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Explosion") then
+                    v.Enabled = false
+                elseif v:IsA("Beam") or v:IsA("Light") then
+                    v.Enabled = false
+                elseif v:IsA("Decal") or v:IsA("Texture") then
+                    v.Transparency = 1 
+                end
+            end
+        end)
+        
+        -- 2. LIGHTING & ENVIRONMENT (Pengaturan Minimalis)
+        pcall(function()
+            for _, effect in pairs(Lighting:GetChildren()) do
+                if effect:IsA("PostEffect") then effect.Enabled = false end
+            end
+            Lighting.GlobalShadows = false
+            Lighting.FogEnd = 9e9
+            Lighting.Brightness = 0 -- Lebih gelap/kontras untuk efisiensi
+            Lighting.ClockTime = 14 -- Siang tanpa bayangan
+            Lighting.Ambient = Color3.new(0, 0, 0)
+            Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+        end)
+        
+        -- 3. TERRAIN & WATER
+        if Terrain then
+            pcall(function()
+                Terrain.WaterWaveSize = 0
+                Terrain.WaterWaveSpeed = 0
+                Terrain.WaterReflectance = 0
+                Terrain.WaterTransparency = 1
+                Terrain.Decoration = false
+            end)
+        end
+        
+        -- 4. QUALITY & EXPLOIT TRICKS
+        pcall(function()
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
+            settings().Rendering.TextureQuality = Enum.TextureQuality.Low
+        end)
+
+        if type(setfpscap) == "function" then pcall(function() setfpscap(100) end) end 
+        if type(collectgarbage) == "function" then collectgarbage("collect") end
+
+        WindUI:Notify({ Title = "FPS Boost", Content = "Maximum FPS mode enabled (Minimal Graphics).", Duration = 3, Icon = "zap" })
+    else
+        -- RESET
+        pcall(function()
+            if originalLightingValues.GlobalShadows ~= nil then
+                Lighting.GlobalShadows = originalLightingValues.GlobalShadows
+                Lighting.FogEnd = originalLightingValues.FogEnd
+                Lighting.Brightness = originalLightingValues.Brightness
+                Lighting.ClockTime = originalLightingValues.ClockTime
+                Lighting.Ambient = originalLightingValues.Ambient
+                Lighting.OutdoorAmbient = originalLightingValues.OutdoorAmbient
+            end
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+            
+            for _, effect in pairs(Lighting:GetChildren()) do
+                if effect:IsA("PostEffect") then effect.Enabled = true end
+            end
+        end)
+        
+        if type(setfpscap) == "function" then pcall(function() setfpscap(60) end) end
+        
+        WindUI:Notify({ Title = "FPS Boost", Content = "Graphics reset to default/automatic. Rejoin recommended.", Duration = 3, Icon = "rotate-ccw" })
     end
-    table.sort(v1165)
-    task.spawn(function()
-        repeat
-            REObtainedNewFishNotification = vu4.Net["RE/ObtainedNewFishNotification"]
-            task.wait(1)
-        until REObtainedNewFishNotification
-        if not _G.FishWebhookConnected then
-            _G.FishWebhookConnected = true
-            REObtainedNewFishNotification.OnClientEvent:Connect(function(p1167, p1168)
-                if vu7.autoWebhook then
-                    local v1169 = {
-                        Id = p1167
-                    }
-                    local v1170 = {}
-                    local v1171
-                    if p1168 then
-                        v1171 = p1168.Weight
+end
+
+    local tfps = Reg("togfps",misc:Toggle({
+        Title = "FPS Ultra Boost",
+        Value = false,
+        Callback = function(state)
+            ToggleFPSBoost(state)
+        end
+    }))
+
+utility:Divider()
+
+-- =================================================================
+    -- 🌐 SERVER MANAGEMENT (REJOIN & HOP)
+    -- =================================================================
+    local serverm = utility:Section({ Title = "Server Management", TextSize = 20})
+
+    local TeleportService = game:GetService("TeleportService")
+    local HttpService = game:GetService("HttpService")
+    local Players = game:GetService("Players")
+
+    -- 1. REJOIN SERVER
+    local brejoin = serverm:Button({
+        Title = "Rejoin Server",
+        Desc = "Masuk ulang ke server ini (Refresh game).",
+        Icon = "rotate-cw",
+        Callback = function()
+            WindUI:Notify({ Title = "Rejoining...", Content = "Tunggu sebentar...", Duration = 3, Icon = "loader" })
+            
+            -- Queue script agar dieksekusi lagi pas rejoin (Optional, tergantung executor support)
+            if syn and syn.queue_on_teleport then
+                syn.queue_on_teleport('loadstring(game:HttpGet("URL_SCRIPT_KAMU_DISINI"))()')
+            elseif queue_on_teleport then
+                queue_on_teleport('loadstring(game:HttpGet("URL_SCRIPT_KAMU_DISINI"))()')
+            end
+
+            if #Players:GetPlayers() <= 1 then
+                -- Kalau sendiri, Teleport biasa (akan buat server baru/masuk ulang)
+                Players.LocalPlayer:Kick("\n[CatrazHub] Rejoining...")
+                task.wait()
+                TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+            else
+                -- Kalau rame, masuk ke Instance yang sama
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+            end
+        end
+    })
+
+    -- 2. SERVER HOP (RANDOM)
+    local bhop = serverm:Button({
+        Title = "Server Hop (Random)",
+        Desc = "Pindah ke server lain secara acak.",
+        Icon = "arrow-right-circle",
+        Callback = function()
+            WindUI:Notify({ Title = "Hopping...", Content = "Mencari server baru...", Duration = 3, Icon = "search" })
+            
+            task.spawn(function()
+                local PlaceId = game.PlaceId
+                local JobId = game.JobId
+                
+                local sfUrl = "https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true"
+                local req = game:HttpGet(string.format(sfUrl, PlaceId))
+                local body = HttpService:JSONDecode(req)
+        
+                if body and body.data then
+                    local servers = {}
+                    for _, v in ipairs(body.data) do
+                        -- Filter: Bukan server saat ini, dan belum penuh
+                        if type(v) == "table" and v.maxPlayers > v.playing and v.id ~= JobId then
+                            table.insert(servers, v.id)
+                        end
+                    end
+        
+                    if #servers > 0 then
+                        local randomServerId = servers[math.random(1, #servers)]
+                        WindUI:Notify({ Title = "Server Found", Content = "Teleporting...", Duration = 3, Icon = "plane" })
+                        TeleportService:TeleportToPlaceInstance(PlaceId, randomServerId, Players.LocalPlayer)
                     else
-                        v1171 = p1168
+                        WindUI:Notify({ Title = "Gagal Hop", Content = "Tidak menemukan server lain yang cocok.", Duration = 3, Icon = "x" })
                     end
-                    v1170.Weight = v1171
-                    if p1168 then
-                        p1168 = p1168.VariantId
-                    end
-                    v1170.VariantId = p1168
-                    v1169.Metadata = v1170
-                    sendNewFishWebhook(v1169)
+                else
+                    WindUI:Notify({ Title = "API Error", Content = "Gagal mengambil daftar server.", Duration = 3, Icon = "alert-triangle" })
                 end
             end)
         end
-    end)
-    webhook = v163.Webhook:AddSection("Webhook Fish Caught")
-    webhook:AddInput({
-        Title = "Input Discord ID",
-        Default = "",
-        Callback = function(p1172)
-            if p1172 and p1172 ~= "" then
-                DISCORD_ID2 = "<@" .. p1172:gsub("%D", "") .. ">"
-            else
-                DISCORD_ID2 = ""
-            end
-            SaveConfig()
-        end
     })
-    webhook:AddInput({
-        Title = "Webhook URL",
-        Default = "",
-        Callback = function(p1173)
-            _G.WebhookURLs = _G.WebhookURLs or {}
-            _G.WebhookURLs.FishCaught = p1173
-            if _G.WebhookFlags and _G.WebhookFlags.FishCaught then
-                _G.WebhookFlags.FishCaught.URL = p1173
-            end
-            if p1173 and p1173:match("discord.com/api/webhooks") then
-                SaveConfig()
-            end
-        end
-    })
-    webhook:AddDropdown({
-        Title = "Tier Filter",
-        Multi = true,
-        Options = {
-            "Common",
-            "Uncommon",
-            "Rare",
-            "Epic",
-            "Legendary",
-            "Mythic",
-            "Secret"
-        },
-        Default = {
-            "Mythic",
-            "Secret"
-        },
-        Callback = function(p1174)
-            _G.WebhookRarities = p1174
-            SaveConfig()
-        end
-    })
-    webhook:AddDropdown({
-        Title = "Name Filter",
-        Multi = true,
-        Options = v1165,
-        Default = {},
-        Callback = function(p1175)
-            _G.WebhookNames = p1175
-            SaveConfig()
-        end
-    })
-    webhook:AddInput({
-        Title = "Hide Identity",
-        Content = "Protect your name for sending webhook to discord",
-        Default = _G.WebhookCustomName or "",
-        Callback = function(p1176)
-            _G.WebhookCustomName = p1176
-            SaveConfig()
-        end
-    })
-    webhook:AddToggle({
-        Title = "Send Fish Webhook",
-        Default = _G.WebhookFlags.FishCaught.Enabled,
-        Callback = function(p1177)
-            _G.WebhookFlags.FishCaught.Enabled = p1177
-            vu7.autoWebhook = p1177
-            SaveConfig()
-        end
-    })
-    webhook:AddButton({
-        Title = "Test Webhook Connection",
+
+    -- 3. SERVER HOP (LOW SERVER / SEPI)
+    local hoplow = serverm:Button({
+        Title = "Server Hop (Low Player)",
+        Desc = "Mencari server yang sepi (cocok buat farming).",
+        Icon = "user-minus",
         Callback = function()
-            local vu1178 = _G.WebhookFlags.FishCaught.URL
-            if vu1178 and vu1178:match("discord.com/api/webhooks") then
-                local vu1179 = {
-                    content = nil,
-                    embeds = {
-                        {
-                            color = 44543,
-                            author = {
-                                name = "Ding dongggg! Webhook is connected :3"
-                            },
-                            image = {
-                                url = "https://media.tenor.com/KJDqZ0H6Gb4AAAAC/gawr-gura-gura.gif"
-                            }
-                        }
-                    },
-                    username = "Chloe X Notification!",
-                    avatar_url = "https://i.imgur.com/9afHGRy.jpeg",
-                    attachments = {}
-                }
-                task.spawn(function()
-                    local v1182, v1183 = pcall(function()
-                        local v1180 = _G.httpRequest
-                        local v1181 = {
-                            Url = vu1178,
-                            Method = "POST",
-                            Headers = {
-                                ["Content-Type"] = "application/json"
-                            },
-                            Body = vu1.HttpService:JSONEncode(vu1179)
-                        }
-                        return v1180(v1181)
-                    end)
-                    if v1182 then
-                        chloex("Successfully sent test message!")
-                    else
-                        chloex("Failed to send webhook:", v1183)
-                    end
-                end)
-            else
-                warn("[Webhook Test] \226\157\140 Invalid or missing webhook URL.")
-            end
-        end
-    })
-    local v1184 = v163.Webhook:AddSection("Webhook Statistic Player")
-    v1184:AddInput({
-        Title = "Statistic Webhook URL",
-        Default = _G.WebhookFlags.Stats.URL,
-        Placeholder = "Paste your stats webhook here...",
-        Callback = function(p1185)
-            if p1185 and p1185:match("discord.com/api/webhooks") then
-                _G.WebhookFlags.Stats.URL = p1185
-                SaveConfig()
-            end
-        end
-    })
-    v1184:AddInput({
-        Title = "Delay (Minutes)",
-        Default = tostring(_G.WebhookFlags.Stats.Delay),
-        Placeholder = "Delay between data sends...",
-        Numeric = true,
-        Callback = function(p1186)
-            local v1187 = tonumber(p1186)
-            if v1187 and 1 <= v1187 then
-                _G.WebhookFlags.Stats.Delay = v1187
-                SaveConfig()
-            end
-        end
-    })
-    v1184:AddToggle({
-        Title = "Send Webhook Statistic",
-        Content = "Automatically send player stats, inventory, utility, and quest info to Discord.",
-        Default = _G.WebhookFlags.Stats.Enabled or false,
-        Callback = function(p1188)
-            vu7.autoWebhookStats = p1188
-            _G.WebhookFlags.Stats.Enabled = p1188
-            SaveConfig()
-            if p1188 then
-                task.spawn(function()
-                    local v1189 = vu1.RS
-                    local vu1190 = vu1.HttpService
-                    local vu1191 = vu6.Data
-                    local v1192 = v1189:WaitForChild("Items")
-                    local v1193 = v1189:WaitForChild("Baits")
-                    local v1194 = v1189:WaitForChild("Totems")
-                    local vu1195 = {}
-                    local vu1196 = {
-                        Fish = {
-                            folders = {
-                                v1192
-                            },
-                            expectType = "Fish"
-                        },
-                        ["Fishing Rods"] = {
-                            folders = {
-                                v1192
-                            },
-                            expectType = "Fishing Rods"
-                        },
-                        Baits = {
-                            folders = {
-                                v1193
-                            },
-                            expectType = "Baits"
-                        },
-                        Totems = {
-                            folders = {
-                                v1194
-                            },
-                            expectType = "Totems"
-                        },
-                        Items = {
-                            folders = {
-                                v1192
-                            },
-                            expectType = nil
-                        }
-                    }
-                    local function vu1200(p1197)
-                        local v1198, v1199 = pcall(require, p1197)
-                        if v1198 and (type(v1199) == "table" and v1199.Data) then
-                            return v1199
+            WindUI:Notify({ Title = "Searching Low Server...", Content = "Mencari server sepi...", Duration = 3, Icon = "search" })
+            
+            task.spawn(function()
+                local PlaceId = game.PlaceId
+                local JobId = game.JobId
+                
+                -- Sort Ascending (Dari yang paling sedikit pemainnya)
+                local sfUrl = "https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Asc&limit=100"
+                local req = game:HttpGet(string.format(sfUrl, PlaceId))
+                local body = HttpService:JSONDecode(req)
+        
+                if body and body.data then
+                    for _, v in ipairs(body.data) do
+                        if type(v) == "table" and v.maxPlayers > v.playing and v.id ~= JobId and v.playing >= 1 then
+                            -- Ketemu server, langsung gas
+                            WindUI:Notify({ Title = "Low Server Found!", Content = "Players: " .. tostring(v.playing), Duration = 3, Icon = "check" })
+                            TeleportService:TeleportToPlaceInstance(PlaceId, v.id, Players.LocalPlayer)
+                            return -- Stop loop
                         end
                     end
-                    local function vu1216(p1201, p1202)
-                        local v1203 = (p1202.expectType or "ANY") .. ":" .. tostring(p1201)
-                        if vu1195[v1203] ~= nil then
-                            return vu1195[v1203]
-                        end
-                        local v1204, v1205, v1206 = ipairs(p1202.folders)
-                        while true do
-                            local v1207
-                            v1206, v1207 = v1204(v1205, v1206)
-                            if v1206 == nil then
-                                break
-                            end
-                            local v1208, v1209, v1210 = ipairs(v1207:GetDescendants())
-                            while true do
-                                local v1211
-                                v1210, v1211 = v1208(v1209, v1210)
-                                if v1210 == nil then
-                                    break
-                                end
-                                if v1211:IsA("ModuleScript") then
-                                    local v1212 = vu1200(v1211)
-                                    if v1212 and (v1212.Data and (v1212.Data.Id == p1201 and (not p1202.expectType or v1212.Data.Type == p1202.expectType))) then
-                                        vu1195[v1203] = v1212
-                                        return v1212
-                                    end
-                                else
-                                    local v1213 = v1211.GetAttribute
-                                    if v1213 then
-                                        v1213 = v1211:GetAttribute("Id")
-                                    end
-                                    if v1213 == p1201 then
-                                        local v1214 = v1211.GetAttribute
-                                        if v1214 then
-                                            v1214 = v1211:GetAttribute("Type")
-                                        end
-                                        if not p1202.expectType or v1214 == p1202.expectType then
-                                            local v1215 = {
-                                                Data = {
-                                                    Id = v1213,
-                                                    Type = v1214,
-                                                    Name = v1211:GetAttribute("Name"),
-                                                    Tier = v1211:GetAttribute("Rarity")
-                                                }
-                                            }
-                                            vu1195[v1203] = v1215
-                                            return v1215
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                        vu1195[v1203] = false
-                        return nil
-                    end
-                    local function vu1218(p1217)
-                        if p1217 >= 1000000000 then
-                            return string.format("%.1fB", p1217 / 1000000000)
-                        elseif p1217 >= 1000000 then
-                            return string.format("%.1fM", p1217 / 1000000)
-                        elseif p1217 >= 1000 then
-                            return string.format("%.1fk", p1217 / 1000)
-                        else
-                            return tostring(p1217)
-                        end
-                    end
-                    local function vu1221(p1219)
-                        local v1220 = p1219 and p1219.Data
-                        if v1220 then
-                            v1220 = p1219.Data.Tier
-                        end
-                        return _G.TierFish[v1220] or v1220 and tostring(v1220) or "Unknown"
-                    end
-                    local function vu1238(p1222, p1223, p1224)
-                        local v1225 = {}
-                        if typeof(p1222) == "table" then
-                            local v1226, v1227, v1228 = ipairs(p1222)
-                            while true do
-                                local v1229
-                                v1228, v1229 = v1226(v1227, v1228)
-                                if v1228 == nil then
-                                    break
-                                end
-                                local v1230 = vu1216(v1229.Id, vu1196[p1223] or vu1196.Items)
-                                local v1231 = v1230 and (v1230.Data and v1230.Data.Name) or "Unknown"
-                                v1225[v1231] = (v1225[v1231] or 0) + (v1229.Amount or 1)
-                            end
-                        end
-                        local v1232, v1233, v1234 = pairs(v1225)
-                        local v1235 = {}
-                        local v1236 = 1
-                        while true do
-                            local v1237
-                            v1234, v1237 = v1232(v1233, v1234)
-                            if v1234 == nil then
-                                break
-                            end
-                            if p1224 then
-                                table.insert(v1235, string.format("%d. %s | x%s", v1236, v1234, v1237))
-                            else
-                                table.insert(v1235, string.format("%d. %s", v1236, v1234))
-                            end
-                            v1236 = v1236 + 1
-                        end
-                        return table.concat(v1235, "\n")
-                    end
-                    local function vu1252()
-                        local v1239 = {
-                            DeepSea = {},
-                            Element = {}
-                        }
-                        local v1240 = workspace:FindFirstChild("!!! MENU RINGS")
-                        if not v1240 then
-                            return v1239
-                        end
-                        local v1241 = {
-                            DeepSea = v1240:FindFirstChild("Deep Sea Tracker"),
-                            Element = v1240:FindFirstChild("Element Tracker")
-                        }
-                        local v1242, v1243, v1244 = pairs(v1241)
-                        while true do
-                            local v1245
-                            v1244, v1245 = v1242(v1243, v1244)
-                            if v1244 == nil then
-                                break
-                            end
-                            local v1246 = v1245 and v1245:FindFirstChild("Board")
-                            if v1246 then
-                                v1246 = v1245.Board:FindFirstChild("Gui")
-                            end
-                            if v1246 then
-                                v1246 = v1246:FindFirstChild("Content")
-                            end
-                            if v1246 then
-                                local v1247, v1248, v1249 = ipairs(v1246:GetChildren())
-                                local v1250 = v1244
-                                while true do
-                                    local v1251
-                                    v1249, v1251 = v1247(v1248, v1249)
-                                    if v1249 == nil then
-                                        break
-                                    end
-                                    if v1251:IsA("TextLabel") and v1251.Name:match("Label") then
-                                        table.insert(v1239[v1250], string.format("%d. %s", # v1239[v1250] + 1, v1251.Text))
-                                    end
-                                end
-                            end
-                        end
-                        return v1239
-                    end
-                    local function v1254()
-                        local v1253 = vu1191:Get({
-                            "Statistics"
-                        }) or {}
-                        return {
-                            Coins = vu1191:Get({
-                                "Coins"
-                            }) or 0,
-                            FishCaught = v1253.FishCaught or 0,
-                            XP = vu1191:Get({
-                                "XP"
-                            }) or 0
-                        }
-                    end
-                    local function v1303(p1255, p1256)
-                        local vu1257 = _G.WebhookFlags and _G.WebhookFlags.Stats.URL or ""
-                        if vu1257 == "" then
-                            warn("[Webhook Stats] \226\157\140 Please set your Webhook URL first!")
-                        else
-                            local v1258 = game.Players.LocalPlayer
-                            local v1259 = v1258 and v1258.Name or "Unknown"
-                            local v1260 = vu1238(p1256["Fishing Rods"], "Fishing Rods", false)
-                            local v1261 = vu1238(p1256.Baits, "Baits", false)
-                            local v1262 = vu1238(p1256.Totems, "Totems", true)
-                            local v1263, v1264, v1265 = ipairs(p1256.Items or {})
-                            local v1266 = {}
-                            while true do
-                                local v1267
-                                v1265, v1267 = v1263(v1264, v1265)
-                                if v1265 == nil then
-                                    break
-                                end
-                                if v1267.Id ~= 10 then
-                                    if v1267.Id ~= 125 then
-                                        if v1267.Id == 246 then
-                                            v1266["Transcended Stone"] = (v1266["Transcended Stone"] or 0) + (v1267.Amount or 1)
-                                        end
-                                    else
-                                        v1266["Super Enchant Stone"] = (v1266["Super Enchant Stone"] or 0) + (v1267.Amount or 1)
-                                    end
-                                else
-                                    v1266["Enchant Stone"] = (v1266["Enchant Stone"] or 0) + (v1267.Amount or 1)
-                                end
-                            end
-                            local v1268, v1269, v1270 = pairs(v1266)
-                            local v1271 = {}
-                            local v1272 = 1
-                            while true do
-                                local v1273
-                                v1270, v1273 = v1268(v1269, v1270)
-                                if v1270 == nil then
-                                    break
-                                end
-                                table.insert(v1271, string.format("%d. %s | x%s", v1272, v1270, v1273))
-                                v1272 = v1272 + 1
-                            end
-                            local v1274 = next(v1266) and table.concat(v1271, "\n") or "(None)"
-                            local v1275 = vu1252()
-                            local v1276 = # v1275.DeepSea <= 0 and "(No Deep Sea Quest Found)" or (table.concat(v1275.DeepSea, "\n") or "(No Deep Sea Quest Found)")
-                            local v1277 = # v1275.Element > 0 and table.concat(v1275.Element, "\n") or "(No Element Quest Found)"
-                            local v1278 = p1256.Items or {}
-                            local v1279, v1280, v1281 = ipairs(v1278)
-                            local v1282 = {}
-                            while true do
-                                local v1283, v1284 = v1279(v1280, v1281)
-                                if v1283 == nil then
-                                    break
-                                end
-                                v1281 = v1283
-                                local v1285 = vu1216(v1284.Id, vu1196.Fish)
-                                if v1285 and (v1285.Data and v1285.Data.Type == "Fish") then
-                                    local v1286 = vu1221(v1285)
-                                    local v1287 = v1285.Data.Name or "Unknown"
-                                    v1282[v1286] = v1282[v1286] or {}
-                                    v1282[v1286][v1287] = (v1282[v1286][v1287] or 0) + (v1284.Amount or 1)
-                                end
-                            end
-                            local v1288, v1289, v1290 = ipairs({
-                                "Uncommon",
-                                "Common",
-                                "Rare",
-                                "Epic",
-                                "Legendary",
-                                "Mythic",
-                                "Secret"
-                            })
-                            local v1291 = {}
-                            while true do
-                                local v1292
-                                v1290, v1292 = v1288(v1289, v1290)
-                                if v1290 == nil then
-                                    break
-                                end
-                                local v1293 = v1282[v1292]
-                                if v1293 then
-                                    table.insert(v1291, string.format("\227\128\162**%s :**", v1292))
-                                    local v1294, v1295, v1296 = pairs(v1293)
-                                    local v1297 = 1
-                                    while true do
-                                        local v1298
-                                        v1296, v1298 = v1294(v1295, v1296)
-                                        if v1296 == nil then
-                                            break
-                                        end
-                                        table.insert(v1291, string.format("%d. %s | x%s", v1297, v1296, v1298))
-                                        v1297 = v1297 + 1
-                                    end
-                                end
-                            end
-                            local v1299 = # v1291 > 0 and table.concat(v1291, "\n") or "(No Fishes Found)"
-                            local vu1300 = {
-                                username = "Chloe X Notification!",
-                                avatar_url = "https://i.imgur.com/9afHGRy.jpeg",
-                                embeds = {
-                                    {
-                                        title = "\227\128\162Chloe X Webhook | Player Info",
-                                        color = 52479,
-                                        fields = {
-                                            {
-                                                name = "\227\128\162Player Data",
-                                                value = string.format("**\226\157\175 NAME:** %s\n**\226\157\175 COINS:** $%s\n**\226\157\175 FISH CAUGHT:** %s", v1259, vu1218(p1255.Coins), p1255.FishCaught)
-                                            },
-                                            {
-                                                name = "\227\128\162Inventory",
-                                                value = string.format("**Totems:**\n%s\n**Rods:**\n%s\n**Baits:**\n%s", v1262, v1260, v1261)
-                                            }
-                                        }
-                                    },
-                                    {
-                                        title = "Utility & Quest Data",
-                                        color = 26367,
-                                        fields = {
-                                            {
-                                                name = "\227\128\162Utility Data",
-                                                value = string.format("**\226\157\175 Fishes:**\n%s\n**\226\157\175 Enchant Stones:**\n%s", v1299, v1274)
-                                            },
-                                            {
-                                                name = "\227\128\162Quest Data",
-                                                value = string.format("**\226\157\175 Deep Sea Quest:**\n%s\n**\226\157\175 Element Quest:**\n%s", v1276, v1277)
-                                            }
-                                        },
-                                        footer = {
-                                            text = string.format("Chloe X Auto Sync | Every %dm", _G.WebhookFlags.Stats.Delay or 5),
-                                            icon_url = "https://i.imgur.com/WltO8IG.png"
-                                        },
-                                        timestamp = os.date("!%Y-%m-%dT%H:%M:%S.000Z")
-                                    }
-                                }
-                            }
-                            task.spawn(function()
-                                pcall(function()
-                                    local v1301 = _G.httpRequest
-                                    local v1302 = {
-                                        Url = vu1257,
-                                        Method = "POST",
-                                        Headers = {
-                                            ["Content-Type"] = "application/json"
-                                        },
-                                        Body = vu1190:JSONEncode(vu1300)
-                                    }
-                                    v1301(v1302)
-                                end)
-                            end)
-                        end
-                    end
-                    local v1304 = vu1191
-                    while vu7.autoWebhookStats do
-                        v1303(v1254(), v1304:Get({
-                            "Inventory"
-                        }) or {})
-                        task.wait((_G.WebhookFlags.Stats.Delay or 5) * 60)
-                    end
-                end)
-            end
-        end
-    })
-    local vu1305 = ""
-    local vu1306 = false
-    local vu1307 = false
-    function SendDisconnectWebhook(p1308)
-        if vu1306 then
-            local vu1309 = _G.WebhookURLs.Disconnect or (_G.WebhookFlags and _G.WebhookFlags.Disconnect.URL or "")
-            if vu1309 ~= "" and vu1309:match("discord") then
-                local v1310 = game.Players.LocalPlayer
-                local v1311 = "Unknown"
-                if _G.DisconnectCustomName and _G.DisconnectCustomName ~= "" then
-                    v1311 = _G.DisconnectCustomName
-                elseif v1310 and v1310.Name then
-                    v1311 = v1310.Name
+                    WindUI:Notify({ Title = "Gagal", Content = "Tidak ada server sepi ditemukan.", Duration = 3, Icon = "x" })
+                else
+                    WindUI:Notify({ Title = "API Error", Content = "Gagal mengambil daftar server.", Duration = 3, Icon = "alert-triangle" })
                 end
-                local v1312 = os.date("*t")
-                local v1313 = v1312.hour > 12 and v1312.hour - 12 or v1312.hour
-                local v1314 = v1312.hour >= 12 and "PM" or "AM"
-                local v1315 = string.format("%02d/%02d/%04d %02d.%02d %s", v1312.day, v1312.month, v1312.year, v1313, v1312.min, v1314)
-                local v1316 = vu1305 ~= "" and vu1305 or "Anonymous"
-                local v1317 = (not p1308 or (p1308 == "" or not p1308)) and "Disconnected from server" or p1308
-                local vu1318 = {
-                    content = "Ding Dongg Ding Dongggg, Hello! " .. v1316 .. " your account got disconnected from server!",
-                    embeds = {
-                        {
-                            title = "DETAIL ACCOUNT",
-                            color = 36863,
-                            fields = {
-                                {
-                                    name = "\227\128\162Username :",
-                                    value = "> " .. v1311
-                                },
-                                {
-                                    name = "\227\128\162Time got disconnected :",
-                                    value = "> " .. v1315
-                                },
-                                {
-                                    name = "\227\128\162Reason :",
-                                    value = "> " .. v1317
-                                }
-                            },
-                            thumbnail = {
-                                url = "https://media.tenor.com/rx88bhLtmyUAAAAC/gawr-gura.gif"
-                            }
-                        }
-                    },
-                    username = "Chloe X Notification!",
-                    avatar_url = "https://i.imgur.com/9afHGRy.jpeg"
-                }
-                task.spawn(function()
-                    pcall(function()
-                        local v1319 = _G.httpRequest
-                        local v1320 = {
-                            Url = vu1309,
-                            Method = "POST",
-                            Headers = {
-                                ["Content-Type"] = "application/json"
-                            },
-                            Body = vu1.HttpService:JSONEncode(vu1318)
-                        }
-                        v1319(v1320)
-                    end)
-                end)
-            end
-        else
-            return
+            end)
         end
+    })
+
+    -- 1. COPY JOB ID SAAT INI
+    local copyjobid = serverm:Button({
+        Title = "Copy Current Job ID",
+        Desc = "Salin ID Server ini ke clipboard.",
+        Icon = "copy",
+        Callback = function()
+            local jobId = game.JobId
+            setclipboard(jobId)
+            WindUI:Notify({ 
+                Title = "Copied!", 
+                Content = "Job ID disalin ke clipboard.", 
+                Duration = 3, 
+                Icon = "check" 
+            })
+        end
+    })
+
+    -- Variabel penyimpanan input
+    local targetJoinID = ""
+
+    -- 2. INPUT FIELD JOB ID
+    local injobid = serverm:Input({
+        Title = "Target Job ID",
+        Desc = "Paste Job ID server tujuan di sini.",
+        Value = "",
+        Placeholder = "Paste Job ID here...",
+        Icon = "keyboard",
+        Callback = function(text)
+            targetJoinID = text
+        end
+    })
+
+    -- 3. TOMBOL JOIN
+    local joinid = serverm:Button({
+        Title = "Join Server by ID",
+        Desc = "Teleport ke Job ID yang dimasukkan di atas.",
+        Icon = "log-in",
+        Callback = function()
+            if targetJoinID == "" then
+                WindUI:Notify({ Title = "Error", Content = "Masukkan Job ID dulu di kolom input!", Duration = 3, Icon = "alert-triangle" })
+                return
+            end
+
+            -- Cek apakah ID-nya sama dengan server sekarang (biar gak buang waktu)
+            if targetJoinID == game.JobId then
+                WindUI:Notify({ Title = "Info", Content = "Kamu sudah berada di server ini!", Duration = 3, Icon = "info" })
+                return
+            end
+
+            WindUI:Notify({ Title = "Joining...", Content = "Mencoba masuk ke server ID...", Duration = 3, Icon = "plane" })
+            
+            -- Eksekusi Teleport
+            local success, err = pcall(function()
+                game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, targetJoinID, game.Players.LocalPlayer)
+            end)
+
+            if not success then
+                WindUI:Notify({ Title = "Gagal", Content = "ID Server Salah / Server Penuh / Expired.", Duration = 5, Icon = "x" })
+            end
+        end
+    })
+
+-- =================================================================
+    -- 🎥 CINEMATIC / CONTENT TOOLS (V11 - CLEAN MODE FIX)
+    -- =================================================================
+    utility:Divider()
+    local cinematic = utility:Section({ Title = "Cinematic / Content Tools", TextSize = 20})
+
+    -- Services
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+    local StarterGui = game:GetService("StarterGui")
+    local Workspace = game:GetService("Workspace")
+    
+    -- Modules
+    local LocalPlayer = Players.LocalPlayer
+    
+    -- Settings & State
+    local freeCamSpeed = 1.5
+    local freeCamFov = 70
+    local isFreeCamActive = false
+    
+    local camera = Workspace.CurrentCamera
+    local camPos = camera.CFrame.Position
+    local camRot = Vector2.new(0,0)
+    
+    -- Manual Mouse Vars
+    local lastMousePos = Vector2.new(0,0)
+    local renderConn = nil
+    local touchConn = nil
+    local touchDelta = Vector2.new(0, 0)
+    
+    -- Restore
+    local oldWalkSpeed = 16
+    local oldJumpPower = 50
+
+    -- 1. SLIDER CAMERA SPEED
+    local cameras = cinematic:Slider({
+        Title = "Camera Speed",
+        Step = 0.1,
+        Value = { Min = 0.1, Max = 10.0, Default = 1.5 },
+        Callback = function(val) 
+            freeCamSpeed = tonumber(val) 
+        end
+    })
+
+    -- 2. SLIDER FOV
+    local fovcam = cinematic:Slider({
+        Title = "Field of View (FOV)",
+        Desc = "Zoom In/Out Lens.",
+        Step = 1,
+        Value = { Min = 10, Max = 120, Default = 70 },
+        Callback = function(val) 
+            freeCamFov = tonumber(val)
+            if isFreeCamActive then 
+                camera.FieldOfView = freeCamFov 
+            end
+        end
+    })
+
+    -- 3. TOGGLE CLEAN MODE (FIXED LOGIC)
+    local hideuiall = cinematic:Toggle({
+        Title = "Hide All UI (Clean Mode)",
+        Value = false,
+        Icon = "eye-off",
+        Callback = function(state)
+            local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+            
+            if state then
+                -- [LOGIKA FIX]: Simpan state asli sebelum dimatikan
+                for _, gui in ipairs(PlayerGui:GetChildren()) do
+                    if gui:IsA("ScreenGui") and gui.Name ~= "WindUI" and gui.Name ~= "CustomFloatingIcon_CatrazHub" then
+                        -- Simpan status 'Enabled' saat ini ke Attribute
+                        gui:SetAttribute("OriginalState", gui.Enabled)
+                        gui.Enabled = false
+                    end
+                end
+                -- Matikan CoreGui (Chat, Leaderboard)
+                pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
+                
+                WindUI:Notify({ Title = "Clean Mode ON", Content = "UI Disembunyikan.", Duration = 2, Icon = "camera" })
+            else
+                -- [LOGIKA FIX]: Restore sesuai state asli
+                for _, gui in ipairs(PlayerGui:GetChildren()) do
+                    if gui:IsA("ScreenGui") then
+                        local originalState = gui:GetAttribute("OriginalState")
+                        if originalState ~= nil then
+                            gui.Enabled = originalState
+                            gui:SetAttribute("OriginalState", nil) -- Bersihkan attribute
+                        end
+                    end
+                end
+                -- Nyalakan CoreGui
+                pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true) end)
+                
+                WindUI:Notify({ Title = "Clean Mode OFF", Duration = 2, Icon = "eye" })
+            end
+        end
+    })
+
+    -- 4. FREE CAM (MANUAL TRACKING - YANG UDAH WORK)
+    local enablecam = cinematic:Toggle({
+        Title = "Enable Free Cam",
+        Value = false,
+        Icon = "video",
+        Callback = function(state)
+            isFreeCamActive = state
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if state then
+                -- INIT
+                camera.CameraType = Enum.CameraType.Scriptable
+                camPos = camera.CFrame.Position
+                local rx, ry, _ = camera.CFrame:ToEulerAnglesYXZ()
+                camRot = Vector2.new(rx, ry)
+                
+                -- INITIAL MOUSE POS
+                lastMousePos = UserInputService:GetMouseLocation()
+
+                -- FREEZE CHARACTER
+                if hum then
+                    oldWalkSpeed = hum.WalkSpeed
+                    oldJumpPower = hum.JumpPower
+                    hum.WalkSpeed = 0
+                    hum.JumpPower = 0
+                    hum.PlatformStand = true
+                end
+                if hrp then hrp.Anchored = true end
+
+                -- TOUCH LISTENER (MOBILE)
+                if touchConn then touchConn:Disconnect() end
+                touchConn = UserInputService.TouchMoved:Connect(function(input, processed)
+                    if not processed then touchDelta = input.Delta end
+                end)
+
+                -- [UPDATE] FREECAM RENDER LOOP (MOBILE SUPPORT)
+                local ControlModule = require(LocalPlayer.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
+
+                if renderConn then renderConn:Disconnect() end
+                renderConn = RunService.RenderStepped:Connect(function()
+                    if not isFreeCamActive then return end
+
+                    -- A. ROTASI KAMERA (Touch/Mouse)
+                    local currentMousePos = UserInputService:GetMouseLocation()
+                    if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                        local deltaX = currentMousePos.X - lastMousePos.X
+                        local deltaY = currentMousePos.Y - lastMousePos.Y
+                        local sens = 0.003
+                        
+                        camRot = camRot - Vector2.new(deltaY * sens, deltaX * sens)
+                        camRot = Vector2.new(math.clamp(camRot.X, -1.55, 1.55), camRot.Y)
+                    end
+                    
+                    -- Mobile Touch Drag
+                    if UserInputService.TouchEnabled then
+                        camRot = camRot - Vector2.new(touchDelta.Y * 0.005 * 2.0, touchDelta.X * 0.005 * 2.0)
+                        camRot = Vector2.new(math.clamp(camRot.X, -1.55, 1.55), camRot.Y)
+                        touchDelta = Vector2.new(0, 0)
+                    end
+                    
+                    lastMousePos = currentMousePos
+
+                    -- B. PERGERAKAN (KEYBOARD + ANALOG MOBILE)
+                    local rotCFrame = CFrame.fromEulerAnglesYXZ(camRot.X, camRot.Y, 0)
+                    local moveVector = Vector3.zero
+
+                    -- 1. Ambil Input dari Control Module (Support WASD & Mobile Analog sekaligus)
+                    local rawMoveVector = ControlModule:GetMoveVector()
+                    
+                    -- 2. Input Keyboard Manual (untuk vertical E/Q)
+                    local verticalInput = 0
+                    if UserInputService:IsKeyDown(Enum.KeyCode.E) then verticalInput = 1 end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Q) then verticalInput = -1 end
+
+                    -- 3. Kalkulasi Arah (World Space)
+                    -- rawMoveVector.X adalah Kanan/Kiri (Relative Camera)
+                    -- rawMoveVector.Z adalah Maju/Mundur (Relative Camera)
+                    
+                    -- Konversi ke arah kamera saat ini
+                    if rawMoveVector.Magnitude > 0 then
+                        moveVector = (rotCFrame.RightVector * rawMoveVector.X) + (rotCFrame.LookVector * rawMoveVector.Z * -1)
+                    end
+                    
+                    -- Tambah gerakan Vertikal
+                    moveVector = moveVector + Vector3.new(0, verticalInput, 0)
+
+                    -- 4. Kecepatan (Shift untuk ngebut)
+                    local speedMultiplier = (UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4 or 1)
+                    local finalSpeed = freeCamSpeed * speedMultiplier
+                    
+                    -- 5. Terapkan Posisi
+                    if moveVector.Magnitude > 0 then
+                        camPos = camPos + (moveVector * finalSpeed)
+                    end
+
+                    -- C. UPDATE KAMERA
+                    camera.CFrame = CFrame.new(camPos) * rotCFrame
+                    camera.FieldOfView = freeCamFov 
+                end)
+                
+                WindUI:Notify({ Title = "Free Cam Ready", Duration = 3, Icon = "check" })
+
+            else
+                -- MATIKAN
+                if renderConn then renderConn:Disconnect() renderConn = nil end
+                if touchConn then touchConn:Disconnect() touchConn = nil end
+                
+                camera.CameraType = Enum.CameraType.Custom
+                UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+                camera.FieldOfView = 70 
+
+                if hum then
+                    hum.WalkSpeed = oldWalkSpeed
+                    hum.JumpPower = oldJumpPower
+                    hum.PlatformStand = false
+                end
+                if hrp then hrp.Anchored = false end
+                
+                WindUI:Notify({ Title = "Free Cam OFF", Duration = 3 })
+            end
+        end
+    })
+    utility:Divider()
+utility:Keybind({
+    Title = "Keybind",
+    Desc = "Keybind to open/close ui",
+    Value = "F",
+    Callback = function(v)
+        Window:SetToggleKey(Enum.KeyCode[v])
     end
-    local v1321 = v163.Webhook:AddSection("Webhook Alert")
-    v1321:AddInput({
-        Title = "Disconnect Alert Webhook URL",
-        Default = "",
-        Callback = function(p1322)
-            _G.WebhookURLs = _G.WebhookURLs or {}
-            _G.WebhookURLs.Disconnect = p1322
-            if _G.WebhookFlags and _G.WebhookFlags.Disconnect then
-                _G.WebhookFlags.Disconnect.URL = p1322
-            end
-        end
-    })
-    v1321:AddInput({
-        Title = "Discord ID",
-        Default = "",
-        Callback = function(p1323)
-            if p1323 and p1323 ~= "" then
-                vu1305 = "<@" .. p1323:gsub("%D", "") .. ">"
-            else
-                vu1305 = ""
-            end
-            SaveConfig()
-        end
-    })
-    v1321:AddInput({
-        Title = "Hide Identity",
-        Placeholder = "Enter custom name (leave blank for default)",
-        Default = _G.DisconnectCustomName or "",
-        Callback = function(p1324)
-            _G.DisconnectCustomName = p1324
-            SaveConfig()
-        end
-    })
-    v1321:AddToggle({
-        Title = "Send Webhook On Disconnect",
-        Content = "Notify your Discord when account disconnected and auto rejoin.",
-        Default = _G.WebhookFlags.Disconnect.Enabled or false,
-        Callback = function(p1325)
-            if p1325 and (not _G.DisconnectCustomName or _G.DisconnectCustomName == "") then
-                chloex("Invalid! Input Hide Identity first.")
-                if _G.WebhookFlags and _G.WebhookFlags.Disconnect then
-                    _G.WebhookFlags.Disconnect.Enabled = false
-                end
-                vu1306 = false
-            else
-                vu1306 = p1325
-                if _G.WebhookFlags and _G.WebhookFlags.Disconnect then
-                    _G.WebhookFlags.Disconnect.Enabled = p1325
-                end
-                SaveConfig()
-                if p1325 then
-                    vu1307 = false
-                    local function vu1329(p1326)
-                        if not vu1307 and vu1306 then
-                            vu1307 = true
-                            SendDisconnectWebhook(p1326 or "Disconnected from server")
-                            task.wait(2)
-                            local v1327 = game:GetService("TeleportService")
-                            local v1328 = game:GetService("Players").LocalPlayer
-                            v1327:Teleport(game.PlaceId, v1328)
-                        end
-                    end
-                    vu1.GuiService.ErrorMessageChanged:Connect(function(p1330)
-                        if p1330 and p1330 ~= "" then
-                            vu1329(p1330)
-                        end
-                    end)
-                    game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(p1331)
-                        if p1331.Name == "ErrorPrompt" then
-                            task.wait(1)
-                            local v1332 = p1331:FindFirstChildWhichIsA("TextLabel", true)
-                            vu1329(v1332 and v1332.Text or "Disconnected")
-                        end
-                    end)
-                end
-            end
-        end
-    })
-    v1321:AddButton({
-        Title = "Test Disconnected Player",
-        Content = "Kick yourself, send webhook, and auto rejoin.",
-        Callback = function()
-            chloex("Kicking player...")
-            task.wait(1)
-            SendDisconnectWebhook("Test Successfully :3")
-            task.wait(2)
-            local v1333 = game:GetService("TeleportService")
-            local v1334 = game:GetService("Players").LocalPlayer
-            v1333:Teleport(game.PlaceId, v1334)
-        end
-    })
+})
 end

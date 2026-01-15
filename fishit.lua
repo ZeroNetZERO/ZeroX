@@ -1,38 +1,288 @@
--- cracked by alt_ https://discord.gg/UQyfsxUQu6
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-local Window = WindUI:CreateWindow({
-    Title = "RockHub - Fish It",
-    Icon = "rbxassetid://116236936447443",
-    Author = "Premium Version",
-    Folder = "RockHub",
-    Size = UDim2.fromOffset(600, 360),
-    MinSize = Vector2.new(560, 250),
-    MaxSize = Vector2.new(950, 760),
-    Transparent = true,
-    Theme = "Rose",
-    Resizable = true,
-    SideBarWidth = 190,
-    BackgroundImageTransparency = 0.42,
-    HideSearchBar = true,
-    ScrollBarEnabled = true,
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+-------- [[ CATRAZ THEME SETUP ]] --------
+WindUI:AddTheme({
+    Name = "Native Red",
+    Accent = Color3.fromHex("#ff5e5e"), 
+    Background = Color3.fromHex("#1a0b0b"), 
+    BackgroundTransparency = 0.8, 
+    Outline = Color3.fromHex("#451a1a"), 
+    Text = Color3.fromHex("#fcfcfc"), 
+    Placeholder = Color3.fromHex("#8a4b4b"),
+    Button = Color3.fromHex("#2b1212"), 
+    Icon = Color3.fromHex("#ffcccc"),
+    Hover = Color3.fromHex("#3d1a1a"), 
+    WindowBackground = Color3.fromHex("#140808"), 
+    WindowShadow = Color3.fromHex("#000000"),
+    WindowTopbarButtonIcon = Color3.fromHex("#ffcccc"),
+    WindowTopbarTitle = Color3.fromHex("#fcfcfc"), 
+    WindowTopbarAuthor = Color3.fromHex("#aa5555"),
+    WindowTopbarIcon = Color3.fromHex("#ff5e5e"),
+    TabBackground = Color3.fromHex("#0f0505"), 
+    TabTitle = Color3.fromHex("#fcfcfc"),
+    TabIcon = Color3.fromHex("#cc8888"),
+    ElementBackground = Color3.fromHex("#260f0f"), 
+    ElementTitle = Color3.fromHex("#fcfcfc"),
+    ElementDesc = Color3.fromHex("#b36b6b"),
+    ElementIcon = Color3.fromHex("#ffcccc"),
+    Toggle = Color3.fromHex("#fcfcfc"), 
+    ToggleBar = Color3.fromHex("#3d1a1a"),
+    Checkbox = Color3.fromHex("#fcfcfc"),
+    CheckboxIcon = Color3.fromHex("#1a0b0b"), 
+    Slider = Color3.fromHex("#fcfcfc"),
+    SliderThumb = Color3.fromHex("#ff5e5e"), 
 })
 
+WindUI:SetTheme("Native Red")
+
+local Window = WindUI:CreateWindow({
+    Title = "Catraz Hub |Vyn HUB | Fish It!",
+    Folder = "CatrazHub",
+    Icon = "rbxassetid://124162045221605", 
+    NewElements = true,
+    Transparent = true,
+    Theme = "Native Red",
+    HideSearchBar = true,
+    BackgroundImageTransparency = 1,
+    OpenButton = { Title = "Open Hub", Enabled = false },                                                              
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function() end,
+    },
+})
+
+-- [[ 1. VERSION TAG (BETA) ]] --
+Window:Tag({
+    Title = "v4.0-BETA",
+    Icon = "github", -- Ikon Github
+    Color = Color3.fromHex("#4a4a4a"), -- Warna Hijau Stabilo
+})
+
+Window:Tag({
+    Title = "Premium",
+    Color = Color3.fromHex("#b80202"), -- Warna Hijau Stabilo
+})
+
+Window:DisableTopbarButtons({
+    "Close", 
+    "Minimize", 
+    "Fullscreen",
+})
+
+WindUI:Notify({
+    Title = "Catraz Hub Loaded",
+    Content = "Success load Catraz Hub | FISH IT!",
+    Duration = 5,
+    Icon = "badge-check", 
+})
+
+-- [[ CUSTOM TOGGLE UI SYSTEM & MINI DASHBOARD (DRAGGABLE VERSION) ]] --
+task.spawn(function()
+    local CoreGui = game:GetService("CoreGui")
+    local TweenService = game:GetService("TweenService")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService") -- Tambahan Service
+    local Stats = game:GetService("Stats")
+    
+    local NameUI = "CatrazHubSystem"
+    if CoreGui:FindFirstChild(NameUI) then CoreGui[NameUI]:Destroy() end
+    
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = NameUI
+    ScreenGui.Parent = CoreGui
+    ScreenGui.ResetOnSpawn = false
+    
+    -- [[ FUNGSI DRAGGABLE (BIAR BISA DIGESER) ]] --
+    local function MakeDraggable(topbarobject, object)
+        local Dragging = nil
+        local DragInput = nil
+        local DragStart = nil
+        local StartPosition = nil
+
+        local function Update(input)
+            local Delta = input.Position - DragStart
+            local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
+            -- Pakai Tween biar smooth pas ditarik
+            local Tween = TweenService:Create(object, TweenInfo.new(0.15), {Position = pos})
+            Tween:Play()
+        end
+
+        topbarobject.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                Dragging = true
+                DragStart = input.Position
+                StartPosition = object.Position
+
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        Dragging = false
+                    end
+                end)
+            end
+        end)
+
+        topbarobject.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                DragInput = input
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input == DragInput and Dragging then
+                Update(input)
+            end
+        end)
+    end
+    -- [[ END FUNGSI DRAGGABLE ]] --
+
+    -- Variables State
+    local IsMenuOpen = true 
+    
+    -- 1. TOGGLE BUTTON
+    local ToggleBtn = Instance.new("ImageButton")
+    ToggleBtn.Name = "MainButton"
+    ToggleBtn.Parent = ScreenGui
+    ToggleBtn.Position = UDim2.new(0.05, 0, 0.45, 0)
+    ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+    ToggleBtn.BackgroundColor3 = Color3.fromHex("#140808")
+    ToggleBtn.BackgroundTransparency = 0.2
+    ToggleBtn.AutoButtonColor = false 
+    
+    -- Bikin Tombolnya Draggable juga (Pakai fungsi baru biar smooth)
+    MakeDraggable(ToggleBtn, ToggleBtn)
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0.3, 0)
+    BtnCorner.Parent = ToggleBtn
+
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Parent = ToggleBtn
+    BtnStroke.Color = Color3.fromHex("#ff5e5e")
+    BtnStroke.Thickness = 2.5
+    BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local IconImage = Instance.new("ImageLabel")
+    IconImage.Parent = ToggleBtn
+    IconImage.BackgroundTransparency = 1 
+    IconImage.AnchorPoint = Vector2.new(0.5, 0.5)
+    IconImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+    IconImage.Size = UDim2.new(0.7, 0, 0.7, 0)
+    IconImage.Image = "rbxassetid://124162045221605" 
+    IconImage.ScaleType = Enum.ScaleType.Fit
+    
+    -- 2. MINI DASHBOARD (Status Box)
+    local StatusFrame = Instance.new("Frame")
+    StatusFrame.Name = "StatusDashboard"
+    StatusFrame.Parent = ScreenGui
+    StatusFrame.Position = UDim2.new(0.5, 0, 0.05, 0) 
+    StatusFrame.AnchorPoint = Vector2.new(0.5, 0)
+    StatusFrame.Size = UDim2.new(0, 300, 0, 65)
+    StatusFrame.BackgroundColor3 = Color3.fromHex("#0f0505")
+    StatusFrame.BackgroundTransparency = 0.1
+    StatusFrame.Visible = false 
+    
+    -- [[ TERAPKAN DRAGGABLE DI SINI ]]
+    -- Kita bikin StatusFrame bisa ditarik
+    MakeDraggable(StatusFrame, StatusFrame)
+
+    local StatusCorner = Instance.new("UICorner")
+    StatusCorner.CornerRadius = UDim.new(0, 8)
+    StatusCorner.Parent = StatusFrame
+    
+    local StatusStroke = Instance.new("UIStroke")
+    StatusStroke.Parent = StatusFrame
+    StatusStroke.Color = Color3.fromHex("#451a1a")
+    StatusStroke.Thickness = 2
+    
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Parent = StatusFrame
+    AccentBar.BackgroundColor3 = Color3.fromHex("#ff5e5e")
+    AccentBar.Size = UDim2.new(0, 4, 1, 0)
+    AccentBar.BorderSizePixel = 0
+    local BarCorner = Instance.new("UICorner"); BarCorner.Parent = AccentBar
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Parent = StatusFrame
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+    TitleLabel.Size = UDim2.new(1, -20, 0, 20)
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.Text = "CATRAZ HUB | <font color='#ff5e5e'>FISH IT!</font>"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.RichText = true
+
+    local StatsLabel = Instance.new("TextLabel")
+    StatsLabel.Parent = StatusFrame
+    StatsLabel.BackgroundTransparency = 1
+    StatsLabel.Position = UDim2.new(0, 15, 0, 28)
+    StatsLabel.Size = UDim2.new(1, -20, 0, 30) 
+    StatsLabel.Font = Enum.Font.GothamMedium
+    StatsLabel.Text = "Loading Stats..."
+    StatsLabel.TextColor3 = Color3.fromHex("#cccccc")
+    StatsLabel.TextSize = 12
+    StatsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- 3. ANIMATION & LOGIC
+    local function PlayClickAnim()
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(0, 40, 0, 40)}):Play()
+        task.wait(0.1)
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.3, Enum.EasingStyle.Elastic), {Size = UDim2.new(0, 50, 0, 50)}):Play()
+    end
+
+    local function FormatTime(seconds)
+        local h = math.floor(seconds / 3600)
+        local m = math.floor((seconds % 3600) / 60)
+        local s = math.floor(seconds % 60)
+        return string.format("%02d:%02d:%02d", h, m, s)
+    end
+
+    ToggleBtn.MouseButton1Click:Connect(function()
+        PlayClickAnim()
+        Window:Toggle() 
+        IsMenuOpen = not IsMenuOpen
+        StatusFrame.Visible = not IsMenuOpen 
+        
+        if not IsMenuOpen then
+            StatusFrame.BackgroundTransparency = 1
+            TitleLabel.TextTransparency = 1
+            StatsLabel.TextTransparency = 1
+            TweenService:Create(StatusFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0.1}):Play()
+            TweenService:Create(TitleLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+            TweenService:Create(StatsLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        end
+    end)
+
+    -- 4. LIVE VISUAL UPDATE
+    RunService.RenderStepped:Connect(function(deltaTime)
+        if StatusFrame.Visible then
+            local fps = math.floor(1 / deltaTime)
+            local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            local runtime = FormatTime(workspace.DistributedGameTime)
+            
+            StatsLabel.Text = string.format("FPS: %d  |  Ping: %d ms\nRuntime: %s", fps, ping, runtime)
+        end
+    end)
+end)
+
 -- [[ 1. CONFIGURATION SYSTEM SETUP ]] --
-local RockHubConfig = Window.ConfigManager:CreateConfig("rockhub")
+local CatrazHubConfig = Window.ConfigManager:CreateConfig("catrazhub")
 
 -- [BARU] Tabel untuk menyimpan semua elemen UI agar bisa dicek valuenya
 local ElementRegistry = {} 
 
 -- Fungsi Helper Reg yang sudah di-upgrade
 local function Reg(id, element)
-    RockHubConfig:Register(id, element)
+    CatrazHubConfig:Register(id, element)
     -- Simpan elemen ke tabel lokal kita
     ElementRegistry[id] = element 
     return element
 end
 
 local HttpService = game:GetService("HttpService")
-local BaseFolder = "WindUI/" .. (Window.Folder or "RockHub") .. "/config/"
+local BaseFolder = "WindUI/" .. (Window.Folder or "CatrazHub") .. "/config/"
 
 local function SmartLoadConfig(configName)
     local path = BaseFolder .. configName .. ".json"
@@ -172,7 +422,7 @@ pcall(function()
     for i, v in pairs(getconnections(player.Idled)) do
         if v.Disable then
             v:Disable() -- Menonaktifkan koneksi event
-            print("[RockHub Anti-AFK] ON")
+            print("[CatrazHub Anti-AFK] ON")
         end
     end
 end)
@@ -279,13 +529,13 @@ do
         Promise = require(RepStorage:WaitForChild("Packages").Promise)
     end)
     
-    _G.RockHub_AutoAcceptTradeEnabled = false 
+    _G.CatrazHub = false 
 
     if PromptController and PromptController.FirePrompt and Promise then
         local oldFirePrompt = PromptController.FirePrompt
         PromptController.FirePrompt = function(self, promptText, ...)
             
-            if _G.RockHub_AutoAcceptTradeEnabled and type(promptText) == "string" and promptText:find("Accept") and promptText:find("from:") then
+            if _G.CatrazHub and type(promptText) == "string" and promptText:find("Accept") and promptText:find("from:") then
                 
                 local initiatorName = string.match(promptText, "from: ([^\n]+)") or "Seseorang"
                 
@@ -299,7 +549,7 @@ do
             return oldFirePrompt(self, promptText, ...)
         end
     else
-        warn("[RockHub] Gagal memuat PromptController/Promise untuk Auto Accept Trade.")
+        warn("[Catrazhub] Gagal memuat PromptController/Promise untuk Auto Accept Trade.")
     end
 end
 
@@ -329,7 +579,7 @@ local selectedRodUUID = nil
 local selectedEnchantNames = {}
 
 local ENCHANT_STONE_ID = 10
-_G.RockHub_EnchantStoneUUIDs = {}
+_G.CatrazHub = {}
 
 local function GetEnchantNameFromId(id)
     id = tonumber(id)
@@ -1087,8 +1337,8 @@ do
     local isHideActive = false
     local hideConnection = nil
     
-    local customName = ".gg/RockHub"
-    local customLevel = "Lvl. 969" 
+    local customName = ".gg/CatrazHub|VynHub"
+    local customLevel = "Lvl. 0" 
 
     local custname = Reg("cfakennme",other:Input({
         Title = "Custom Fake Name",
@@ -1105,7 +1355,7 @@ do
         Title = "Custom Fake Level",
         Desc = "Level samaran (misal: 'Lvl. 100' atau 'Max').",
         Value = customLevel,
-        Placeholder = "Lvl. 999",
+        Placeholder = "Lvl. 0",
         Icon = "bar-chart-2",
         Callback = function(text)
             customLevel = text
@@ -1206,7 +1456,7 @@ do
         else
             if targetPlayer.Character then
                 for _, v in ipairs(targetPlayer.Character:GetChildren()) do
-                    if v.Name == "RockHubESP" and v:IsA("BillboardGui") then pcall(function() v:Destroy() end) end
+                    if v.Name == "CatrazHubESP" and v:IsA("BillboardGui") then pcall(function() v:Destroy() end) end
                 end
             end
         end
@@ -1221,7 +1471,7 @@ do
         if not hrp then return end
 
         local BillboardGui = Instance.new("BillboardGui")
-        BillboardGui.Name = "RockHubESP"
+        BillboardGui.Name = "CatrazHubESP"
         BillboardGui.Adornee = hrp
         BillboardGui.Size = UDim2.new(0, 140, 0, 40)
         BillboardGui.AlwaysOnTop = true
@@ -1680,7 +1930,7 @@ do
     local cancelDelay = 0.3
     local loopInterval = 1.715
     
-    _G.RockHub_BlatantActive = false
+    _G.CatrazHub_BlatantActive = false
 
     -- [[ 1. LOGIC KILLER: LUMPUHKAN CONTROLLER ]]
     task.spawn(function()
@@ -1691,11 +1941,11 @@ do
             
             -- Matikan fungsi charge & cast game asli saat Blatant ON
             FishingController.RequestChargeFishingRod = function(...)
-                if _G.RockHub_BlatantActive then return end 
+                if _G.CatrazHub_BlatantActive then return end 
                 return Old_Charge(...)
             end
             FishingController.SendFishingRequestToServer = function(...)
-                if _G.RockHub_BlatantActive then return false, "Blocked by RockHub" end
+                if _G.CatrazHub_BlatantActive then return false, "Blocked by CatrazHub" end
                 return Old_Cast(...)
             end
         end
@@ -1707,7 +1957,7 @@ do
     setreadonly(mt, false)
     mt.__namecall = newcclosure(function(self, ...)
         local method = getnamecallmethod()
-        if _G.RockHub_BlatantActive and not checkcaller() then
+        if _G.CatrazHub_BlatantActive and not checkcaller() then
             -- Cegah game mengirim request mancing atau request update state
             if method == "InvokeServer" and (self.Name == "RequestFishingMinigameStarted" or self.Name == "ChargeFishingRod" or self.Name == "UpdateAutoFishingState") then
                 return nil 
@@ -1754,7 +2004,7 @@ do
                     ColorSequenceKeypoint.new(1, Color3.fromHex("ff2256"))
                 })
 
-                while _G.RockHub_BlatantActive do
+                while _G.CatrazHub_BlatantActive do
                     -- Cari tombol Auto Fishing (Bisa di Backpack atau tagged)
                     local targets = {}
                     
@@ -1837,7 +2087,7 @@ do
             if not checkFishingRemotes() then return end
             disableOtherModes("blatant")
             blatantInstantState = state
-            _G.RockHub_BlatantActive = state
+            _G.CatrazHub_BlatantActive = state
             
             -- Jalankan Visual Killer
             SuppressGameVisuals(state)
@@ -2961,7 +3211,7 @@ end
         Icon = "arrow-right-left",
         Value = false,
         Callback = function(state)
-            _G.RockHub_AutoAcceptTradeEnabled = state
+            _G.CatrazHub_AutoAcceptTradeEnabled = state
             
             if state then
                 WindUI:Notify({
@@ -4713,10 +4963,10 @@ do
     -- [UI] KAITUN OVERLAY (FIX Z-INDEX)
     -- =================================================================
     local function CreateKaitunUI()
-        local old = game.CoreGui:FindFirstChild("RockHubKaitunStats")
+        local old = game.CoreGui:FindFirstChild("CatrazHubKaitunStats")
         if old then old:Destroy() end
         local sg = Instance.new("ScreenGui")
-        sg.Name = "RockHubKaitunStats"
+        sg.Name = "CatrazHubKaitunStats"
         sg.Parent = game.CoreGui
         sg.IgnoreGuiInset = true
         sg.DisplayOrder = -50 
@@ -4741,11 +4991,7 @@ do
             return l
         end
         
-        txt("KAITUN ROCKHUB (PREMIUM)", 0.2, Color3.fromRGB(255,0,255), 35)
-        local lLC = txt("Last Catch: None", 0.3, Color3.fromRGB(0,255,255))
-        local lCoins = txt("Coins: ...", 0.4, Color3.fromRGB(255,215,0))
-        local lGear = txt("Best Rod: ... | Best Bait: ...", 0.45) 
-        local lStat = txt("Status: Idle", 0.55, Color3.fromRGB(0,255,127))
+        txt("CATRAZHUB KAITUN MODE", 0.2, Color3.fromRGB(255,0,255), 35)
         local lQuest = txt("", 0.65, Color3.fromRGB(255,100,100))
         lQuest.TextScaled = true; lQuest.Size = UDim2.new(0.8,0,0.08,0); lQuest.Position = UDim2.new(0.1,0,0.65,0)
 
@@ -7458,7 +7704,7 @@ local CutsceneController = nil
                 -- 1. Buat GUI Hitam di PlayerGui (Bukan CoreGui)
                 if not _G.BlackScreenGUI then
                     _G.BlackScreenGUI = Instance.new("ScreenGui")
-                    _G.BlackScreenGUI.Name = "RockHub_BlackBackground"
+                    _G.BlackScreenGUI.Name = "CatrazHub_BlackBackground"
                     _G.BlackScreenGUI.IgnoreGuiInset = true
                     -- [-999] = Taruh di paling belakang (di bawah UI Game), tapi nutupin world 3D
                     _G.BlackScreenGUI.DisplayOrder = -999 
@@ -7652,7 +7898,7 @@ utility:Divider()
 
             if #Players:GetPlayers() <= 1 then
                 -- Kalau sendiri, Teleport biasa (akan buat server baru/masuk ulang)
-                Players.LocalPlayer:Kick("\n[RockHub] Rejoining...")
+                Players.LocalPlayer:Kick("\n[CatrazHub] Rejoining...")
                 task.wait()
                 TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
             else
@@ -7867,7 +8113,7 @@ utility:Divider()
             if state then
                 -- [LOGIKA FIX]: Simpan state asli sebelum dimatikan
                 for _, gui in ipairs(PlayerGui:GetChildren()) do
-                    if gui:IsA("ScreenGui") and gui.Name ~= "WindUI" and gui.Name ~= "CustomFloatingIcon_RockHub" then
+                    if gui:IsA("ScreenGui") and gui.Name ~= "WindUI" and gui.Name ~= "CustomFloatingIcon_CatrazHub" then
                         -- Simpan status 'Enabled' saat ini ke Attribute
                         gui:SetAttribute("OriginalState", gui.Enabled)
                         gui.Enabled = false
@@ -8030,805 +8276,3 @@ utility:Keybind({
     end
 })
 end
-
-do
-    local webhook = Window:Tab({
-        Title = "Webhook",
-        Icon = "send",
-        Locked = false,
-    })
-
-    -- Variabel lokal untuk menyimpan data
-    local WEBHOOK_URL = ""
-    local WEBHOOK_USERNAME = "RockHub Notify" 
-    local isWebhookEnabled = false
-    local SelectedRarityCategories = {}
-    local SelectedWebhookItemNames = {} -- Variabel baru untuk filter nama
-    
-    -- Kita butuh daftar nama item (Copy fungsi helper ini ke dalam tab webhook atau taruh di global scope)
-    local function getWebhookItemOptions()
-        local itemNames = {}
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local itemsContainer = ReplicatedStorage:FindFirstChild("Items")
-        if itemsContainer then
-            for _, itemObject in ipairs(itemsContainer:GetChildren()) do
-                local itemName = itemObject.Name
-                if type(itemName) == "string" and #itemName >= 3 and itemName:sub(1, 3) ~= "!!!" then
-                    table.insert(itemNames, itemName)
-                end
-            end
-        end
-        table.sort(itemNames)
-        return itemNames
-    end
-    
-    -- Variabel KHUSUS untuk Global Webhook
-    local GLOBAL_WEBHOOK_URL = "https://discord.com/api/webhooks/1438756450972471387/gHuV9K4UmiTjqK3F9KRt720HkGvLJGogwJ9uh17b7QpqMd1ieBC_UdKAX95ozTanWH37"
-    local GLOBAL_WEBHOOK_USERNAME = "RockHub | Community"
-    local GLOBAL_RARITY_FILTER = {"SECRET", "TROPHY", "COLLECTIBLE", "DEV"}
-
-    local RarityList = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "Secret", "Trophy", "Collectible", "DEV"}
-    
-    local REObtainedNewFishNotification = GetRemote(RPath, "RE/ObtainedNewFishNotification")
-    local HttpService = game:GetService("HttpService")
-    local WebhookStatusParagraph -- Forward declaration
-
-    -- ============================================================
-    -- 🖼️ SISTEM CACHE GAMBAR (BARU)
-    -- ============================================================
-    local ImageURLCache = {} -- Table untuk menyimpan Link Gambar (ID -> URL)
-
-    -- FUNGSI HELPER: Format Angka (Updated: Full Digit dengan Titik)
-    local function FormatNumber(n)
-        n = math.floor(n) -- Bulatkan ke bawah biar ga ada desimal aneh
-        -- Logic: Balik string -> Tambah titik tiap 3 digit -> Balik lagi
-        local formatted = tostring(n):reverse():gsub("%d%d%d", "%1."):reverse()
-        -- Hapus titik di paling depan jika ada (clean up)
-        return formatted:gsub("^%.", "")
-    end
-    
-    local function UpdateWebhookStatus(title, content, icon)
-        if WebhookStatusParagraph then
-            WebhookStatusParagraph:SetTitle(title)
-            WebhookStatusParagraph:SetDesc(content)
-        end
-    end
-
-    -- FUNGSI GET IMAGE DENGAN CACHE
-    local function GetRobloxAssetImage(assetId)
-        if not assetId or assetId == 0 then return nil end
-        
-        -- 1. Cek Cache dulu!
-        if ImageURLCache[assetId] then
-            return ImageURLCache[assetId]
-        end
-        
-        -- 2. Jika tidak ada di cache, baru panggil API
-        local url = string.format("https://thumbnails.roblox.com/v1/assets?assetIds=%d&size=420x420&format=Png&isCircular=false", assetId)
-        local success, response = pcall(game.HttpGet, game, url)
-        
-        if success then
-            local ok, data = pcall(HttpService.JSONDecode, HttpService, response)
-            if ok and data and data.data and data.data[1] and data.data[1].imageUrl then
-                local finalUrl = data.data[1].imageUrl
-                
-                -- 3. Simpan ke Cache agar request berikutnya instan
-                ImageURLCache[assetId] = finalUrl
-                return finalUrl
-            end
-        end
-        return nil
-    end
-
-    local function sendExploitWebhook(url, username, embed_data)
-        local payload = {
-            username = username,
-            embeds = {embed_data} 
-        }
-        
-        local json_data = HttpService:JSONEncode(payload)
-        
-        if typeof(request) == "function" then
-            local success, response = pcall(function()
-                return request({
-                    Url = url,
-                    Method = "POST",
-                    Headers = { ["Content-Type"] = "application/json" },
-                    Body = json_data
-                })
-            end)
-            
-            if success and (response.StatusCode == 200 or response.StatusCode == 204) then
-                 return true, "Sent"
-            elseif success and response.StatusCode then
-                return false, "Failed: " .. response.StatusCode
-            elseif not success then
-                return false, "Error: " .. tostring(response)
-            end
-        end
-        return false, "No Request Func"
-    end
-    
-    local function getRarityColor(rarity)
-        local r = rarity:upper()
-        if r == "SECRET" then return 0xFFD700 end
-        if r == "MYTHIC" then return 0x9400D3 end
-        if r == "LEGENDARY" then return 0xFF4500 end
-        if r == "EPIC" then return 0x8A2BE2 end
-        if r == "RARE" then return 0x0000FF end
-        if r == "UNCOMMON" then return 0x00FF00 end
-        return 0x00BFFF
-    end
-
-    local function shouldNotify(fishRarityUpper, fishMetadata, fishName)
-        -- Cek Filter Rarity
-        if #SelectedRarityCategories > 0 and table.find(SelectedRarityCategories, fishRarityUpper) then
-            return true
-        end
-
-        -- Cek Filter Nama (Fitur Baru)
-        if #SelectedWebhookItemNames > 0 and table.find(SelectedWebhookItemNames, fishName) then
-            return true
-        end
-
-        -- Cek Mutasi
-        if _G.NotifyOnMutation and (fishMetadata.Shiny or fishMetadata.VariantId) then
-             return true
-        end
-        
-        return false
-    end
-    
-    -- FUNGSI UNTUK MENGIRIM PESAN IKAN AKTUAL (FIXED PATH: {"Coins"})
-    local function onFishObtained(itemId, metadata, fullData)
-        local success, results = pcall(function()
-            local dummyItem = {Id = itemId, Metadata = metadata}
-            local fishName, fishRarity = GetFishNameAndRarity(dummyItem)
-            local fishRarityUpper = fishRarity:upper()
-
-            -- --- START: Ambil Data Embed Umum ---
-            local fishWeight = string.format("%.2fkg", metadata.Weight or 0)
-            local mutationString = GetItemMutationString(dummyItem)
-            local mutationDisplay = mutationString ~= "" and mutationString or "N/A"
-            local itemData = ItemUtility:GetItemData(itemId)
-            
-            -- Handling Image
-            local assetId = nil
-            if itemData and itemData.Data then
-                local iconRaw = itemData.Data.Icon or itemData.Data.ImageId
-                if iconRaw then
-                    assetId = tonumber(string.match(tostring(iconRaw), "%d+"))
-                end
-            end
-
-            local imageUrl = assetId and GetRobloxAssetImage(assetId)
-            if not imageUrl then
-                imageUrl = "https://tr.rbxcdn.com/53eb9b170bea9855c45c9356fb33c070/420/420/Image/Png" 
-            end
-            
-            local basePrice = itemData and itemData.SellPrice or 0
-            local sellPrice = basePrice * (metadata.SellMultiplier or 1)
-            local formattedSellPrice = string.format("%s$", FormatNumber(sellPrice))
-            
-            -- 1. GET TOTAL CAUGHT (Untuk Footer)
-            local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
-            local caughtStat = leaderstats and leaderstats:FindFirstChild("Caught")
-            local caughtDisplay = caughtStat and FormatNumber(caughtStat.Value) or "N/A"
-
-            -- 2. GET CURRENT COINS (FIXED LOGIC BASED ON DUMP)
-            local currentCoins = 0
-            local replion = GetPlayerDataReplion()
-            
-            if replion then
-                -- Cara 1: Ambil Path Resmi dari Module (Paling Aman)
-                local success_curr, CurrencyConfig = pcall(function()
-                    return require(game:GetService("ReplicatedStorage").Modules.CurrencyUtility.Currency)
-                end)
-
-                if success_curr and CurrencyConfig and CurrencyConfig["Coins"] then
-                    -- Path adalah table: { "Coins" }
-                    -- Replion library di game ini support passing table path langsung
-                    currentCoins = replion:Get(CurrencyConfig["Coins"].Path) or 0
-                else
-                    -- Cara 2: Fallback Manual (Root "Coins", bukan "Currency/Coins")
-                    -- Kita coba unpack table manual atau string langsung
-                    currentCoins = replion:Get("Coins") or replion:Get({"Coins"}) or 0
-                end
-            else
-                -- Fallback Terakhir: Leaderstats
-                if leaderstats then
-                    local coinStat = leaderstats:FindFirstChild("Coins") or leaderstats:FindFirstChild("C$")
-                    currentCoins = coinStat and coinStat.Value or 0
-                end
-            end
-
-            local formattedCoins = FormatNumber(currentCoins)
-            -- --- END: Ambil Data Embed Umum ---
-
-            
-            -- ************************************************************
-            -- 1. LOGIKA WEBHOOK PRIBADI (USER'S WEBHOOK)
-            -- ************************************************************
-            local isUserFilterMatch = shouldNotify(fishRarityUpper, metadata, fishName)
-
-            if isWebhookEnabled and WEBHOOK_URL ~= "" and isUserFilterMatch then
-                local title_private = string.format("<:TEXTURENOBG:1438662703722790992> RockHub | Webhook\n\n<a:ChipiChapa:1438661193857503304> New Fish Caught! (%s)", fishName)
-                
-                local embed = {
-                    title = title_private,
-                    description = string.format("Found by **%s**.", LocalPlayer.DisplayName or LocalPlayer.Name),
-                    color = getRarityColor(fishRarityUpper),
-                    fields = {
-                        { name = "<a:ARROW:1438758883203223605> Fish Name", value = string.format("`%s`", fishName), inline = true },
-                        { name = "<a:ARROW:1438758883203223605> Rarity", value = string.format("`%s`", fishRarityUpper), inline = true },
-                        { name = "<a:ARROW:1438758883203223605> Weight", value = string.format("`%s`", fishWeight), inline = true },
-                        
-                        { name = "<a:ARROW:1438758883203223605> Mutation", value = string.format("`%s`", mutationDisplay), inline = true },
-                        { name = "<a:coines:1438758976992051231> Sell Price", value = string.format("`%s`", formattedSellPrice), inline = true },
-                        { name = "<a:coines:1438758976992051231> Current Coins", value = string.format("`%s`", formattedCoins), inline = true },
-                    },
-                    thumbnail = { url = imageUrl },
-                    footer = {
-                        text = string.format("RockHub Webhook • Total Caught: %s • %s", caughtDisplay, os.date("%Y-%m-%d %H:%M:%S"))
-                    }
-                }
-                local success_send, message = sendExploitWebhook(WEBHOOK_URL, WEBHOOK_USERNAME, embed)
-                
-                if success_send then
-                    UpdateWebhookStatus("Webhook Aktif", "Terkirim: " .. fishName, "check")
-                else
-                    UpdateWebhookStatus("Webhook Gagal", "Error: " .. message, "x")
-                end
-            end
-
-            -- ************************************************************
-            -- 2. LOGIKA WEBHOOK GLOBAL (COMMUNITY WEBHOOK)
-            -- ************************************************************
-            local isGlobalTarget = table.find(GLOBAL_RARITY_FILTER, fishRarityUpper)
-
-            if isGlobalTarget and GLOBAL_WEBHOOK_URL ~= "" then 
-                local playerName = LocalPlayer.DisplayName or LocalPlayer.Name
-                local censoredPlayerName = CensorName(playerName)
-                
-                local title_global = string.format("<:TEXTURENOBG:1438662703722790992> RockHub | Global Tracker\n\n<a:globe:1438758633151266818> GLOBAL CATCH! %s", fishName)
-
-                local globalEmbed = {
-                    title = title_global,
-                    description = string.format("Pemain **%s** baru saja menangkap ikan **%s**!", censoredPlayerName, fishRarityUpper),
-                    color = getRarityColor(fishRarityUpper),
-                    fields = {
-                        { name = "<a:ARROW:1438758883203223605> Rarity", value = string.format("`%s`", fishRarityUpper), inline = true },
-                        { name = "<a:ARROW:1438758883203223605> Weight", value = string.format("`%s`", fishWeight), inline = true },
-                        { name = "<a:ARROW:1438758883203223605> Mutation", value = string.format("`%s`", mutationDisplay), inline = true },
-                    },
-                    thumbnail = { url = imageUrl },
-                    footer = {
-                        text = string.format("RockHub Community| Player: %s | %s", censoredPlayerName, os.date("%Y-%m-%d %H:%M:%S"))
-                    }
-                }
-                
-                sendExploitWebhook(GLOBAL_WEBHOOK_URL, GLOBAL_WEBHOOK_USERNAME, globalEmbed)
-            end
-            
-            return true
-        end)
-        
-        if not success then
-            warn("[RockHub Webhook] Error processing fish data:", results)
-        end
-    end
-    
-    if REObtainedNewFishNotification then
-        REObtainedNewFishNotification.OnClientEvent:Connect(function(itemId, metadata, fullData)
-            pcall(function() onFishObtained(itemId, metadata, fullData) end)
-        end)
-    end
-    
-
-    -- =================================================================
-    -- UI IMPLEMENTATION (LANJUTAN)
-    -- =================================================================
-    local webhooksec = webhook:Section({
-        Title = "Webhook Setup",
-        TextSize = 20,
-        FontWeight = Enum.FontWeight.SemiBold,
-    })
-
-   local inputweb = Reg("inptweb",webhooksec:Input({
-        Title = "Discord Webhook URL",
-        Desc = "URL tempat notifikasi akan dikirim.",
-        Value = "",
-        Placeholder = "https://discord.com/api/webhooks/...",
-        Icon = "link",
-        Type = "Input",
-        Callback = function(input)
-            WEBHOOK_URL = input
-        end
-    }))
-
-    webhook:Divider()
-    
-   local ToggleNotif = Reg("tweb",webhooksec:Toggle({
-        Title = "Enable Fish Notifications",
-        Desc = "Aktifkan/nonaktifkan pengiriman notifikasi ikan.",
-        Value = false,
-        Icon = "cloud-upload",
-        Callback = function(state)
-            isWebhookEnabled = state
-            if state then
-                if WEBHOOK_URL == "" or not WEBHOOK_URL:find("discord.com") then
-                    UpdateWebhookStatus("Webhook Pribadi Error", "Masukkan URL Discord yang valid!", "alert-triangle")
-                    return false
-                end
-                WindUI:Notify({ Title = "Webhook ON!", Duration = 4, Icon = "check" })
-                UpdateWebhookStatus("Status: Listening", "Menunggu tangkapan ikan...", "ear")
-            else
-                WindUI:Notify({ Title = "Webhook OFF!", Duration = 4, Icon = "x" })
-                UpdateWebhookStatus("Webhook Status", "Aktifkan 'Enable Fish Notifications' untuk mulai mendengarkan tangkapan ikan.", "info")
-            end
-        end
-    }))
-
-    local dwebname = Reg("drweb", webhooksec:Dropdown({
-        Title = "Filter by Specific Name",
-        Desc = "Notifikasi khusus untuk nama ikan tertentu",
-        Values = getWebhookItemOptions(),
-        Value = SelectedWebhookItemNames,
-        Multi = true,
-        AllowNone = true,
-        Callback = function(names)
-            SelectedWebhookItemNames = names or {} 
-        end
-    }))
-
-    local dwebrar = Reg("rarwebd", webhooksec:Dropdown({
-        Title = "Rarity to Notify",
-        Desc = "Hanya notifikasi ikan rarity yang dipilih.",
-        Values = RarityList, -- Menggunakan list yang sudah distandarisasi
-        Value = SelectedRarityCategories,
-        Multi = true,
-        AllowNone = true,
-        Callback = function(categories)
-            SelectedRarityCategories = {}
-            for _, cat in ipairs(categories or {}) do
-                table.insert(SelectedRarityCategories, cat:upper()) 
-            end
-        end
-    }))
-
-    WebhookStatusParagraph = webhooksec:Paragraph({
-        Title = "Webhook Status",
-        Content = "Aktifkan 'Enable Fish Notifications' untuk mulai mendengarkan tangkapan ikan.",
-        Icon = "info",
-    })
-    
-
-    local teswebbut = webhooksec:Button({
-        Title = "Test Webhook ",
-        Icon = "send",
-        Desc = "Mengirim Webhook Test",
-        Callback = function()
-            if WEBHOOK_URL == "" then
-                WindUI:Notify({ Title = "Error", Content = "Masukkan URL Webhook terlebih dahulu.", Duration = 3, Icon = "alert-triangle" })
-                return
-            end
-            local testEmbed = {
-                title = "RockHub Webhook Test",
-                description = "Success <a:ChipiChapa:1438661193857503304>",
-                color = 0x00FF00,
-                fields = {
-                    { name = "Name Player", value = LocalPlayer.DisplayName or LocalPlayer.Name, inline = true },
-                    { name = "Status", value = "Success", inline = true },
-                    { name = "Cache System", value = "Active ✅", inline = true }
-                },
-                footer = {
-                    text = "RockHub Webhook Test"
-                }
-            }
-            local success, message = sendExploitWebhook(WEBHOOK_URL, WEBHOOK_USERNAME, testEmbed)
-            if success then
-                 WindUI:Notify({ Title = "Test Sukses!", Content = "Cek channel Discord Anda. " .. message, Duration = 4, Icon = "check" })
-            else
-                 WindUI:Notify({ Title = "Test Gagal!", Content = "Cek console (Output) untuk error. " .. message, Duration = 5, Icon = "x" })
-            end
-        end
-    })
-end
-
-do
-    local SettingsTab = Window:Tab({
-        Title = "Configuration",
-        Icon = "settings",
-        Locked = false,
-    })
-
-    local ConfigSection = SettingsTab:Section({
-        Title = "Config Manager",
-        TextSize = 20,
-    })
-
-    -- Variabel Lokal
-    local ConfigManager = Window.ConfigManager
-    local SelectedConfigName = "rockhub" -- Default
-    local BaseFolder = "WindUI/" .. (Window.Folder or "RockHub") .. "/config/"
-
-    -- Helper: Update Dropdown
-    local function RefreshConfigList(dropdown)
-        local list = ConfigManager:AllConfigs()
-        if #list == 0 then list = {"None"} end
-        pcall(function() dropdown:Refresh(list) end)
-    end
-
-    local ConfigNameInput = ConfigSection:Input({
-        Title = "Config Name",
-        Desc = "Nama config baru/yang akan disimpan.",
-        Value = "rockhub",
-        Placeholder = "e.g. LegitFarming",
-        Icon = "file-pen",
-        Callback = function(text)
-            SelectedConfigName = text
-        end
-    })
-
-    local ConfigDropdown = ConfigSection:Dropdown({
-        Title = "Available Configs",
-        Desc = "Pilih file config yang ada.",
-        Values = ConfigManager:AllConfigs() or {"None"},
-        Value = "rockhub",
-        AllowNone = true,
-        Callback = function(val)
-            if val and val ~= "None" then
-                SelectedConfigName = val
-                ConfigNameInput:Set(val)
-            end
-        end
-    })
-
-    ConfigSection:Button({
-        Title = "Refresh List",
-        Icon = "refresh-ccw",
-        Callback = function() RefreshConfigList(ConfigDropdown) end
-    })
-
-    ConfigSection:Divider()
-
-    -- [FIXED] SAVE BUTTON
-    ConfigSection:Button({
-        Title = "Save Config",
-        Desc = "Simpan settingan saat ini.",
-        Icon = "save",
-        Color = Color3.fromRGB(0, 255, 127),
-        Callback = function()
-            if SelectedConfigName == "" then return end
-            
-            -- 1. Save ke config utama dulu ("rockhub.json")
-            RockHubConfig:Save()
-            task.wait(0.1)
-
-            -- 2. Jika nama beda, salin isi "rockhub.json" ke "NamaBaru.json"
-            if SelectedConfigName ~= "rockhub" then
-                local success, err = pcall(function()
-                    local mainContent = readfile(BaseFolder .. "rockhub.json")
-                    writefile(BaseFolder .. SelectedConfigName .. ".json", mainContent)
-                end)
-                
-                if not success then
-                    WindUI:Notify({ Title = "Error Write", Content = "Gagal menyalin file.", Duration = 3, Icon = "x" })
-                    return
-                end
-            end
-
-            WindUI:Notify({ Title = "Saved!", Content = "Config: " .. SelectedConfigName, Duration = 2, Icon = "check" })
-            RefreshConfigList(ConfigDropdown)
-        end
-    })
-
-    -- [FIXED SMART LOAD] LOAD BUTTON
-    ConfigSection:Button({
-        Title = "Load Config",
-        Icon = "download",
-        Callback = function()
-            if SelectedConfigName == "" then return end
-            
-            -- Panggil fungsi Smart Load buatan kita
-            SmartLoadConfig(SelectedConfigName)
-        end
-    })
-
-    -- DELETE BUTTON
-    ConfigSection:Button({
-        Title = "Delete Config",
-        Icon = "trash-2",
-        Color = Color3.fromRGB(255, 80, 80),
-        Callback = function()
-            if SelectedConfigName == "" or SelectedConfigName == "rockhub" then 
-                WindUI:Notify({ Title = "Gagal", Content = "Tidak bisa hapus config default/kosong.", Duration = 3 })
-                return 
-            end
-            
-            local path = BaseFolder .. SelectedConfigName .. ".json"
-            
-            if isfile(path) then
-                delfile(path)
-                WindUI:Notify({ Title = "Deleted", Content = SelectedConfigName .. " dihapus.", Duration = 2, Icon = "trash" })
-                RefreshConfigList(ConfigDropdown)
-                ConfigNameInput:Set("rockhub")
-                SelectedConfigName = "rockhub"
-            else
-                WindUI:Notify({ Title = "Error", Content = "File tidak ditemukan.", Duration = 3, Icon = "x" })
-            end
-        end
-    })
-    
-    -- Info Tambahan
-    --ConfigSection:Paragraph({
-        --Title = "Auto-Save Active",
-       -- Desc = "Script otomatis menyimpan ke 'rockhub.json' setiap 30 detik.",
-      --  Icon = "info"
- --   })
-end
-
-do
-    local about = Window:Tab({
-        Title = "About",
-        Icon = "info",
-        Locked = false,
-    })
-
-    about:Section({
-        Title = "Join Discord Server RockHub",
-        TextSize = 20,
-    })
-
-    about:Paragraph({
-        Title = "RockHub Community",
-        Desc = "Join Our Community Discord Server to get the latest updates, support, and connect with other users!",
-        Image = "rbxassetid://122210708834535",
-        ImageSize = 24,
-        Buttons = {
-            {
-                Title = "Copy Link",
-                Icon = "link",
-                Callback = function()
-                    setclipboard("https://dsc.gg/rockhub")
-                    WindUI:Notify({
-                        Title = "Link Disalin!",
-                        Content = "Link Discord RockHub berhasil disalin.",
-                        Duration = 3,
-                        Icon = "copy",
-                    })
-                end,
-            }
-        }
-    })
-
-    about:Divider()
-    
-    about:Section({
-        Title = "What's New?",
-        TextSize = 24,
-        FontWeight = Enum.FontWeight.SemiBold,
-    })
-
-    about:Image({
-        Image = "rbxassetid://122210708834535",
-        AspectRatio = "16:9",
-        Radius = 9,
-    })
-
-    about:Space()
-
-    about:Paragraph({
-        Title = "Version 1.0.0",
-        Desc = "- 28 Nov 2025 Release Premium Version",
-    })
-    about:Paragraph({
-        Title = "Version 1.0.1",
-        Desc = "[~] Fix stuck at farming artifact\n[~] Fix auto sell issue\n[~] Fix Legit Fishing Stuck Issue\n[~] Fix & change method kaitun mode\n[+] Add missing mutation\n[+] add auto trade by coin\n[+] Add filter by name at webhook\n",
-    })
-    about:Paragraph({
-        Title = "Version 1.0.2",
-        Desc = "[~] Fix 3D Rendering Force Close Issue\n[~] Fix Teleport & Freeze Detect Old Position\n[~] Improve Load UI\n[+] Add Freeze Player\n[+] Add Detect Enchant Perfection On Blatant Mode\n[+] Add Auto Spawn 9 Totem\n[+] Bring Back 3 Setting On Blatant Mode",
-    })
-end
-
-Window:Tag({
-    Title = "V 1.0.2",
-    Color = Color3.fromHex("#F5C527"),
-    Radius = 9,
-})
-
-Window:EditOpenButton({
-    Title = "RockHub - Fish It",
-    Icon = "rbxassetid://116236936447443",
-    CornerRadius = UDim.new(0,30),
-    StrokeThickness = 1.5,
-    Color = ColorSequence.new(
-        Color3.fromHex("FF0F7B"),
-        Color3.fromHex("F89B29")
-    ),
-    OnlyMobile = false,
-    Enabled = true,
-    Draggable = true,
-})
-
--- =================================================================
--- FLOATING ICON (FIXED: NO GLITCH & SMOOTH DRAG)
--- =================================================================
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
--- Variabel Koneksi Global (PENTING BIAR GA TUMPUK)
-local uisConnection = nil
-
--- Variabel Logika Dragging
-local dragging = false
-local dragInput = nil
-local dragStart = nil
-local startPos = nil
-
-local function CreateFloatingIcon()
-    local existingGui = PlayerGui:FindFirstChild("CustomFloatingIcon_RockHub")
-    if existingGui then existingGui:Destroy() end
-
-    local FloatingIconGui = Instance.new("ScreenGui")
-    FloatingIconGui.Name = "CustomFloatingIcon_RockHub"
-    FloatingIconGui.DisplayOrder = 999
-    FloatingIconGui.ResetOnSpawn = false 
-
-    local FloatingFrame = Instance.new("Frame")
-    FloatingFrame.Name = "FloatingFrame"
-    -- Posisi Default (Tengah Kiri aman)
-    FloatingFrame.Position = UDim2.new(0, 50, 0.4, 0) 
-    FloatingFrame.Size = UDim2.fromOffset(45, 45) 
-    FloatingFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    FloatingFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    FloatingFrame.BackgroundTransparency = 0 -- Hitam Pekat
-    FloatingFrame.BorderSizePixel = 0
-    FloatingFrame.Parent = FloatingIconGui
-
-    -- Stroke/Garis Tepi
-    local FrameStroke = Instance.new("UIStroke")
-    FrameStroke.Color = Color3.fromHex("FF0F7B")
-    FrameStroke.Thickness = 2
-    FrameStroke.Transparency = 0
-    FrameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    FrameStroke.Parent = FloatingFrame
-
-    -- Sudut Tumpul (Rounded Square)
-    local FrameCorner = Instance.new("UICorner")
-    FrameCorner.CornerRadius = UDim.new(0, 12) 
-    FrameCorner.Parent = FloatingFrame
-
-    -- Icon Gambar
-    local IconImage = Instance.new("ImageLabel")
-    IconImage.Name = "Icon"
-    IconImage.Image = "rbxassetid://122210708834535"
-    IconImage.BackgroundTransparency = 1
-    IconImage.Size = UDim2.new(1, -4, 1, -4) 
-    IconImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-    IconImage.AnchorPoint = Vector2.new(0.5, 0.5)
-    IconImage.Parent = FloatingFrame
-
-    -- Corner untuk Gambar
-    local ImageCorner = Instance.new("UICorner")
-    ImageCorner.CornerRadius = UDim.new(0, 10)
-    ImageCorner.Parent = IconImage
-    
-    FloatingIconGui.Parent = PlayerGui
-    return FloatingIconGui, FloatingFrame
-end
-
-local function SetupFloatingIcon(FloatingIconGui, FloatingFrame)
-    -- [FIX] Putuskan koneksi lama jika ada (Mencegah glitch tumpuk)
-    if uisConnection then 
-        uisConnection:Disconnect() 
-        uisConnection = nil
-    end
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        FloatingFrame.Position = UDim2.new(
-            startPos.X.Scale, 
-            startPos.X.Offset + delta.X, 
-            startPos.Y.Scale, 
-            startPos.Y.Offset + delta.Y
-        )
-    end
-
-    -- Event: Mulai Sentuh/Klik
-    FloatingFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = FloatingFrame.Position
-            
-            local didMove = false
-
-            -- Tracking release
-            local connection
-            connection = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                    connection:Disconnect()
-                    
-                    -- Logika: Jika tidak geser (atau geser dikit banget), berarti KLIK
-                    if not didMove then
-                        if Window and Window.Toggle then
-                            Window:Toggle()
-                        end
-                    end
-                end
-            end)
-            
-            -- Tracking movement khusus input ini untuk status 'didMove'
-            local moveConnection
-            moveConnection = input.Changed:Connect(function()
-                 if dragging and (input.Position - dragStart).Magnitude > 5 then
-                     didMove = true
-                     moveConnection:Disconnect()
-                 end
-            end)
-        end
-    end)
-
-    -- Event: Pergerakan Input (Menyiapkan dragInput)
-    FloatingFrame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    -- [FIX] Event Global Disimpan ke Variabel uisConnection
-    uisConnection = UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-
-    -- Handler: Sembunyikan Icon saat UI Terbuka
-    if Window then
-        Window:OnOpen(function()
-            FloatingIconGui.Enabled = false
-        end)
-        Window:OnClose(function()
-            FloatingIconGui.Enabled = true
-        end)
-    end
-end
-
-local function InitializeIcon()
-    -- Pastikan karakter sudah load
-    if not game.Players.LocalPlayer.Character then
-        game.Players.LocalPlayer.CharacterAdded:Wait()
-    end
-    
-    local gui, frame = CreateFloatingIcon()
-    if gui and frame then
-        SetupFloatingIcon(gui, frame)
-    end
-end
-
--- Auto Reload Icon saat Respawn
-game.Players.LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1) 
-    InitializeIcon()
-end)
-
-WindUI:Notify({ Title = "RockHub Was Loaded", Content = "Press [F] to open/close the menu", Duration = 5, Icon = "info" })
--- [[ AUTO LOAD & SAVE LOOP ]]
-task.spawn(function()
-    task.wait(2) -- Tunggu UI load sempurna
-    
-    -- Ganti Load biasa dengan Smart Load
-    -- Default load "rockhub", atau nama config terakhir user kalau kamu simpan
-    SmartLoadConfig("rockhub") 
-    
-    -- Auto Save Loop (Setiap 30 detik) -- Save tetap pakai cara biasa gapapa
-    while true do
-         task.wait(10)
-         pcall(function() RockHubConfig:Save() end)
-    end
-end)
-InitializeIcon()

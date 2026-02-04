@@ -9,7 +9,7 @@ local win = DiscordLib:Window({
 
 -- Tabs 
 local fishingTab = win:Server("Fishing Tab", "rbxassetid://10709761530")
-local playerTab = win:Server("Player Tab", "rbxassetid://10747372167")
+-- local playerTab = win:Server("Player Tab", "rbxassetid://10747372167")
 local autoTab = win:Server("Automation Tab", "rbxassetid://10723354521")
 local teleTab = win:Server("Teleport Tab", "rbxassetid://10734886004")
 local webTab = win:Server("Webhook Tab", "rbxassetid://10723426722")
@@ -23,9 +23,9 @@ local fishFav = fishingTab:Channel("Auto Fav/UnFav")
 local fishSell = fishingTab:Channel("Auto Sell")
 
 -- player Tab
-local moveTab = playerTab:Channel("Movement")
-local abilityTab = playerTab:Channel("Ability")
-local otherTab = playerTab:Channel("Other")
+-- local moveTab = playerTab:Channel("Movement")
+-- local abilityTab = playerTab:Channel("Ability")
+-- local otherTab = playerTab:Channel("Other")
 
 -- auto Tab
 local merchantTab = autoTab:Channel("Auto Buy Merchant Items")
@@ -939,20 +939,17 @@ do
     local RE_EquipToolFromHotbar = GetRemote("RE/EquipToolFromHotbar")
     local RF_ChargeFishingRod    = GetRemote("RF/ChargeFishingRod")
     local RF_RequestFishingMinigameStarted = GetRemote("RF/RequestFishingMinigameStarted")
-    local RE_FishingCompleted    = GetRemote("RE/FishingCompleted")
+    local RE_FishingCompleted    = GetRemote("RF/CatchFishCompleted")
     local RF_CancelFishingInputs = GetRemote("RF/CancelFishingInputs")
     local RF_UpdateAutoFishingState = GetRemote("RF/UpdateAutoFishingState")
     
     local InstantState = nil
     local blatantV1State = nil
-    local blatantV2State = nil
     
     local insDe = nil
     local insCyc = nil
     local blatv1de = nil
     local blatv1cyc = nil
-    local blatv2de = nil
-    local blatv2cyc = nil
     
     local SPEED_LEGIT = 0.05
     local legitClickThread = nil
@@ -1078,47 +1075,28 @@ do
     setreadonly(mt, true)
     
     local function instantOk()
-        task.wait(0.001)
-        RF_ChargeFishingRod:InvokeServer(1, 0.999)
-        task.wait(0.016)
-        RF_RequestFishingMinigameStarted:InvokeServer(1, 0.999)
+        RF_ChargeFishingRod:InvokeServer(nil, nil, nil, 1769972555.6933)
+        RF_RequestFishingMinigameStarted:InvokeServer(1, 1, 1769972555.6933)
         task.wait(insDe)
-        RE_FishingCompleted:FireServer()
-        task.wait(0.3)
-        RF_CancelFishingInputs:InvokeServer()
+        RE_FishingCompleted:InvokeServer()
     end
-    
+
     local function blatantFishv1()
+        for i = 1, 7 do
+            task.wait(0.035)
+            task.spawn(function()
+                RF_ChargeFishingRod:InvokeServer(nil, nil, nil, 1769972555.6933)
+            end)
+            task.spawn(function()
+                RF_RequestFishingMinigameStarted:InvokeServer(1, 1, 1769972555.6933)
+            end)
+        end
+        task.wait(blatv1de)
         task.spawn(function()
-            RF_CancelFishingInputs:InvokeServer(1, 0.99)
+            RE_FishingCompleted:InvokeServer()
         end)
         task.spawn(function()
-            task.wait(0.001)
-            RF_ChargeFishingRod:InvokeServer(1, 0.99)
-        end)
-        task.spawn(function()
-            task.wait(0.016)
-            RF_RequestFishingMinigameStarted:InvokeServer(1, 0.99)
-            task.wait(blatv1de)
-            RE_FishingCompleted:FireServer()
-        end)
-    end
-    
-    local function blatantFishv2()
-        task.spawn(function()
-            pcall(function() RF_CancelFishingInputs:InvokeServer() end)
-        end)
-        task.spawn(function()
-            task.wait(0.001)
-            pcall(function() RF_ChargeFishingRod:InvokeServer(1, 0.999) end)
-        end)
-        task.spawn(function()
-            task.wait(0.016)
-            pcall(function() RF_RequestFishingMinigameStarted:InvokeServer(1, 0.999) end)
-        end)
-        task.spawn(function()
-            task.wait(blatv2de)
-            pcall(function() RE_FishingCompleted:FireServer() end)
+            RF_CancelFishingInputs:InvokeServer()
         end)
     end
 
@@ -1164,7 +1142,7 @@ do
                 task.spawn(function()
                     while InstantState do
                         instantOk()
-                        task.wait(0.1) 
+                        task.wait(0.01) 
                     end
                 end)
             end
@@ -1200,58 +1178,25 @@ do
             pcall(function() RF_UpdateAutoFishingState:InvokeServer(state) end)
             
             if state then
-                 task.spawn(function()
+                for i = 1, 7 do
+                    task.wait(0.035)
+                    task.spawn(function()
+                        RF_ChargeFishingRod:InvokeServer(nil, nil, nil, 1769972555.6933)
+                    end)
+                    task.spawn(function()
+                        RF_RequestFishingMinigameStarted:InvokeServer(1, 1, 1769972555.6933)
+                    end)
+                end
+                task.wait(0.1)
+                task.spawn(function()
                     while blatantV1State do
-                        blatantFishv1()
+                        task.spawn(blatantFishv1)
                         task.wait(blatv1cyc)
                     end
                 end)
             end
         end
     })
-
-    fishMain:Seperator()
-    fishMain:Label("BlatantV2 Fishing")
-
-    local BlatantV2Bait = fishMain:Textbox("blatV2bait", { -- ✅ DIPERBAIKI
-        Title = "Bait Delay",
-        Placeholder = "ex: 0.3",
-        Callback = function(val)
-            blatv2cyc = tonumber(val)
-        end
-    })
-    
-    -- BlatantV2Bait:SetValue(0.5)
-    
-    local BlatantV2Delay = fishMain:Textbox("blatV2delay", { -- ✅ DIPERBAIKI
-        Title = "Complete Delay",
-        Placeholder = "ex: 0.7",
-        Callback = function(val)
-            blatv2de = tonumber(val)
-        end
-    })
-    
-    -- BlatantV2Delay:SetValue(1.47)
-    
-    local BlatantV2Toggle = fishMain:Toggle("togblatv2", { -- ✅ DIPERBAIKI
-        Title = "BlatantV2 Fish",
-        Value = false,
-        Callback = function(state)
-            blatantV2State = state -- ✅ DIPERBAIKI (tadinya blatantV1State)
-            _G.BloxFish_BlatantActive = state
-            pcall(function() RF_UpdateAutoFishingState:InvokeServer(state) end)
-            
-            if state then
-                task.spawn(function()
-                    while blatantV2State do
-                        blatantFishv2()
-                        task.wait(blatv2cyc + blatv2de)
-                    end
-                end)
-            end
-        end
-    })
-    -- BlatantV2Toggle:SetValue(true)
 end 
 
 do 
@@ -1264,6 +1209,7 @@ do
     local selectedMutations = {}
 
     local customName = {}
+    local customRarity = {}
     local customMutation = {}
     
     local RE_FavoriteItem = GetRemote("RE/FavoriteItem")
@@ -1353,6 +1299,10 @@ do
             end
 
             if not isMatch and isCustomName and table.find(customName, name) and table.find(customMutation, mutationFilterString) then
+                isMatch = true
+            end
+            
+            if not isMatch and isCustomName and table.find(customName, name) and table.find(customRarity, rarity) then
                 isMatch = true
             end
     
@@ -1501,25 +1451,24 @@ do
         end
     })
     
-    local toggleunfav = fishFav:Toggle("tunvav", {
+    local toggleunfav = fishFav:Button({
         Title = "Enable Auto UnFavorite",
-        Value = false,
-        Callback = function(state)
-            autoUnfavoriteState = state
-            if state then
-                if #selectedRarities == 0 and #selectedItemNames == 0 and #selectedMutations == 0 then
-                    return false -- Batalkan aksi jika tidak ada filter
-                end
-    
-                RunAutoUnfavoriteLoop()
-            else
-                if autoUnfavoriteThread then autoUnfavoriteThread = nil end
-            end
+        Callback = function()
+            RunAutoUnfavoriteLoop()
         end
     })
 
     fishFav:Seperator()
     fishFav:Label("Custom Name + Mutation Filter")
+    
+    fishFav:Dropdown("customRarit", {
+        Title = "by Rarity",
+        List = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET"},
+        Multi = true, 
+        Callback = function(val)
+            customRarity = val
+        end
+    })
 
     fishFav:Dropdown("nameCostum", {
         Title = "Name Fish",
@@ -1678,6 +1627,12 @@ do
             end
         end
     })
+    fishSell:Button({
+        Title = "Sell Now",
+        Callback = function()
+            pcall(function() RF_SellAllItems:InvokeServer() end)
+        end
+    })
 end
 
 -- ================================================================================================
@@ -1719,6 +1674,25 @@ do
                     while mutanTotemActive do
                         pcall(function() 
                             RF_PurchaseMarketItem:InvokeServer(8) 
+                        end)
+                        task.wait(0.5)
+                    end
+                end)
+            end
+        end
+    })
+
+    merchantTab:Toggle("buyShinyT", {
+        Title = "Buy Shiny Totem",
+        Value = false,
+        Callback = function(state)
+            mutanTotemActive = state
+            
+            if state then
+                task.spawn(function()
+                    while mutanTotemActive do
+                        pcall(function() 
+                            RF_PurchaseMarketItem:InvokeServer(7) 
                         end)
                         task.wait(0.5)
                     end
@@ -2222,6 +2196,7 @@ Fish Secret --> %d / %d]],
     -- ✅ Initialize display
     updateFishStatus()
 end
+
 -- ================================================================================================
 --                                          Teleport Tab
 -- ================================================================================================
